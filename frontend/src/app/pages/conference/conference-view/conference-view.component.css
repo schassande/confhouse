@@ -1,0 +1,16 @@
+.conference-view-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  text-align: left;
+}
+h2 {
+  color: #1976d2;
+  margin-bottom: 16px;
+}
+p {
+  margin-bottom: 12px;
+}

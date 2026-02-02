@@ -1,0 +1,24 @@
+<section class="conference-view-container">
+  <ng-container *ngIf="conference() as conf; else loading">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <img *ngIf="conf.logo" [src]="conf.logo" alt="logo" width="48" height="48" style="border-radius:8px;object-fit:cover;">
+          <span style="font-size:1.5rem;font-weight:600;">{{ conf.name }}</span>
+        </div>
+      </ng-template>
+      <div style="margin: 1rem 0;">
+        <p><p-tag severity="info">{{ conf.dates.join(' - ') }}</p-tag></p>
+        <p><p-tag severity="success">{{ conf.location }}</p-tag></p>
+      </div>
+      <div>
+        <strong>{{ 'CONFERENCE.DESCRIPTION' | translate }}:</strong>
+        <p>{{ conf.description[lang()] }}</p>
+      </div>
+      <!-- Add more fields as needed -->
+    </p-card>
+  </ng-container>
+  <ng-template #loading>
+    <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
+  </ng-template>
+</section>

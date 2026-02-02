@@ -1,0 +1,29 @@
+<section class="home-container">
+  <h1>{{ 'HOME.TITLE' | translate }}</h1>
+  @if (conferences() === undefined) {
+    <p>{{ 'HOME.LOADING' | translate }}</p>
+  } @else if (conferences()?.length === 0) {
+    <p>{{ 'HOME.NO_CONFS' | translate }}</p>
+  } @else {
+    <p-table [value]="conferences() || []" styleClass="p-datatable-sm" [paginator]="true" [rows]="5" [responsiveLayout]="'scroll'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'HOME.CONF_NAME' | translate }}</th>
+          <th>{{ 'HOME.CONF_DATES' | translate }}</th>
+          <th>{{ 'HOME.CONF_LOCATION' | translate }}</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-conf>
+        <tr>
+          <td><strong>{{ conf.name }}</strong></td>
+          <td>{{ conf.dates.join(' - ') }}</td>
+          <td>{{ conf.location }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-search" class="p-button-text p-button-sm" [routerLink]="['/conference', conf.id]" [label]="'HOME.VIEW' | translate"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</section>
