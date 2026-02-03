@@ -35,6 +35,14 @@ export class PersonListComponent implements OnInit {
   // Search term
   readonly searchTerm = signal('');
 
+  // Effect: if user changes and is no longer admin, redirect (must be in field initializer for injection context)
+  private readonly redirectOnNonAdmin = effect(() => {
+    const p = this.signupService.person();
+    if (!p || !p.isPlatformAdmin) {
+      void this.router.navigate(['/']);
+    }
+  });
+
   ngOnInit(): void {
     // Prevent access if not admin
     const current = this.signupService.getCurrentPerson();
@@ -45,14 +53,6 @@ export class PersonListComponent implements OnInit {
 
     // Initial load page 1 with empty search
     void this.loadPage(1);
-
-    // Effect: if user changes and is no longer admin, redirect
-    effect(() => {
-      const p = this.signupService.person();
-      if (!p || !p.isPlatformAdmin) {
-        void this.router.navigate(['/']);
-      }
-    });
   }
 
   private async loadPage(page: number) {

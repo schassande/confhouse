@@ -41,6 +41,17 @@ setGlobalOptions({ maxInstances: 10 });
  * creates a new document in `person` collection and an index doc in `person_emails`.
  */
 export const createPerson = onRequest(async (req, res) => {
+	// Enable CORS
+	res.set('Access-Control-Allow-Origin', '*');
+	res.set('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+	res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+	// Handle preflight requests
+	if (req.method === 'OPTIONS') {
+		res.status(204).send('');
+		return;
+	}
+
 	try {
 		if (req.method !== 'POST') {
 			res.status(405).send({ error: 'Method Not Allowed, use POST' });

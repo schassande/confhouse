@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, User, sendPasswordResetEmail } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, User, sendPasswordResetEmail, setPersistence, browserLocalPersistence, onAuthStateChanged } from '@angular/fire/auth';
 import { PersonService } from './person.service';
 import { Person } from '../model/person.model';
 import { firstValueFrom } from 'rxjs';
@@ -14,6 +14,27 @@ export class UserSignService {
   private readonly _user = signal<User | null>(null);
   private readonly _person = signal<Person | null>(null);
   person = computed(() => this._person());
+
+  constructor() {
+    // Set Firebase persistence to localStorage (survives page refreshes)
+    void setPersistence(this.auth, browserLocalPersistence);
+    
+    // Listen to auth state changes and restore user session
+    onAuthStateChanged(this.auth, async (firebaseUser) => {
+      if (firebaseUser && firebaseUser.email) {
+        // User is authenticated - fetch Person from database
+        const person = await firstValueFrom(this.personService.findByEmail(firebaseUser.email));
+        if (person) {
+          this._person.set(person);
+          this._user.set(firebaseUser);
+        }
+      } else {
+        // No user - clear signals
+        this._user.set(null);
+        this._person.set(null);
+      }
+    });
+  }
 
   /**
    * Create person via Cloud Function with email uniqueness guarantee
