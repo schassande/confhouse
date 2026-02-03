@@ -60,6 +60,7 @@ export class SignupComponent {
           firstName: formValue.firstName,
           lastName: formValue.lastName,
           email: formValue.email,
+          search: '',
           hasAccount: true,
           preferredLanguage: 'en',
           isPlatformAdmin: false

@@ -14,6 +14,26 @@ export class PersonService extends FirestoreGenericService<Person> {
     return 'person';
   }
 
+  /**
+   * Compute the search field from person data: concatenation of lastName, firstName, email, speaker.company (lowercase, space-separated)
+   */
+  private computeSearchField(person: Person): string {
+    const parts: string[] = [];
+    if (person.lastName) parts.push(person.lastName.toLowerCase());
+    if (person.firstName) parts.push(person.firstName.toLowerCase());
+    if (person.email) parts.push(person.email.toLowerCase());
+    if (person.speaker?.company) parts.push(person.speaker.company.toLowerCase());
+    return parts.join(' ');
+  }
+
+  /**
+   * Override save to compute search field before saving
+   */
+  public override save(item: Person): Observable<Person> {
+    item.search = this.computeSearchField(item);
+    return super.save(item);
+  }
+
   findByEmail(email: string): Observable<Person | undefined> {
     const q = fbQuery(this.itemsCollection(), fbOrderBy('email'), fbLimit(1));
     // Use generic query helper
@@ -31,9 +51,10 @@ export class PersonService extends FirestoreGenericService<Person> {
   }
 
   /**
-   * Combined search and pagination. Searches across firstName, lastName, email (case-sensitive prefix match).
+   * Combined search and pagination using the search field.
+   * Searches with prefix match on the computed search field.
    * Results are ordered by lastUpdated desc with cursor-based pagination.
-   * @param searchTerm - Search term (prefix match on firstName, lastName, email). Empty = all persons
+   * @param searchTerm - Search term (prefix match on search field, case-insensitive)
    * @param pageSize - Number of results per page
    * @param startAfterValue - Cursor value (lastUpdated) for pagination
    * @returns Object with filtered+paged persons and nextCursor for the next page
@@ -67,26 +88,30 @@ export class PersonService extends FirestoreGenericService<Person> {
       );
     }
 
-    // Fetch all results from the three prefix queries and filter+paginate client-side
-    const endTerm = searchTerm + '\uf8ff';
-    const q1 = fbQuery(this.itemsCollection(), fbOrderBy('firstName'), fbStartAt(searchTerm), fbEndAt(endTerm), fbLimit(500));
-    const q2 = fbQuery(this.itemsCollection(), fbOrderBy('lastName'), fbStartAt(searchTerm), fbEndAt(endTerm), fbLimit(500));
-    const q3 = fbQuery(this.itemsCollection(), fbOrderBy('email'), fbStartAt(searchTerm), fbEndAt(endTerm), fbLimit(500));
+    // Normalize search term to lowercase for comparison
+    const searchLower = searchTerm.toLowerCase();
+    const endTerm = searchLower + '\uf8ff';
+    
+    // Query on the search field with prefix match
+    const q = fbQuery(
+      this.itemsCollection(),
+      fbOrderBy('search'),
+      fbStartAt(searchLower),
+      fbEndAt(endTerm),
+      fbLimit(500)
+    );
 
-    return from(Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])).pipe(
-      map((results) => {
-        // Merge all results, dedup by id
-        const mapById = new Map<string, Person>();
-        for (const qs of results) {
-          qs.forEach((ds) => {
-            const data = ds.data() as Person;
-            data.id = ds.id;
-            if (!mapById.has(data.id)) mapById.set(data.id, data);
-          });
-        }
+    return from(getDocs(q)).pipe(
+      map((qs) => {
+        const results: Person[] = [];
+        qs.forEach((ds) => {
+          const data = ds.data() as Person;
+          data.id = ds.id;
+          results.push(data);
+        });
+
         // Sort by lastUpdated desc
-        let allResults = Array.from(mapById.values());
-        allResults.sort((a, b) => {
+        results.sort((a, b) => {
           const aVal = parseInt(a.lastUpdated, 10) || 0;
           const bVal = parseInt(b.lastUpdated, 10) || 0;
           return bVal - aVal;
@@ -95,10 +120,10 @@ export class PersonService extends FirestoreGenericService<Person> {
         // Apply cursor pagination on sorted results
         let startIdx = 0;
         if (startAfterValue) {
-          startIdx = allResults.findIndex(p => p.lastUpdated === startAfterValue) + 1;
+          startIdx = results.findIndex(p => p.lastUpdated === startAfterValue) + 1;
           if (startIdx <= 0) startIdx = 0;
         }
-        const paginated = allResults.slice(startIdx, startIdx + pageSize);
+        const paginated = results.slice(startIdx, startIdx + pageSize);
         const nextCursor = paginated.length > 0 && paginated.length === pageSize
           ? paginated[paginated.length - 1].lastUpdated
           : undefined;

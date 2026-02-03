@@ -105,6 +105,7 @@ export class UserSignService {
         firstName: user.displayName?.split(' ')[0] ?? '',
         lastName: user.displayName?.split(' ').slice(1).join(' ') ?? '',
         email: user.email,
+        search: '',
         hasAccount: true,
         preferredLanguage: 'en',
         isPlatformAdmin: false

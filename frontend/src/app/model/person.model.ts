@@ -20,6 +20,8 @@ export interface Person extends PersistentData {
   isPlatformAdmin?: boolean;
   /** Preferred language for communication and interface */
   preferredLanguage: string;
+  /** Search field: concatenation of lastName, firstName, email, speaker.company (space-separated, lowercase) */
+  search: string;
   speaker?: {
     /** Company or organization */
     company: string;
