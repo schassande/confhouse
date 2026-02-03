@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, User, UserCredential } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, User } from '@angular/fire/auth';
 import { PersonService } from './person.service';
 import { Person } from '../model/person.model';
 import { firstValueFrom } from 'rxjs';
@@ -90,6 +90,48 @@ export class SignupService {
         this._person.set(person);
         this._user.set(cred.user);
     }    
+    return person;
+  }
+
+  /**
+   * Login a user with email and password
+   * @param email 
+   * @param password 
+   * @returns 
+   */
+  async loginWithEmail(email: string, password: string): Promise<Person|undefined> {
+    const cred = await signInWithEmailAndPassword(this.auth, email, password);
+    
+    // Fetch person from database using email
+    const person = await firstValueFrom(this.personService.findByEmail(email));
+    
+    if (person) {
+      this._person.set(person);
+      this._user.set(cred.user);
+    }
+    
+    return person;
+  }
+
+  /**
+   * Login a user with Google authentication
+   * @returns 
+   */
+  async loginWithGoogle(): Promise<Person|undefined> {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(this.auth, provider);
+    const user = cred.user;
+    
+    if (!user.email) return undefined;
+    
+    // Fetch person from database using email
+    const person = await firstValueFrom(this.personService.findByEmail(user.email));
+    
+    if (person) {
+      this._person.set(person);
+      this._user.set(cred.user);
+    }
+    
     return person;
   }
 

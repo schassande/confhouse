@@ -1,5 +1,3 @@
-
-
 {
   "HOME": {
     "TITLE": "Upcoming Conferences",
@@ -31,5 +29,15 @@
     "PASSWORD": "Password",
     "CONFIRM": "Confirm password",
     "SUBMIT": "Sign up"
+  },
+  "LOGIN": {
+    "TITLE": "Login to your account",
+    "GOOGLE": "Login with Google",
+    "OR": "or",
+    "EMAIL": "Email",
+    "PASSWORD": "Password",
+    "SUBMIT": "Login",
+    "NO_ACCOUNT": "Don't have an account?",
+    "SIGNUP_LINK": "Sign up here"
   }
 }

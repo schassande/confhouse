@@ -29,5 +29,15 @@
     "PASSWORD": "Mot de passe",
     "CONFIRM": "Confirmez le mot de passe",
     "SUBMIT": "Créer le compte"
+  },
+  "LOGIN": {
+    "TITLE": "Se connecter à votre compte",
+    "GOOGLE": "Se connecter avec Google",
+    "OR": "ou",
+    "EMAIL": "E-mail",
+    "PASSWORD": "Mot de passe",
+    "SUBMIT": "Se connecter",
+    "NO_ACCOUNT": "Vous n'avez pas de compte?",
+    "SIGNUP_LINK": "Créez-en un ici"
   }
 }
