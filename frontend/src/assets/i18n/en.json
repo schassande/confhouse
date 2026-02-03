@@ -25,7 +25,9 @@
     "TITLE": "Create an account",
     "GOOGLE": "Sign up with Google",
     "OR": "or",
-    "EMAIL": "Email address",
+    "FIRSTNAME": "First name",
+    "LASTNAME": "Last name",
+    "EMAIL": "Email",
     "PASSWORD": "Password",
     "CONFIRM": "Confirm password",
     "SUBMIT": "Sign up"

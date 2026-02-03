@@ -23,7 +23,9 @@
     "TITLE": "Créer un compte",
     "GOOGLE": "S'inscrire avec Google",
     "OR": "ou",
-    "EMAIL": "Adresse e-mail",
+    "FIRSTNAME": "Prénom",
+    "LASTNAME": "Nom",
+    "EMAIL": "E-mail",
     "PASSWORD": "Mot de passe",
     "CONFIRM": "Confirmez le mot de passe",
     "SUBMIT": "Créer le compte"

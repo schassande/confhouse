@@ -49,17 +49,12 @@ export class SignupService {
       // Build Person from Google profile info
       person = {
         id: user.uid,
+        lastUpdated: Date.now().toString(),
         firstName: user.displayName?.split(' ')[0] ?? '',
         lastName: user.displayName?.split(' ').slice(1).join(' ') ?? '',
         email: user.email,
-        company: '',
-        bio: '',
-        reference: '',
-        photoUrl: user.photoURL ?? '',
-        socialLinks: [],
         hasAccount: true,
-        preferredLanguage: 'en',
-        lastUpdated: Date.now().toString()
+        preferredLanguage: 'en'
       };
       person = await firstValueFrom(this.personService.save(person));
     }

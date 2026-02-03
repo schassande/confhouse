@@ -1,11 +1,60 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isConferenceOrganizer(conferenceId) {
+      let confPath = /databases/$(database)/documents/conference/$(conferenceId);
+      return request.auth != null
+        && exists(confPath)
+        && request.auth.token.email in get(confPath).data.organizerEmails;
+    }
+
+    function isSamePerson(personId) {
+      let personPath = /databases/$(database)/documents/person/$(personId);
+      return request.auth != null
+        && exists(personPath)
+        && request.auth.token.email == get(personPath).data.email;
+    }
+
+    match /person/{document=**} {
+      allow read, update, delete: if request.auth != null 
+      	&& request.auth.token.email == resource.data.email;
+      allow create: if request.auth != null 
+      	&& request.auth.token.email == request.resource.data.email;
+    }
+
     match /conference/{document=**} {
       allow read;
-      allow write: if request.auth.uid != null;
+      allow update, delete: if request.auth != null 
+      	&& request.auth.token.email in resource.data.organizerEmails;
+      allow create:         if request.auth != null 
+      	&& request.auth.token.email in request.resource.data.organizerEmails;
     }
+
+    match /session/{document=**} {
+      allow create: if request.auth != null;
+      allow update, delete: if isConferenceOrganizer(resource.data.conference.conferenceId)
+      	|| (resource.data.conference == null && request.auth != null 
+           && (isSamePerson(resource.data.spearker1Id))
+      	       || isSamePerson(resource.data.spearker2Id)
+      	       || isSamePerson(resource.data.spearker3Id)
+              );
+      allow read;
+    }
+    
+    match /activity/{document=**} {
+      allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
+      allow update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+      allow read;
+    }
+
+    match /activityParticipation/{document=**} {
+		  allow create: if isConferenceOrganizer(request.resource.data.conferenceId)
+        || isSamePerson(request.resource.data.personId);
+      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId)
+        || isSamePerson(resource.data.personId);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

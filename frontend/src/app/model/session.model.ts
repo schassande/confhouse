@@ -13,8 +13,12 @@ export interface Session extends PersistentData {
   abstract: { [lang: string]: string };
   /** Type of session (e.g., keynote, workshop) */
   sessionType: string;
-  /** List of speaker IDs */
-  speakers: string[];
+  /** Speaker 1 id */
+  speaker1Id: string;
+  /** Optional Speaker 2 id */
+  speaker2Id?: string;
+  /** Optional Speaker 3 id */
+  speaker3Id?: string;
   /** Conference-specific information */
   conference?: {
     /** Conference ID */

@@ -25,9 +25,11 @@
   margin-bottom: 8px;
   font-size: 1rem;
 }
-.signup-container button {
+.signup-container p-button {
   margin-top: 16px;
   width: 100%;
+  padding: 5px;
+  text-align: center;
 }
 .signup-options {
   display: flex;
@@ -49,4 +51,14 @@
   color: #888;
   font-size: 0.95rem;
   margin: 8px 0;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border-left: 4px solid #c33;
+  font-size: 0.95rem;
 }

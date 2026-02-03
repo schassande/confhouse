@@ -17,8 +17,8 @@ export interface Conference extends PersistentData {
   /** Description in several languages. See the field languages for supported ones */
   description: { [lang: string]: string };
   visible: boolean;
-  /** List of organizer IDs */
-  organizerIds: string[];
+  /** List of organizer email */
+  organizerEmails: string[];
   /** List of tracks */
   tracks: Track[];
   /** List of rooms */
@@ -62,6 +62,7 @@ export interface SessionType extends WithId {
   icon: string;
   color: string;
   visible: boolean;
+  maxSpeakers: number;
 }
 
 

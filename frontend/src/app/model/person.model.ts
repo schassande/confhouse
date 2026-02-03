@@ -14,18 +14,20 @@ export interface Person extends PersistentData {
   lastName: string;
   /** Email address */
   email: string;
-  /** Company or organization */
-  company: string;
-  /** Short biography */
-  bio: string;
-  /** Reference or internal code */
-  reference: string;
-  /** URL to the person's photo */
-  photoUrl: string;
-  /** List of social network links */
-  socialLinks: SocialLink[];
   /** Whether the person has an account in the system */
   hasAccount: boolean;
   /** Preferred language for communication and interface */
   preferredLanguage: string;
+  speaker?: {
+    /** Company or organization */
+    company: string;
+    /** Short biography */
+    bio: string;
+    /** Reference or internal code */
+    reference: string;
+    /** URL to the person's photo */
+    photoUrl: string;
+    /** List of social network links */
+    socialLinks: SocialLink[];
+  };
 }

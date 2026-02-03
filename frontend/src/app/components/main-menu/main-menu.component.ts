@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal, inject } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -13,7 +13,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-main-menu',
   standalone: true,
-  imports: [NgOptimizedImage, AvatarModule, ButtonModule, TooltipModule, MenuModule, TranslateModule],
+  imports: [RouterModule, AvatarModule, ButtonModule, TooltipModule, MenuModule, TranslateModule],
   templateUrl: './main-menu.component.html',
   styleUrls: ['./main-menu.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
