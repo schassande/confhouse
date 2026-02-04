@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, inject, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Conference } from '../../../../model/conference.model';
@@ -43,9 +43,11 @@ export class ConferenceGeneralConfigComponent implements OnInit {
   private readonly conferenceService = inject(ConferenceService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // State
   protected readonly form = signal<FormGroup | null>(null);
+  private readonly formValueTrigger = signal<number>(0);
   readonly languageOptions = signal([
     { label: 'Français', value: 'FR' },
     { label: 'English', value: 'EN' },
@@ -56,8 +58,26 @@ export class ConferenceGeneralConfigComponent implements OnInit {
 
   // Computed
   protected readonly currentForm = computed(() => this.form());
-  readonly organizerEmails = computed(() => this.currentForm()?.get('organizerEmails')?.value || []);
-  readonly dates = computed(() => this.currentForm()?.get('dates')?.value || []);
+  readonly organizerEmails = computed(() => {
+    this.formValueTrigger();
+    return this.currentForm()?.get('organizerEmails')?.value || [];
+  });
+  readonly dates = computed(() => {
+    this.formValueTrigger();
+    const formDates = this.currentForm()?.get('dates')?.value || [];
+    console.log('Current dates in form:', formDates);
+    return formDates;
+  });
+  readonly sortedDates = computed(() => {
+    const dateList = this.dates();
+    if (!Array.isArray(dateList)) return [];
+    // Sort dates chronologically (assuming ISO date format or valid date strings)
+    return [...dateList].sort((a: string, b: string) => {
+      const dateA = new Date(a).getTime();
+      const dateB = new Date(b).getTime();
+      return dateA - dateB;
+    });
+  });
 
   ngOnInit() {
     this.initializeForm();
@@ -72,7 +92,7 @@ export class ConferenceGeneralConfigComponent implements OnInit {
       logo: [conf.logo, []],
       languages: [conf.languages, [Validators.required]],
       visible: [conf.visible, []],
-      organizerEmails: [conf.organizerEmails, []],
+      organizerEmails: [conf.organizerEmails, [Validators.required]],
     });
     this.form.set(formGroup);
   }
@@ -125,6 +145,9 @@ export class ConferenceGeneralConfigComponent implements OnInit {
       currentForm.patchValue({
         organizerEmails: [...emails, email],
       });
+      // Trigger computed signal recalculation
+      this.formValueTrigger.update(v => v + 1);
+      this.cdr.markForCheck();
     }
   }
 
@@ -136,6 +159,9 @@ export class ConferenceGeneralConfigComponent implements OnInit {
     currentForm.patchValue({
       organizerEmails: emails.filter((e: string) => e !== email),
     });
+    // Trigger computed signal recalculation
+    this.formValueTrigger.update(v => v + 1);
+    this.cdr.markForCheck();
   }
 
   addDate(date: string) {
@@ -145,8 +171,19 @@ export class ConferenceGeneralConfigComponent implements OnInit {
     const dates = currentForm.get('dates')?.value || [];
     if (date && !dates.includes(date)) {
       currentForm.patchValue({
-        dates: [...dates, date],
+        dates: [...dates, date].sort(),
       });
+      // Trigger computed signal recalculation
+      this.formValueTrigger.update(v => v + 1);
+      this.cdr.markForCheck();
+      console.log('New dates:', currentForm.get('dates')?.value);
+    }
+  }
+
+  onAddDate(input: HTMLInputElement) {
+    const dateValue = input.value;
+    if (dateValue) {
+      this.addDate(dateValue);
     }
   }
 
@@ -158,5 +195,8 @@ export class ConferenceGeneralConfigComponent implements OnInit {
     currentForm.patchValue({
       dates: dates.filter((d: string) => d !== date),
     });
+    // Trigger computed signal recalculation
+    this.formValueTrigger.update(v => v + 1);
+    this.cdr.markForCheck();
   }
 }

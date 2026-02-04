@@ -67,6 +67,9 @@
     <div class="form-section">
       <label class="form-label">
         {{ 'CONFERENCE.DATES' | translate }} <span class="required">*</span>
+        @if (dates()?.length > 0) {
+        <span class="dates-count">({{ dates()?.length }})</span>
+        }
       </label>
       <div class="dates-input-group">
         <input
@@ -81,25 +84,32 @@
           type="button"
           icon="pi pi-plus"
           class="p-button-sm"
-          (click)="addDate(dateInput.value); dateInput.value = ''"
+          (click)="onAddDate(dateInput)"
           [disabled]="!dateInput.value"
         ></button>
       </div>
-      <div class="dates-list">
-        @for (date of dates(); track date) {
-        <div class="date-tag">
-          <span>{{ date | date: 'shortDate' }}</span>
-          <button
-            pButton
-            type="button"
-            icon="pi pi-times"
-            class="p-button-sm p-button-text p-button-danger"
-            (click)="removeDate(date)"
-          ></button>
+      @if (dates()?.length > 0) {
+      <div class="dates-display-section">
+        <div class="dates-summary">
+          {{ 'CONFERENCE.DATES_ADDED' | translate }}
         </div>
-        }
+        <ol class="dates-list">
+          @for (date of sortedDates(); track date) {
+          <li class="date-item">
+            <span class="date-value">{{ date | date: 'fullDate' }}</span>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-times"
+              class="p-button-sm p-button-text p-button-danger"
+              (click)="removeDate(date)"
+              [title]="'COMMON.REMOVE' | translate"
+            ></button>
+          </li>
+          }
+        </ol>
       </div>
-      @if (form.get('dates')?.invalid && form.get('dates')?.touched) {
+      } @else if (form.get('dates')?.invalid && form.get('dates')?.touched) {
       <small class="error-message">
         {{ 'VALIDATION.REQUIRED' | translate }}
       </small>

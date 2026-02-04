@@ -88,11 +88,13 @@
     "SAVE": "Enregistrer",
     "CANCEL": "Annuler",
     "ERROR": "Erreur",
-    "SUCCESS": "Succès"
+    "SUCCESS": "Succès",
+    "REMOVE": "Supprimer"
   },
   "CONFERENCE": {
     "NAME": "Nom de la conférence",
     "DATES": "Dates",
+    "DATES_ADDED": "Dates ajoutées:",
     "LOCATION": "Lieu",
     "LOGO": "Logo",
     "LANGUAGES": "Langues",
@@ -112,5 +114,9 @@
       "GENERAL_UPDATED": "Configuration générale mise à jour avec succès",
       "UPDATE_ERROR": "Erreur lors de la mise à jour de la configuration"
     }
+  },
+  "VALIDATION": {
+    "REQUIRED": "Ce champ est obligatoire"
   }
+}
 }

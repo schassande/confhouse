@@ -11,7 +11,7 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
     const person = this.userSignService.getCurrentPerson();
-    // console.log('AuthGuard canActivate - person:', person);
+    console.log('AuthGuard canActivate - person:', person, state.url);
     if (person) return true;
     // store intended url for later redirection
     if (state && state.url) {

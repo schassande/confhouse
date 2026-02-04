@@ -88,11 +88,13 @@
     "SAVE": "Save",
     "CANCEL": "Cancel",
     "ERROR": "Error",
-    "SUCCESS": "Success"
+    "SUCCESS": "Success",
+    "REMOVE": "Remove"
   },
   "CONFERENCE": {
     "NAME": "Conference Name",
     "DATES": "Dates",
+    "DATES_ADDED": "Dates added:",
     "LOCATION": "Location",
     "LOGO": "Logo",
     "LANGUAGES": "Languages",
@@ -112,6 +114,9 @@
       "GENERAL_UPDATED": "General configuration updated successfully",
       "UPDATE_ERROR": "Error updating configuration"
     }
+  },
+  "VALIDATION": {
+    "REQUIRED": "This field is required"
   }
 }
 
