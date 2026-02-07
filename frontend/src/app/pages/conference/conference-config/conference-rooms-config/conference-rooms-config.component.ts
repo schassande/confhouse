@@ -1,6 +1,6 @@
 import { Component, input, ChangeDetectionStrategy, ChangeDetectorRef, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Conference, SessionType, Track } from '../../../../model/conference.model';
+import { Conference, SessionType, Room } from '../../../../model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -13,7 +13,7 @@ import { ToastModule } from 'primeng/toast';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 
 @Component({
-  selector: 'app-conference-tracks-config',
+  selector: 'app-conference-rooms-config',
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -25,12 +25,12 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
     ToastModule,
     CardModule,    
   ],
-  templateUrl: './conference-tracks-config.component.html',
-  styleUrls: ['./conference-tracks-config.component.scss'],
+  templateUrl: './conference-rooms-config.component.html',
+  styleUrls: ['./conference-rooms-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConferenceTracksConfigComponent {
-readonly conference = input.required<Conference>();
+export class ConferenceRoomsConfigComponent {
+  readonly conference = input.required<Conference>();
 
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
@@ -38,35 +38,33 @@ readonly conference = input.required<Conference>();
   private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  protected readonly tracks = signal<Track[]>([]);
+  protected readonly rooms = signal<Room[]>([]);
   protected readonly form = signal<FormGroup | null>(null);
   protected readonly editingId = signal<string | null>(null);
   private readonly formValueTrigger = signal<number>(0);
 
   protected readonly isEditing = computed(() => this.editingId() !== null);
   protected readonly currentForm = computed(() => this.form());
-  protected readonly currentTracks = computed(() => {
+  protected readonly currentRooms = computed(() => {
     this.formValueTrigger();
-    return this.tracks();
+    return this.rooms();
   });
 
   ngOnInit() {
-    this.initializeTracks();
+    this.initializeRooms();
   }
 
-  private initializeTracks() {
+  private initializeRooms() {
     const conf = this.conference();
-    this.tracks.set(conf.tracks || []);
+    this.rooms.set(conf.rooms || []);
   }
 
-  createNewForm(track?: Track) {
+  createNewForm(room?: Room) {
     const defaultLanguage = this.translateService.getCurrentLang() || 'EN';
     const formGroup = this.fb.group({
-      name: [track?.name || '', [Validators.required, Validators.minLength(2)]],
-      icon: [track?.icon || '', []],
-      color: [track?.color || '#3498db', []],
-      description_en: [track?.description?.['EN'] || '', []],
-      description_fr: [track?.description?.['FR'] || '', []],
+      name: [room?.name || '', [Validators.required, Validators.minLength(2)]],
+      capacity: [room?.capacity || 0, []],
+      plan: [room?.plan || '', []]
     });
     this.form.set(formGroup);
   }
@@ -76,9 +74,9 @@ readonly conference = input.required<Conference>();
     this.createNewForm();
   }
 
-  onEdit(track: Track) {
-    this.editingId.set(track.id);
-    this.createNewForm(track);
+  onEdit(room: Room) {
+    this.editingId.set(room.id);
+    this.createNewForm(room);
   }
 
   onCancel() {
@@ -86,37 +84,37 @@ readonly conference = input.required<Conference>();
     this.editingId.set(null);
   }
 
-  onDelete(track: Track) {
-    if (confirm(this.translateService.instant('CONFERENCE.CONFIG.TRACKS.CONFIRM_DELETE'))) {
-      const updatedTracks = this.tracks().filter((t) => t.id !== track.id);
+  onDelete(room: Room) {
+    if (confirm(this.translateService.instant('CONFERENCE.CONFIG.ROOMS.CONFIRM_DELETE'))) {
+      const updatedRooms = this.rooms().filter((t) => t.id !== room.id);
       const updatedConference: Conference = {
         ...this.conference(),
-        tracks: updatedTracks,
+        rooms: updatedRooms,
       };
 
       this.conferenceService.save(updatedConference).subscribe({
         next: () => {
-          this.tracks.set(updatedTracks);
+          this.rooms.set(updatedRooms);
           this.formValueTrigger.update((v) => v + 1);
           this.cdr.markForCheck();
           this.messageService.add({
             severity: 'success',
             summary: this.translateService.instant('COMMON.SUCCESS'),
-            detail: this.translateService.instant('CONFERENCE.CONFIG.TRACKS.TRACK_DELETED'),
+            detail: this.translateService.instant('CONFERENCE.CONFIG.ROOMS.TRACK_DELETED'),
           });
         },
         error: (err) => {
-          console.error('Error deleting track:', err);
+          console.error('Error deleting room:', err);
           this.messageService.add({
             severity: 'error',
             summary: this.translateService.instant('COMMON.ERROR'),
-            detail: this.translateService.instant('CONFERENCE.CONFIG.TRACKS.TRACK_DELETE_ERROR'),
+            detail: this.translateService.instant('CONFERENCE.CONFIG.ROOMS.TRACK_DELETE_ERROR'),
           });
         },
       });
     }
   }
-    onSave() {
+  onSave() {
     const currentForm = this.currentForm();
     if (!currentForm || currentForm.invalid) {
       this.messageService.add({
@@ -130,43 +128,39 @@ readonly conference = input.required<Conference>();
     const formValue = currentForm.value;
     const editId = this.editingId();
 
-    let updatedTracks: Track[];
+    let updatedRooms: Room[];
 
     if (editId) {
       // Update existing
-      updatedTracks = this.tracks().map((st) =>
+      updatedRooms = this.rooms().map((st) =>
         st.id === editId
           ? {
               ...st,
               ...formValue,
-              description: { ...st.description, 
-                en: formValue.description_en || st.description?.['EN'] || '', 
-                fr: formValue.description_fr || st.description?.['FR'] || '' 
-              },
+              plan: st.plan, 
+              capacity: st.capacity, 
             }
           : st
       );
     } else {
       // Add new
-      const newTrack: Track = {
+      const newRoom: Room = {
         id: `st_${Date.now()}`,
         ...formValue,
-        description: { 
-            en: formValue.description_en || '',
-            fr: formValue.description_fr || ''
-         },
+        plan: formValue.plan || '',
+        capacity: formValue.capacity || 0,
       };
-      updatedTracks = [...this.tracks(), newTrack];
+      updatedRooms = [...this.rooms(), newRoom];
     }
 
     const updatedConference: Conference = {
       ...this.conference(),
-      tracks: updatedTracks,
+      rooms: updatedRooms,
     };
 
     this.conferenceService.save(updatedConference).subscribe({
       next: () => {
-        this.tracks.set(updatedTracks);
+        this.rooms.set(updatedRooms);
         this.formValueTrigger.update((v) => v + 1);
         this.form.set(null);
         this.editingId.set(null);
@@ -178,7 +172,7 @@ readonly conference = input.required<Conference>();
         });
       },
       error: (err) => {
-        console.error('Error saving track:', err);
+        console.error('Error saving room:', err);
         this.messageService.add({
           severity: 'error',
           summary: this.translateService.instant('COMMON.ERROR'),
@@ -187,5 +181,4 @@ readonly conference = input.required<Conference>();
       },
     });
   }
-
 }

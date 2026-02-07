@@ -153,6 +153,24 @@
         "TRACK_DELETED": "Catégorie supprimée avec succès",
         "TRACK_DELETE_ERROR": "Erreur lors de la suppression de la catégorie"
       },
+      "ROOMS": {
+        "TAB": "Salles",
+        "TITLE": "Salles de la conférence",
+        "NAME": "Nom",
+        "CAPACITY": "Capacité",
+        "PLAN": "Plan",
+        "DESCRIPTION": "Gérez les salles de votre conférence ici.",
+        "ADD_ROOM": "Ajouter une salle",
+        "EDIT":"Modifier",
+        "CANCEL":"Annuler",
+        "SAVE": "Enregistrer la salle",
+        "DELETE": "Supprimer la salle",
+        "NO_ROOMS": "Aucune salle définie",
+        "CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cette salle ?",
+        "ROOM_SAVED": "Salle enregistrée avec succès",
+        "ROOM_DELETED": "Salle supprimée avec succès",
+        "ROOM_DELETE_ERROR": "Erreur lors de la suppression de la salle"
+      },
       "PLANNING_STRUCTURE": {
         "TAB": "Structure de planification",
         "TITLE": "Configuration de la structure de planification",

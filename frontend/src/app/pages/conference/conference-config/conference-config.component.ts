@@ -16,6 +16,7 @@ import { ConferenceVoxxrinConfigComponent } from './conference-voxxrin-config/co
 import { ConferenceTracksConfigComponent } from './conference-tracks-config/conference-tracks-config.component';
 import { ConferenceSessionTypesConfigComponent } from './conference-session-types-config/conference-session-types-config.component';
 import { ConferencePlanningStructureConfigComponent } from './conference-planning-structure-config/conference-planning-structure-config.component';
+import { ConferenceRoomsConfigComponent } from './conference-rooms-config/conference-rooms-config.component';
 
 @Component({
   selector: 'app-conference-config',
@@ -27,6 +28,7 @@ import { ConferencePlanningStructureConfigComponent } from './conference-plannin
     ToastModule,
     TranslateModule,
     ConferenceGeneralConfigComponent,
+    ConferenceRoomsConfigComponent,
     ConferenceConferencehallConfigComponent,
     ConferenceVoxxrinConfigComponent,
     ConferenceTracksConfigComponent,
