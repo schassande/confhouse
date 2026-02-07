@@ -4,14 +4,19 @@
   margin: 0 auto;
 
   .config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 2rem;
     border-bottom: 2px solid #e0e0e0;
     padding-bottom: 1rem;
+    gap: 2rem;
 
     .header-content {
       display: flex;
       align-items: center;
       gap: 1rem;
+      flex: 1;
 
       .header-logo {
         border-radius: 8px;
@@ -24,6 +29,12 @@
         font-weight: 600;
         color: #333;
       }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      flex-shrink: 0;
     }
   }
 }

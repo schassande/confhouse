@@ -92,26 +92,99 @@
     "REMOVE": "Supprimer"
   },
   "CONFERENCE": {
-    "NAME": "Nom de la conférence",
-    "DATES": "Dates",
-    "DATES_ADDED": "Dates ajoutées:",
-    "LOCATION": "Lieu",
-    "LOGO": "Logo",
-    "LANGUAGES": "Langues",
-    "VISIBLE": "Visible",
-    "ORGANIZER_EMAILS": "E-mails des organisateurs",
     "LOADING": "Chargement de la conférence...",
     "NOT_FOUND": "Conférence non trouvée",
-    "CONFIGURATION": "Configuration",
     "CONFIG": {
-      "GENERAL": "Générale",
-      "CONFERENCEHALL": "ConferenceHall",
-      "VOXXRIN": "Voxxrin",
-      "TRACKS": "Pistes",
-      "SESSION_TYPES": "Types de sessions",
-      "PLANNING_STRUCTURE": "Structure de planning",
+      "TITLE": "Configuration de la conférence",
+      "GENERAL": {
+        "TAB": "Générale",
+        "TITLE": "Configuration générale",
+        "DESCRIPTION": "Gérez les paramètres généraux de votre conférence ici.",
+        "NAME": "Nom de la conférence",
+        "DATES": "Dates",
+        "DATES_ADDED": "Dates ajoutées:",
+        "LOCATION": "Lieu",
+        "LOGO": "Logo",
+        "LANGUAGES": "Langues",
+        "VISIBLE": "Visible",
+        "ORGANIZER_EMAILS": "E-mails des organisateurs"
+      },
+      "SESSION_TYPES": {
+        "TAB": "Types de sessions",
+        "TITLE": "Configuration des types de sessions",
+        "DESCRIPTION": "Gérez les types de sessions pour votre conférence ici.",
+        "FIELD_DESCRIPTION_EN": "Description (Anglais)",
+        "FIELD_DESCRIPTION_FR": "Description (Français)",
+        "NO_DESCRIPTION": "Aucune",
+        "DURATION": "Durée",
+        "MINUTES": "minutes",
+        "MAX_SPEAKERS": "Nombre max de conférenciers",
+        "COLOR": "Couleur",
+        "ICON": "Icône",
+        "ADD_SESSION_TYPE": "Ajouter un type de session",
+        "CONFIRM_DELETE_SESSION_TYPE": "Êtes-vous sûr de vouloir supprimer ce type de session ?",
+        "SESSION_TYPE_SAVED": "Type de session enregistré avec succès",
+        "SESSION_TYPE_DELETED": "Type de session supprimé avec succès",
+        "VISIBLE": "Visible",
+        "HIDDEN": "Caché",
+        "EDIT": "Modifier",
+        "SAVE": "Enregistrer le type de session",
+        "CANCEL": "Annuler les modifications",
+        "DELETE": "Supprimer",
+        "NO_SESSION_TYPES": "Aucun type de session défini"
+      },
+      "TRACKS": {
+        "TAB": "Catégories",
+        "TITLE": "Catégories des sessions",
+        "DESCRIPTION": "Gérez les catégories des sessions pour votre conférence ici.",
+        "NAME": "Nom",
+        "COLOR": "Couleur",
+        "ICON": "Icone",
+        "FIELD_DESCRIPTION_EN": "Description (English)",
+        "FIELD_DESCRIPTION_FR": "Description (French)",
+        "NO_DESCRIPTION": "Aucune",
+        "ADD_TRACK": "Ajouter une catégorie",
+        "EDIT":"Modifier",
+        "CANCEL":"Annuler",
+        "DELETE":"Supprimer",
+        "NO_TRACKS": "Aucune catégorie définie",
+        "CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
+        "TRACK_SAVED": "Catégorie enregistrée avec succès",
+        "TRACK_DELETED": "Catégorie supprimée avec succès",
+        "TRACK_DELETE_ERROR": "Erreur lors de la suppression de la catégorie"
+      },
+      "PLANNING_STRUCTURE": {
+        "TAB": "Structure de planification",
+        "TITLE": "Configuration de la structure de planification",
+        "DESCRIPTION": "Gérez la structure de planification pour votre conférence ici."
+      },
+      "SESSION_SOURCE": {
+        "TAB": "Session Source",
+        "TITLE": "Session Source Configuration",
+        "DESCRIPTION": "Manage the session source for your conference here.",
+        "TYPE": "Type",
+        "CONFIG": "Configuration",
+        "MANUAL": "Manual",
+        "EXTERNAL_API": "External API",
+        "EXTERNAL_API_URL": "API URL",
+        "EXTERNAL_API_KEY": "API Key",
+        "EXTERNAL_API_LAST_FETCHED": "Last fetched: {{date}}",
+        "FETCH_SESSIONS": "Fetch sessions from API",
+        "FETCH_SUCCESS": "{{count}} sessions fetched successfully",
+        "FETCH_ERROR": "Error fetching sessions from API"
+      },
+      "PUBLISH": {
+        "TAB": "Publication",
+        "TITLE": "Publication du programme",
+        "DESCRIPTION": "Publiez votre conférence pour la rendre visible au public.",
+        "API_URL": "URL de l'API",
+        "API_KEY": "Clé de l'API",
+        "CONFIRM_PUBLISH": "Êtes-vous sûr de vouloir publier cette conférence ? Une fois publiée, elle sera visible par tous.",
+        "PUBLISH_SUCCESS": "Conférence publiée avec succès",
+        "PUBLISH_ERROR": "Erreur lors de la publication de la conférence"
+      },
+      "SAVED": "Configuration de la conférence enregistrée avec succès",
       "FORM_ERRORS": "Veuillez corriger les erreurs du formulaire",
-      "GENERAL_UPDATED": "Configuration générale mise à jour avec succès",
       "UPDATE_ERROR": "Erreur lors de la mise à jour de la configuration"
     }
   },
@@ -119,4 +192,4 @@
     "REQUIRED": "Ce champ est obligatoire"
   }
 }
-}
+

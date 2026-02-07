@@ -1,0 +1,175 @@
+<div class="tracks-config">
+  <p-toast></p-toast>
+
+  <div class="config-header">
+    <h2>{{ 'CONFERENCE.CONFIG.TRACKS.TITLE' | translate }}</h2>
+    @if (!isEditing()) {
+    <button pButton type="button" icon="pi pi-plus" (click)="onAddNew()" class="p-button-success" [label]="'CONFERENCE.CONFIG.TRACKS.ADD_TRACK' | translate"></button>
+    }
+  </div>
+  <p>{{ 'CONFERENCE.CONFIG.TRACKS.DESCRIPTION' | translate }}</p>
+
+  <!-- Form for adding/editing track -->
+  @if (currentForm(); as form) {
+  <div class="track-form-card">
+    <form [formGroup]="form" class="track-form">
+      <!-- Name Field -->
+      <div class="form-section">
+        <label for="name" class="form-label">
+          {{ 'CONFERENCE.CONFIG.TRACKS.NAME' | translate }} <span class="required">*</span>
+        </label>
+        <input
+          id="name"
+          pInputText
+          formControlName="name"
+          type="text"
+          class="w-full"
+          placeholder="Track name"
+        />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+        <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+        }
+      </div>
+
+      <!-- Color Field -->
+      <div class="form-row">
+        <div class="form-section">
+          <label for="color" class="form-label">
+            {{ 'CONFERENCE.CONFIG.TRACKS.COLOR' | translate }}
+          </label>
+          <div class="color-input-group">
+            <input id="color" type="color" formControlName="color" class="color-picker" />
+            <input pInputText type="text" formControlName="color" class="w-full" placeholder="#3498db" />
+          </div>
+        </div>
+
+        <!-- Icon Field -->
+        <div class="form-section">
+          <label for="icon" class="form-label">
+            {{ 'CONFERENCE.CONFIG.TRACKS.ICON' | translate }}
+          </label>
+          <input
+            id="icon"
+            pInputText
+            formControlName="icon"
+            type="text"
+            class="w-full"
+            placeholder="Font Awesome class (e.g., fa-microphone)"
+          />
+        </div>
+      </div>
+
+      <!-- Description Field EN -->
+      <div class="form-section">
+        <label for="description_en" class="form-label">
+          {{ 'CONFERENCE.CONFIG.TRACKS.FIELD_DESCRIPTION_EN' | translate }}
+        </label>
+        <textarea
+          id="description_en"
+          pInputText
+          formControlName="description_en"
+          rows="3"
+          class="w-full"
+          placeholder="Track description"
+        ></textarea>
+      </div>
+      <!-- Description Field FR -->
+      <div class="form-section">
+        <label for="description_fr" class="form-label">
+          {{ 'CONFERENCE.CONFIG.TRACKS.FIELD_DESCRIPTION_FR' | translate }}
+        </label>
+        <textarea
+          id="description_fr"
+          pInputText
+          formControlName="description_fr"
+          rows="3"
+          class="w-full"
+          placeholder="Track description"
+        ></textarea>
+      </div>
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          label="{{ 'CONFERENCE.CONFIG.TRACKS.CANCEL' | translate }}"
+          class="p-button-secondary"
+          (click)="onCancel()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="{{ 'CONFERENCE.CONFIG.TRACKS.SAVE' | translate }}"
+          class="p-button-success"
+          (click)="onSave()"
+          [disabled]="form.invalid"
+        ></button>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Tracks List -->
+  <div class="tracks-list">
+    @if (currentTracks() && currentTracks().length > 0) {
+    <div class="tracks-grid">
+      @for (track of currentTracks(); track track.id) {
+      <div class="track-card">
+        <div class="card-header">
+          <div class="track-color" [style.background-color]="track.color"></div>
+          <h3>{{ track.name }}</h3>
+        </div>
+        <div class="card-body">
+          @if (track.description) {
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.TRACKS.FIELD_DESCRIPTION_EN' | translate }}:</span>
+            <span class="value description">
+            @if (track.description['EN']) {
+              {{ track.description['EN'] }}
+            } @else {
+              {{ 'CONFERENCE.CONFIG.TRACKS.NO_DESCRIPTION' | translate }}
+            }
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.TRACKS.FIELD_DESCRIPTION_FR' | translate }}:</span>
+            <span class="value description">
+            @if (track.description['FR']) {
+              {{ track.description['FR'] }}
+            } @else {
+              {{ 'CONFERENCE.CONFIG.TRACKS.NO_DESCRIPTION' | translate }}
+            }
+            </span>
+          </div>
+          }
+        </div>
+        <div class="card-actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-pencil"
+            class="p-button-sm p-button-info"
+            (click)="onEdit(track)"
+            [title]="'CONFERENCE.CONFIG.TRACKS.EDIT' | translate"
+            [disabled]="isEditing()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-danger"
+            (click)="onDelete(track)"
+            [title]="'CONFERENCE.CONFIG.TRACKS.DELETE' | translate"
+            [disabled]="isEditing()"
+          ></button>
+        </div>
+      </div>
+      }
+    </div>
+    } @else {
+    <div class="empty-state">
+      <p>{{ 'CONFERENCE.CONFIG.TRACKS.NO_TRACKS' | translate }}</p>
+    </div>
+    }
+  </div>
+</div>

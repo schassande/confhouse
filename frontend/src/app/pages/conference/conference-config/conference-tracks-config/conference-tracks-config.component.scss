@@ -1,4 +1,233 @@
+
 .tracks-config {
   padding: 1.5rem;
   min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+  }
+
+  .track-form-card {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .track-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 900px;
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .form-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+
+        .required {
+          color: #e74c3c;
+          margin-left: 0.25rem;
+        }
+      }
+
+      input,
+      textarea,
+      ::ng-deep .p-inputnumber,
+      ::ng-deep .p-togglebutton {
+        font-size: 0.95rem;
+      }
+
+      .error-message {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 0.25rem;
+      }
+
+      .color-input-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+
+        .color-picker {
+          width: 50px;
+          height: 38px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        input[type="text"] {
+          flex: 1;
+        }
+      }
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e0e0e0;
+    }
+  }
+
+  .tracks-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .tracks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .track-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #3498db;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+
+        .track-color {
+          width: 30px;
+          height: 30px;
+          border-radius: 4px;
+          border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+          margin: 0;
+          flex: 1;
+          font-size: 1.1rem;
+          color: #333;
+        }
+
+        .visibility-badge {
+          background-color: #ecf0f1;
+          color: #7f8c8d;
+          padding: 0.25rem 0.6rem;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+      }
+
+      .card-body {
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .info-row {
+          display: flex;
+          gap: 0.5rem;
+
+          .label {
+            font-weight: 600;
+            color: #666;
+            min-width: 140px;
+          }
+
+          .value {
+            color: #333;
+            flex: 1;
+
+            &.description {
+              font-size: 0.9rem;
+              color: #555;
+              line-height: 1.4;
+              word-break: break-word;
+            }
+          }
+        }
+      }
+
+      .card-actions {
+        display: flex;
+        gap: 0.5rem;
+        padding: 1rem;
+        border-top: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+      }
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      background: #f9f9f9;
+      border: 2px dashed #e0e0e0;
+      border-radius: 8px;
+      color: #999;
+      text-align: center;
+      min-height: 200px;
+
+      p {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+    }
+  }
 }
+
+.w-full {
+  width: 100%;
+}
+
+

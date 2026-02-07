@@ -6,7 +6,10 @@ import { Conference } from '../../../model/conference.model';
 import { TranslateService } from '@ngx-translate/core';
 import { UserSignService } from '../../../services/usersign.service';
 import { TabsModule } from 'primeng/tabs';
+import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
 import { TranslateModule } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
 import { ConferenceGeneralConfigComponent } from './conference-general-config/conference-general-config.component';
 import { ConferenceConferencehallConfigComponent } from './conference-conferencehall-config/conference-conferencehall-config.component';
 import { ConferenceVoxxrinConfigComponent } from './conference-voxxrin-config/conference-voxxrin-config.component';
@@ -20,6 +23,8 @@ import { ConferencePlanningStructureConfigComponent } from './conference-plannin
     CommonModule,
     RouterModule,
     TabsModule,
+    ButtonModule,
+    ToastModule,
     TranslateModule,
     ConferenceGeneralConfigComponent,
     ConferenceConferencehallConfigComponent,
@@ -28,6 +33,7 @@ import { ConferencePlanningStructureConfigComponent } from './conference-plannin
     ConferenceSessionTypesConfigComponent,
     ConferencePlanningStructureConfigComponent,
   ],
+  providers: [MessageService],
   templateUrl: './conference-config.component.html',
   styleUrls: ['./conference-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,9 +45,11 @@ export class ConferenceConfigComponent implements OnInit {
   private readonly userSignService = inject(UserSignService);
   private readonly router = inject(Router);
   private readonly translateService = inject(TranslateService);
+  private readonly messageService = inject(MessageService);
   
   private readonly _conference = signal<Conference | undefined>(undefined);
   private readonly _loading = signal(true);
+  protected readonly activeTab = signal<number>(0);
   
   readonly conference = computed(() => this._conference());
   readonly loading = computed(() => this._loading());
@@ -104,5 +112,34 @@ export class ConferenceConfigComponent implements OnInit {
         }
       });
     }
+  }
+
+  onGeneralConfigSave(updatedConference: Conference) {
+    this.conferenceService.save(updatedConference).subscribe({
+      next: (saved) => {
+        this._conference.set(saved);
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translateService.instant('COMMON.SUCCESS'),
+          detail: this.translateService.instant('CONFERENCE.CONFIG.GENERAL_UPDATED'),
+        });
+      },
+      error: (err) => {
+        console.error('Error saving conference:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translateService.instant('COMMON.ERROR'),
+          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
+        });
+      },
+    });
+  }
+
+  onGeneralConfigCancel() {
+    // Just close the form, no action needed
+  }
+
+  onActiveTabChange(event: any) {
+    this.activeTab.set(event.index);
   }
 }

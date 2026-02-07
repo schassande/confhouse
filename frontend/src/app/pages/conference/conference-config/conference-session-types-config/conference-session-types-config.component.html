@@ -1,0 +1,243 @@
+<div class="session-types-config">
+  <p-toast></p-toast>
+
+  <div class="config-header">
+    <h2>{{ 'CONFERENCE.CONFIG.SESSION_TYPES.TITLE' | translate }}</h2>
+    
+    @if (!isEditing()) {
+    <button pButton type="button" icon="pi pi-plus" (click)="onAddNew()" class="p-button-success" [label]="'CONFERENCE.CONFIG.SESSION_TYPES.ADD_SESSION_TYPE' | translate"></button>
+    }
+  </div>
+  <p>{{ 'CONFERENCE.CONFIG.SESSION_TYPES.DESCRIPTION' | translate }}</p>
+
+  <!-- Form for adding/editing session type -->
+  @if (currentForm(); as form) {
+  <div class="session-type-form-card">
+    <form [formGroup]="form" class="session-type-form">
+      <!-- Name Field -->
+      <div class="form-section">
+        <label for="name" class="form-label">
+          {{ 'CONFERENCE.CONFIG.SESSION_TYPES.NAME' | translate }} <span class="required">*</span>
+        </label>
+        <input
+          id="name"
+          pInputText
+          formControlName="name"
+          type="text"
+          class="w-full"
+          placeholder="Session type name"
+        />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+        <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+        }
+      </div>
+
+      <!-- Duration Field -->
+      <div class="form-row">
+        <div class="form-section">
+          <label for="duration" class="form-label">
+            {{ 'CONFERENCE.CONFIG.SESSION_TYPES.DURATION' | translate }} ({{ 'CONFERENCE.CONFIG.SESSION_TYPES.MINUTES' | translate }})
+            <span class="required">*</span>
+          </label>
+          <p-inputNumber
+            id="duration"
+            formControlName="duration"
+            [min]="5"
+            [max]="480"
+            [useGrouping]="false"
+            placeholder="Duration in minutes"
+          ></p-inputNumber>
+          @if (form.get('duration')?.invalid && form.get('duration')?.touched) {
+          <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+          }
+        </div>
+
+        <!-- Max Speakers Field -->
+        <div class="form-section">
+          <label for="maxSpeakers" class="form-label">
+            {{ 'CONFERENCE.CONFIG.SESSION_TYPES.MAX_SPEAKERS' | translate }} <span class="required">*</span>
+          </label>
+          <p-inputNumber
+            id="maxSpeakers"
+            formControlName="maxSpeakers"
+            [min]="1"
+            [max]="20"
+            [useGrouping]="false"
+            placeholder="Max speakers"
+          ></p-inputNumber>
+          @if (form.get('maxSpeakers')?.invalid && form.get('maxSpeakers')?.touched) {
+          <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+          }
+        </div>
+      </div>
+
+      <!-- Color Field -->
+      <div class="form-row">
+        <div class="form-section">
+          <label for="color" class="form-label">
+            {{ 'CONFERENCE.CONFIG.SESSION_TYPES.COLOR' | translate }}
+          </label>
+          <div class="color-input-group">
+            <input id="color" type="color" formControlName="color" class="color-picker" />
+            <input pInputText type="text" formControlName="color" class="w-full" placeholder="#3498db" />
+          </div>
+        </div>
+
+        <!-- Icon Field -->
+        <div class="form-section">
+          <label for="icon" class="form-label">
+            {{ 'CONFERENCE.CONFIG.SESSION_TYPES.ICON' | translate }}
+          </label>
+          <input
+            id="icon"
+            pInputText
+            formControlName="icon"
+            type="text"
+            class="w-full"
+            placeholder="Font Awesome class (e.g., fa-microphone)"
+          />
+        </div>
+      </div>
+
+      <!-- Description EN Field -->
+      <div class="form-section">
+        <label for="description_en" class="form-label">
+          {{ 'CONFERENCE.CONFIG.SESSION_TYPES.FIELD_DESCRIPTION_EN' | translate }}
+        </label>
+        <textarea
+          id="description_en"
+          pInputText
+          formControlName="description_en"
+          rows="3"
+          class="w-full"
+          placeholder="Session type English description"
+        ></textarea>
+      </div>
+
+      <!-- Description FR Field -->
+      <div class="form-section">
+        <label for="description_fr" class="form-label">
+          {{ 'CONFERENCE.CONFIG.SESSION_TYPES.FIELD_DESCRIPTION_FR' | translate }}
+        </label>
+        <textarea
+          id="description_fr"
+          pInputText
+          formControlName="description_fr"
+          rows="3"
+          class="w-full"
+          placeholder="Session type French description"
+        ></textarea>
+      </div>
+
+      <!-- Visible Toggle -->
+      <div class="form-section">
+        <label for="visible" class="form-label">
+          {{ 'CONFERENCE.CONFIG.SESSION_TYPES.VISIBLE' | translate }}
+        </label>
+        <p-toggleButton
+          id="visible"
+          [onIcon]="'pi pi-check'"
+          [offIcon]="'pi pi-times'"
+          formControlName="visible"
+          onLabel="{{ 'CONFERENCE.CONFIG.SESSION_TYPES.VISIBLE' | translate }}"
+          offLabel="{{ 'CONFERENCE.CONFIG.SESSION_TYPES.HIDDEN' | translate }}"
+        ></p-toggleButton>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          label="{{ 'CONFERENCE.CONFIG.SESSION_TYPES.CANCEL' | translate }}"
+          class="p-button-secondary"
+          (click)="onCancel()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="{{ 'CONFERENCE.CONFIG.SESSION_TYPES.SAVE' | translate }}"
+          class="p-button-success"
+          (click)="onSave()"
+          [disabled]="form.invalid"
+        ></button>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Session Types List -->
+  <div class="session-types-list">
+    @if (currentSessionTypes() && currentSessionTypes().length > 0) {
+    <div class="types-grid">
+      @for (sessionType of currentSessionTypes(); track sessionType.id) {
+      <div class="session-type-card">
+        <div class="card-header">
+          <div class="type-color" [style.background-color]="sessionType.color"></div>
+          <h3>{{ sessionType.name }}</h3>
+          @if (!sessionType.visible) {
+          <span class="visibility-badge">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.HIDDEN' | translate }}</span>
+          }
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.DURATION' | translate }}:</span>
+            <span class="value">{{ sessionType.duration }} {{ 'CONFERENCE.CONFIG.SESSION_TYPES.MINUTES' | translate }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.MAX_SPEAKERS' | translate }}:</span>
+            <span class="value">{{ sessionType.maxSpeakers }}</span>
+          </div>
+          @if (sessionType.description) {
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.FIELD_DESCRIPTION_EN' | translate }}:</span>
+            <span class="value description">
+            @if (sessionType.description['EN']) {
+                {{ sessionType.description['EN'] }}
+            } @else {
+                {{ 'CONFERENCE.CONFIG.SESSION_TYPES.NO_DESCRIPTION' | translate }}
+            }
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.FIELD_DESCRIPTION_FR' | translate }}:</span>
+            <span class="value description">
+              @if (sessionType.description['FR']) {
+                {{ sessionType.description['FR'] }}
+              } @else {
+                {{ 'CONFERENCE.CONFIG.SESSION_TYPES.NO_DESCRIPTION' | translate }}
+              }
+            </span>
+          </div>
+          }
+        </div>
+        <div class="card-actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-pencil"
+            class="p-button-sm p-button-info"
+            (click)="onEdit(sessionType)"
+            [title]="'CONFERENCE.CONFIG.SESSION_TYPES.EDIT' | translate"
+            [disabled]="isEditing()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-danger"
+            (click)="onDelete(sessionType)"
+            [title]="'CONFERENCE.CONFIG.SESSION_TYPES.DELETE' | translate"
+            [disabled]="isEditing()"
+          ></button>
+        </div>
+      </div>
+      }
+    </div>
+    } @else {
+    <div class="empty-state">
+      <p>{{ 'CONFERENCE.CONFIG.SESSION_TYPES.NO_SESSION_TYPES' | translate }}</p>
+    </div>
+    }
+  </div>
+</div>

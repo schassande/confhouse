@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, inject, OnInit, signal, computed, ChangeDetectorRef, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Conference } from '../../../../model/conference.model';
@@ -37,6 +37,10 @@ import { ToastModule } from 'primeng/toast';
 export class ConferenceGeneralConfigComponent implements OnInit {
   // Inputs
   readonly conference = input.required<Conference>();
+
+  // Outputs
+  readonly saveRequested = output<Conference>();
+  readonly cancelRequested = output<void>();
 
   // Private injects
   private readonly fb = inject(FormBuilder);
@@ -113,26 +117,11 @@ export class ConferenceGeneralConfigComponent implements OnInit {
       ...currentForm.value,
     };
 
-    this.conferenceService.save(updatedConference).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translateService.instant('COMMON.SUCCESS'),
-          detail: this.translateService.instant('CONFERENCE.CONFIG.GENERAL_UPDATED'),
-        });
-      },
-      error: (err) => {
-        console.error('Error updating conference:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: this.translateService.instant('COMMON.ERROR'),
-          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
-        });
-      },
-    });
+    this.saveRequested.emit(updatedConference);
   }
 
   onCancel() {
+    this.cancelRequested.emit();
     this.initializeForm();
   }
 

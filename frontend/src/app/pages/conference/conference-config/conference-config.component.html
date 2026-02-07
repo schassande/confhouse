@@ -1,26 +1,49 @@
 <section class="conference-config-container">
+  <p-toast></p-toast>
+  
   @if (conference(); as conf) {
   <div class="config-header">
     <div class="header-content">
       @if (conf.logo) {
       <img [src]="conf.logo" alt="logo" width="48" height="48" class="header-logo">
       }
-      <h1>{{ conf.name }} - {{ 'CONFERENCE.CONFIGURATION' | translate }}</h1>
+      <h1>{{ conf.name }} - {{ 'CONFERENCE.CONFIG.TITLE' | translate }}</h1>
+    </div>
+    <div class="header-actions">
+      <button
+        pButton
+        type="button"
+        label="{{ 'COMMON.CANCEL' | translate }}"
+        icon="pi pi-times"
+        class="p-button-secondary"
+        (click)="onGeneralConfigCancel()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="{{ 'COMMON.SAVE' | translate }}"
+        icon="pi pi-check"
+        class="p-button-success"
+      ></button>
     </div>
   </div>
 
-  <p-tabs>
+  <p-tabs [value]="activeTab()" (activeIndexChange)="onActiveTabChange($event)">
     <p-tablist>
-      <p-tab [value]="0">{{'CONFERENCE.CONFIG.GENERAL' | translate}}</p-tab>
-      <p-tab [value]="1">{{'CONFERENCE.CONFIG.SESSION_TYPES' | translate}}</p-tab>
-      <p-tab [value]="2">{{'CONFERENCE.CONFIG.TRACKS' | translate}}</p-tab>
-      <p-tab [value]="3">{{'CONFERENCE.CONFIG.PLANNING_STRUCTURE' | translate}}</p-tab>
-      <p-tab [value]="4">{{'CONFERENCE.CONFIG.CONFERENCEHALL' | translate}}</p-tab>
-      <p-tab [value]="5">{{'CONFERENCE.CONFIG.VOXXRIN' | translate}}</p-tab>
+      <p-tab [value]="0">{{'CONFERENCE.CONFIG.GENERAL.TAB' | translate}}</p-tab>
+      <p-tab [value]="1">{{'CONFERENCE.CONFIG.SESSION_TYPES.TAB' | translate}}</p-tab>
+      <p-tab [value]="2">{{'CONFERENCE.CONFIG.TRACKS.TAB' | translate}}</p-tab>
+      <p-tab [value]="3">{{'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate}}</p-tab>
+      <p-tab [value]="4">{{'CONFERENCE.CONFIG.SESSION_SOURCE.TAB' | translate}}</p-tab>
+      <p-tab [value]="5">{{'CONFERENCE.CONFIG.PUBLISH.TAB' | translate}}</p-tab>
     </p-tablist>
     <p-tabpanels>
       <p-tabpanel [value]="0">
-        <app-conference-general-config [conference]="conf"></app-conference-general-config>
+        <app-conference-general-config 
+          [conference]="conf"
+          (saveRequested)="onGeneralConfigSave($event)"
+          (cancelRequested)="onGeneralConfigCancel()">
+        </app-conference-general-config>
       </p-tabpanel>      
       <p-tabpanel [value]="1">
         <app-conference-session-types-config [conference]="conf"></app-conference-session-types-config>
