@@ -186,7 +186,19 @@
         "CONFIRM_REMOVE_DAY": "Are you sure you want to remove this day? All slots for this day will also be removed.",
         "DAY_DATE_CONFLICT": "A day has already been defined for this date.",
         "BEGIN_DAY_TIME": "Day begin",
-        "END_DAY_TIME": "Day end"
+        "END_DAY_TIME": "Day end",
+        "ADD_SLOT": "Add slot",
+        "NO_SLOT": "No slot defined for this day"
+      },
+      "SLOT_EDITOR" : {
+        "START_TIME": "Start Time",
+        "DURATION" : "Duration (min)",
+        "END_TIME": "End Time",
+        "ROOM": "Room",
+        "SLOT_TYPE": "Slot Type",
+        "SESSION_TYPE": "Session Type",
+        "SAVE": "Save Slot",
+        "CANCEL": "Cancel"
       },
       "SESSION_SOURCE": {
         "TAB": "Session Source",

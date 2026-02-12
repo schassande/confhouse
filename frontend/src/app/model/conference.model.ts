@@ -67,6 +67,7 @@ export interface Day extends WithId {
   dayIndex: number;
   date: string; // ISO 8601
   slots: Slot[];
+  disabledRoomIds: string[];
   beginTime: string; // ISO 8601 time '09:00'
   endTime: string; // ISO 8601 time '18:00'
 }

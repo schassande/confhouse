@@ -9,7 +9,7 @@
         [showTime]="true" [timeOnly]="true" hourFormat="24" size="small"
         (onSelect)="changeBeginTime($event)"></p-datepicker>
     </div>
-    <div class="form-section">
+    <div class="form-section" style="padding-left:10px;">
       <label for="endTime" class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.END_DAY_TIME' | translate }}</label>
       <p-datepicker class="time-picker-small"
         [(ngModel)]="endTime" stepMinute="5"
@@ -19,11 +19,11 @@
   </div>  
   @if (!day().slots || day().slots.length === 0) {
     <div class="no-slots">
-    <p>No slots defined for this day.</p>
-    <p-button (click)="onSlotAdd()" color="primary">Add Slot</p-button>
+    <p>{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.NO_SLOT' | translate }}</p>
+    <p-button (click)="onSlotAdd()" color="primary">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.ADD_SLOT' | translate }}</p-button>
     </div>
   } @else {
-    <p-button (click)="onSlotAdd()" color="primary">Add Slot</p-button>
+    <p-button (click)="onSlotAdd()" color="primary">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.ADD_SLOT' | translate }}</p-button>
     <div class="planner">
       <!-- timeline column -->
       <aside class="timeline-col" aria-hidden="false">
@@ -52,14 +52,21 @@
                 @for (slot of getSlotsByRoom(room.id); track slot.id) {
                   @let position = getSlotPosition(slot);
                   @let slotType = getSlotType(slot.slotTypeId);
+                  @let sessionType = getSessionType(slot.sessionTypeId);
                   <div class="slot"
                     [style.top.%]="position.top"
                     [style.height.%]="position.height"
                     [style.backgroundColor]="slotType?.color"
                     (click)="onSlotEdit(slot)">
                     
-                    <div class="slot-title">{{ slotType?.name }}</div>
-                    <div class="slot-time">{{ formatTimeRange(slot.startTime, slot.endTime) }}</div>
+                    <div class="slot-title">
+                      @if (slotType?.isSession) {
+                        {{ sessionType?.name }}
+                      } @else {
+                        {{ slotType?.name?.[defaultLanguage()] }}
+                      }
+                    </div>
+                    <div class="slot-time">{{ slot.startTime}}-{{ slot.endTime }}</div>
                   </div>
                 }
               }
@@ -70,4 +77,18 @@
       </div>
     </div>
   }
+  <p-dialog header="Edit Slot" [modal]="true" [visible]="slotEditorVisible()">
+    @if (editedSlot()) {
+      <app-slot-editor  
+        [slot]="editedSlot()!"
+        [rooms]="rooms()"
+        [slotTypes]="slotTypes()"
+        [sessionTypes]="sessionTypes()"
+        [minTime]="dayStartIso()"
+        [maxTime]="dayEndIso()"
+        (save)="onSlotSave($event)"
+        (cancel)="onSlotEditCancel()">
+      </app-slot-editor>
+    }
+  </p-dialog>
 }

@@ -7,12 +7,12 @@
   } @else {
     <div class="flex nav-bar">
       <div class="nav-bar-left nav-bar-section">
+        <div class="add-before nav-bar-item"><button pButton icon="pi pi-plus" size="small" class="ml-2" (click)="addDayBeforeCurrent()"></button></div>
         <div class="go-previous nav-bar-item">
           <button pButton icon="pi pi-angle-left" 
             [disabled]="!hasPreviousDay()"
             severity="info" size="small" class="ml-2" (click)="goToPreviousDay()"></button>
         </div>
-        <div class="add-before nav-bar-item"><button pButton icon="pi pi-plus" size="small" class="ml-2" (click)="addDayBeforeCurrent()"></button></div>
       </div>
       <div class="nav-bar-center nav-bar-section ">
         <div class="delete-day nav-bar-item"><button pButton icon="pi pi-trash" size="small" severity="danger" class="ml-2" (click)="removeCurrentDay()"></button></div>
@@ -30,10 +30,10 @@
         </div>
       </div>
       <div class="nav-bar-right nav-bar-section">
-        <div class="add-after nav-bar-item"><button pButton icon="pi pi-plus" size="small" class="ml-2" (click)="addDayAfterCurrent()"></button></div>
         <div class="go-next nav-bar-item">
           <button pButton [disabled]="!hasNextDay()" icon="pi pi-angle-right" severity="info" size="small" class="ml-2" (click)="goToNextDay()"></button>
         </div>
+        <div class="add-after nav-bar-item"><button pButton icon="pi pi-plus" size="small" class="ml-2" (click)="addDayAfterCurrent()"></button></div>
       </div>
     </div>
     @if (currentDay()) {
@@ -41,6 +41,7 @@
       [day]="currentDay()!" 
       [rooms]="conference()!.rooms"
       [sessionTypes]="conference()!.sessionTypes"
+      (dayChanged)="dayChanged($event)"
       ></app-day-structure>
     }
   }

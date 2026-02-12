@@ -184,7 +184,19 @@
         "CONFIRM_REMOVE_DAY": "Êtes-vous sûr de vouloir supprimer ce jour ? Toutes les slots planifiés pour ce jour seront également supprimés.",
         "DAY_DATE_CONFLICT": "Une autre journée a déjà été définie à cette date.",
         "BEGIN_DAY_TIME": "Début du jour",
-        "END_DAY_TIME": "Fin du jour"
+        "END_DAY_TIME": "Fin du jour",
+        "ADD_SLOT": "Ajouter un créneau",
+        "NO_SLOT": "Aucune créneau défini pour ce jour"
+      },
+      "SLOT_EDITOR" : {
+        "START_TIME": "Heure de début",
+        "DURATION" : "Durée (min)",
+        "END_TIME": "Heure de fin",
+        "ROOM": "Salle",
+        "SLOT_TYPE": "Type de créneau",
+        "SESSION_TYPE": "Type de session",
+        "SAVE": "Enregistrer le créneau",
+        "CANCEL": "Annuler"
       },
       "SESSION_SOURCE": {
         "TAB": "Session Source",

@@ -8,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
 import { DayStructure } from './day-structure/day-structure';
+import { ConferenceService } from '../../../../services/conference.service';
 
 @Component({
   selector: 'app-conference-planning-structure-config',
@@ -23,6 +24,7 @@ import { DayStructure } from './day-structure/day-structure';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConferencePlanningStructureConfigComponent implements OnInit {
+  private readonly conferenceService = inject(ConferenceService);
   private readonly translateService = inject(TranslateService);
   private readonly messageService = inject(MessageService);
 
@@ -41,13 +43,13 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     }
     // Disable all dates that are already used by other days, except the current day
     const currentDate = this.currentDay()?.date;
-    return this.days().filter(d => d.date !== currentDate).map(d => this.stringToDate(d.date));
+    return this.days().filter(d => d.date !== currentDate).map(d => this.conferenceService.stringToDate(d.date));
   });
 
   constructor() {
     effect(() => {
       const currentDay = this.currentDay();
-      this.currentDayDate = currentDay ? this.stringToDate(currentDay.date) : undefined;
+      this.currentDayDate = currentDay ? this.conferenceService.stringToDate(currentDay.date) : undefined;
     });    
   }
   ngOnInit(): void {
@@ -73,7 +75,7 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
   addDayAfterCurrent() {
     const newDate = new Date(this.currentDay()!.date);
     newDate.setDate(newDate.getDate() + 1);
-    while (this.days().some(d => d.date === this.dateToString(newDate))) {
+    while (this.days().some(d => d.date === this.conferenceService.dateToString(newDate))) {
       newDate.setDate(newDate.getDate() + 1);
     }
     this.addDay(newDate);
@@ -81,7 +83,7 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
   addDayBeforeCurrent() {
     const newDate = new Date(this.currentDay()!.date);
     newDate.setDate(newDate.getDate() - 1);
-    while (this.days().some(d => d.date === this.dateToString(newDate))) {
+    while (this.days().some(d => d.date === this.conferenceService.dateToString(newDate))) {
       newDate.setDate(newDate.getDate() - 1);
     }
     this.addDay(newDate);
@@ -90,18 +92,17 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     const newDay: Day = {
       id: `day-${Date.now()}`,
       dayIndex: this.currentDayIdx() - 1,
-      date: this.dateToString(newDate),
+      date: this.conferenceService.dateToString(newDate),
       beginTime: '09:00',
       endTime: '18:00',
-      slots: [] 
+      slots: [],
+      disabledRoomIds: []
     };
-    console.log('Adding new day with date:', newDay.date);
     this.days.update(days => {
       const newDays = [...days];
       newDays.splice(this.currentDayIdx(), 0, newDay);
-      newDays.sort((a, b) => this.stringToDate(a.date).getTime() - this.stringToDate(b.date).getTime());
+      newDays.sort((a, b) => this.conferenceService.stringToDate(a.date).getTime() - this.conferenceService.stringToDate(b.date).getTime());
       this.updateIndexes(newDays);
-      console.log('New list of days:', JSON.stringify(newDays, null, 2));
       this.conference().days = newDays;
       return newDays;
     });
@@ -110,14 +111,14 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     console.log('Conference:', JSON.stringify(this.conference(), null, 2));
   }
   changeCurrentDayDate(newDate: any) {
-    const newDateStr = this.dateToString(newDate)
+    const newDateStr = this.conferenceService.dateToString(newDate)
     console.log('Changing current day date to:', newDate, newDateStr);
     if (!this.days().some(d => d.date === newDateStr)) {
       // date not already used, we can update current day
       this.days.update(days => {
         const newDays = [...days];
         newDays[this.currentDayIdx()].date = newDateStr;
-        newDays.sort((a, b) => this.stringToDate(a.date).getTime() - this.stringToDate(b.date).getTime());
+        newDays.sort((a, b) => this.conferenceService.stringToDate(a.date).getTime() - this.conferenceService.stringToDate(b.date).getTime());
         this.updateIndexes(newDays);
         this.conference().days = newDays;
         return newDays;
@@ -146,18 +147,17 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
       this.currentDayIdx.update(idx => Math.min(idx, this.days().length - 1));
     } 
   }
+  dayChanged(day: Day) {
+    this.days.update( days => {
+      const idx = days.findIndex(d => d.id === day.id);
+      if (idx >= 0) {
+        days[idx] = day;
+      }
+      this.conference().days = days;
+      return days;
+    });
+  }
   private updateIndexes(days: Day[]) {
     days.forEach((day, index) => day.dayIndex = index);
-  }
-
-  dateToString(date: Date): string {
-    const str = date.toISOString().split('T')[0];
-    console.log('Converted date to string:', date, '=>',str);
-    return str;
-  }
-  stringToDate(dateStr: string): Date {
-    const date = new Date(dateStr); 
-    console.log('Converting string to date:', dateStr,'=>', date);
-    return date;
   }
 }

@@ -19,6 +19,7 @@ export class SlotTypeService extends FirestoreGenericService<SlotType> {
     const SLOT_TYPES: SlotType[] = [
       {
         id: 'session',
+        isSession: true,
         lastUpdated: new Date().toISOString(),
         name: { 'EN': 'Session', 'FR': 'Session' },
         icon: 'mic',
@@ -27,6 +28,7 @@ export class SlotTypeService extends FirestoreGenericService<SlotType> {
       },
       {
         id: 'break',
+        isSession: false,
         lastUpdated: new Date().toISOString(),
         name: { 'EN': 'Break', 'FR': 'Pause' },
         icon: 'coffee',
@@ -35,6 +37,7 @@ export class SlotTypeService extends FirestoreGenericService<SlotType> {
       },
       {
         id: 'lunch',
+        isSession: false,
         lastUpdated: new Date().toISOString(),
         name: { 'EN': 'Lunch', 'FR': 'Déjeuner' },
         icon: 'utensils',
@@ -43,6 +46,7 @@ export class SlotTypeService extends FirestoreGenericService<SlotType> {
       },
       {
         id: 'activity',
+        isSession: false,
         lastUpdated: new Date().toISOString(),
         name: { 'EN': 'Activity', 'FR': 'Activité' },
         icon: 'utensils',

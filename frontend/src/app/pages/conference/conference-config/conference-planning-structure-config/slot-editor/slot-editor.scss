@@ -1,0 +1,57 @@
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+  min-width: 400px;
+  min-height: 400px;
+
+  .form-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+        text-align: right;
+        width: 130px;
+    }
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 0.25rem;
+    }
+    .actions {
+      display:flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .p-datepicker {
+      border: 0px !important;
+      box-shadow: none !important;
+      padding-left: 0;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+  }
+}
+:host ::ng-deep .time-picker-small {
+  width: 90px;
+}
+:host ::ng-deep .duration-small input {
+  width: 60px;
+  text-align: center;
+}

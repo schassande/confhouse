@@ -1,0 +1,66 @@
+@if (currentForm(); as form) {
+  <form [formGroup]="form" class="config-form">
+    <div class="form-section">
+      <label for="slotTypeId" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.SLOT_TYPE' | translate }}</label>
+      <p-select [options]="slotTypes()" formControlName="slotTypeId" 
+        optionLabel="name" optionValue="id" class="w-full md:w-56"
+        (onChange)="onSlotTypeChanged()">
+        <ng-template #selectedItem let-slotType>
+          {{ slotType.name[defaultLanguage()] }}
+        </ng-template>
+        <ng-template #item let-slotType>
+          {{ slotType.name[defaultLanguage()] }}
+        </ng-template>
+      </p-select>
+    </div>
+
+    <div class="form-section">
+      <label for="sessionTypeId" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.SESSION_TYPE' | translate }}</label>
+      <p-select [options]="sessionTypes()" formControlName="sessionTypeId" 
+        optionValue="id" optionLabel="name" class="w-full md:w-56">
+      </p-select>
+    </div>
+
+    <div class="form-section">
+      <label for="roomId" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.ROOM' | translate }}</label>
+      <p-select [options]="rooms()" formControlName="roomId" optionLabel="name" optionValue="id" optionLabel="name" class="w-full md:w-56" />
+    </div>
+
+    <div class="form-section">
+      <label for="startTime" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.START_TIME' | translate }}</label>
+      <p-datepicker formControlName="startTime" class="time-picker-small" 
+        stepMinute="5" autofocus="false"
+        [showTime]="true" [timeOnly]="true" hourFormat="24" size="small"
+        [minDate]="minDate()" [maxDate]="maxDate()"
+        (onSelect)="onStartTimeOrDurationChange()"></p-datepicker>
+    </div>
+
+    <div class="form-section">
+      <label for="duration" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.DURATION' | translate }}</label>
+      <p-inputNumber id="duration" type="number" 
+        [showButtons]="true" [step]="5" [min]="1" [max]="720" 
+        class="duration-small"
+        required formControlName="duration" buttonLayout="horizontal"
+        (onInput)="onStartTimeOrDurationChange()">
+        <ng-template #incrementbuttonicon>
+          <span class="pi pi-plus"></span>
+        </ng-template>
+        <ng-template #decrementbuttonicon>
+          <span class="pi pi-minus"></span>
+        </ng-template>
+      </p-inputNumber>
+    </div>
+
+    <div class="form-section">
+      <label for="endTime" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.END_TIME' | translate }}</label>
+      @if (slot()) {
+        {{slot().endTime}}
+      }
+    </div>
+
+    <div class="form-actions">
+      <p-button type="button" (click)="onCancel()" severity="info" class="btn secondary">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.CANCEL' | translate }}</p-button>
+      <p-button type="submit" (click)="onSave()" severity="success" class="btn primary" [disabled]="form.invalid">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.SAVE' | translate }}</p-button>
+    </div>
+  </form>
+}

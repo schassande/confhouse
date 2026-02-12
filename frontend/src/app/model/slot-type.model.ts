@@ -12,4 +12,6 @@ export interface SlotType extends PersistentData {
   color: string;
   /** Description in several languages */
   description: { [lang: string]: string };
+  /** Whether this slot type corresponds to a session (talk/workshop) or not (break, etc.) */
+  isSession: boolean; 
 }
