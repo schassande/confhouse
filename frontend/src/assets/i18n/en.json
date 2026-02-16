@@ -180,7 +180,7 @@
         "TITLE": "Planning Structure Configuration",
         "DESCRIPTION": "Manage the planning structure for your conference here.",
         "NO_DAYS": "No days defined",
-        "DAY": "Day {{index}}",
+        "DAY": "Day",
         "ADD_FIRST_DAY": "Add First Day",
         "ADD_DAY_BEFORE": "Add Day Before",
         "ADD_DAY_AFTER": "Add Day After",
@@ -194,7 +194,10 @@
         "COPY_ROOM_TO_ROOM": "Copy all slots from a room to another room",
         "SOURCE_ROOM": "Source room",
         "TARGET_ROOM": "Target room",
-        "COPY_ROOM": "Copy"
+        "COPY_ROOM": "Copy",
+        "ROOM_SELECTOR": "Rooms (de)activation",
+        "X_SLOTS": "{{nb}} slots",
+        "ROOM_DISABLING_WARNING": "Warning, if you disable a room, all slots allocated on this room for that day will be definitevely deleted."
       },
       "SLOT_EDITOR" : {
         "TITLE": "Slot editor",

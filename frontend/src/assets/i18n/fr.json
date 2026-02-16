@@ -178,7 +178,7 @@
         "TITLE": "Configuration de la structure de planification",
         "DESCRIPTION": "Gérez la structure de planification pour votre conférence ici.",
         "NO_DAYS": "Aucun jour défini",
-        "DAY": "Jour {{index}}",
+        "DAY": "Jour",
         "ADD_FIRST_DAY": "Ajouter le premier jour",
         "ADD_DAY_BEFORE": "Ajouter un jour avant",
         "ADD_DAY_AFTER": "Ajouter un jour après",
@@ -192,7 +192,10 @@
         "COPY_ROOM_TO_ROOM": "Copier tous les créneaux d'une salle vers une autre salle",
         "SOURCE_ROOM": "Salle source",
         "TARGET_ROOM": "Salle destination",
-        "COPY_ROOM": "Copier"
+        "COPY_ROOM": "Copier",
+        "ROOM_SELECTOR": "Activation de salles",
+        "X_SLOTS": "{{nb}} créneaux",
+        "ROOM_DISABLING_WARNING": "Attention, si vous désactivez une salle, les créneaux alloués à cette salle pour ce jour seront supprimés définitivement."
       },
       "SLOT_EDITOR" : {
         "TITLE": "Editeur de créneau",

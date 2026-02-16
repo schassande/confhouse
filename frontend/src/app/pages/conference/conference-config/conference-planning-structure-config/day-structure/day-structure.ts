@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, model, OnInit, signal, Signal, HostBinding } from '@angular/core';
+import { Component, computed, inject, input, output, model, OnInit, signal, Signal, HostBinding, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Day, Room, SessionType, Slot } from '../../../../../model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { ConferenceService } from '../../../../../services/conference.service';
 import { CopyRoormToRoom } from '../copy-roorm-to-room/copy-roorm-to-room';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
   selector: 'app-day-structure',
@@ -25,6 +26,7 @@ import { MenuItem } from 'primeng/api';
     FormsModule,
     MenuModule,
     SlotEditorComponent,
+    ToggleSwitchModule,
     TranslateModule
   ],
   templateUrl: './day-structure.html',
@@ -54,6 +56,9 @@ export class DayStructure implements OnInit {
   private dayStartMs = computed(() => this.computeTimeOfDay(this.dayStartIso()) );
   private dayEndMs   = computed(() => this.computeTimeOfDay(this.dayEndIso())   );
   totalMinutes = computed(() => Math.max(1, (this.dayEndMs() - this.dayStartMs()) / 60000));
+
+  dayRooms = signal<DayRoom[]>([]);
+  enabledRooms = computed(() => this.dayRooms().filter(dr => dr.enable).map(dr => dr.room));
 
   private readonly tickStep = 30;
   private readonly tickMainRatio = 2;
@@ -96,10 +101,29 @@ export class DayStructure implements OnInit {
 
   menuItems: MenuItem[] = [
     { label: 'New Slot', icon: 'pi pi-plus', command: () => this.onSlotAdd() },
+    { label: 'Select rooms', icon: 'pi pi-clone', command: () => this.roomSelectorVisible.set(true) },
     { label: 'Copy Room to Room', icon: 'pi pi-clone', command: () => this.copyRoomVisible.set(true) },
   ];
   copyRoomVisible = signal<boolean>(false);
+  roomSelectorVisible = signal<boolean>(false);
 
+  constructor() {
+    effect(() =>{
+      this.computeDayRooms();
+    })
+  }
+
+  computeDayRooms() {
+    this.dayRooms.set(this.rooms().map(room => {
+      const disabledRoomIds: string[] = this.day().disabledRoomIds || [];
+      const dr: DayRoom = {
+        room, 
+        enable: disabledRoomIds.findIndex(rid => rid === room.id) < 0
+      };
+      // console.log('compute room', room.name, dr.enable);
+      return dr;
+    }));
+  }
   // Convertit un slot => top% & height% sur la base dayStart/dayEnd
   getSlotPosition(s: Slot) {
     const dayStart = this.conferenceService.timeStringToDate(this.beginTime).getTime();
@@ -108,7 +132,7 @@ export class DayStructure implements OnInit {
     // console.log('dayStart',dayStart, 'slotStart', slotStart, 'delta', delta, "min");
     const startTick = delta / this.tickStep;
     const durationtick = s.duration / this.tickStep;
-    const roomColIdx = this.rooms().findIndex(room => room.id === s.roomId);
+    const roomColIdx = this.enabledRooms().findIndex(room => room.id === s.roomId);
     const position = { startTick, durationtick, roomColIdx };
     // console.log(position);
     return position;
@@ -285,10 +309,30 @@ export class DayStructure implements OnInit {
       return changed ? {...day} : day;
     });
     this.dayChanged.emit(this.day());
+  }
+  toggleRoom(room: Room) {
+    const dr = this.dayRooms().find(dr => dr.room.id === room.id);
+    this.day.update(day => {
+      if (!day.disabledRoomIds) {
+        day.disabledRoomIds = [];
+      }
+      if (dr!.enable) {
+        console.log('Enable room', room.name);
+        day.disabledRoomIds = day.disabledRoomIds.filter(rid => room.id != rid)
+      } else {
+        console.log('Disable room', room.name);
+        day.disabledRoomIds.push(room.id)
+      }
+      return {...day};
+    });
   }  
 } 
 interface Tick { 
   label: string;
   main: boolean, 
   startTime: string 
+}
+interface DayRoom {
+  room: Room;
+  enable: boolean;
 }

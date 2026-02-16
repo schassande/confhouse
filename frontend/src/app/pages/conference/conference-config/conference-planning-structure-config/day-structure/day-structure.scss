@@ -140,3 +140,23 @@ $header-height: 50px;
 .slot:focus { outline: 2px solid #1976d2; }
 .slot-title { font-weight: 600; font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .slot-time { font-size: 11px; opacity: 0.9; margin-top: 4px; }
+
+/////////////////////////////////////////////////////////
+.room-form {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    vertical-align: middle;
+}
+.room-form .form-section {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+.room-label {
+  margin-left: 10px;
+}
+.room-warning {
+  color: red;
+  width: 300px;
+}

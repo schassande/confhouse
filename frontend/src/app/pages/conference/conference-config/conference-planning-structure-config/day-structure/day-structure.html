@@ -19,7 +19,7 @@
   </div>  
   <div class="planning-parent">
     <div class="planning">
-      <div class="room-grid" [style.--nb-rooms]="rooms().length">
+      <div class="room-grid" [style.--nb-rooms]="enabledRooms().length">
         <!-- Header ligne -->
         <div class="header-cell action-header-cell" (click)="menu.toggle($event)">
           <div>
@@ -27,7 +27,7 @@
             <p-menu [model]="menuItems" [popup]="true" #menu appendTo="body"/>
           </div>
         </div>
-        @for (room of rooms(); track room.id) {
+        @for (room of enabledRooms(); track room.id) {
           <div class="header-cell room-header-cell">{{ room.name }}</div>
         }
         
@@ -38,7 +38,7 @@
               <span class="tick-label">{{ tick.label }}</span>
             }
           </div>
-          @for (room of rooms(); track room.id) {
+          @for (room of enabledRooms(); track room.id) {
             <div class="tick-line" aria-hidden="true" (click)="onSlotAdd(room, tick)">
             </div>
           }
@@ -46,7 +46,7 @@
       </div>
       <div class="slots">
         <!-- Slots -->
-        @for (room of rooms(); track room.id) {
+        @for (room of enabledRooms(); track room.id) {
           @if (slotsByRoom().has(room.id)) {
             @for (slot of getSlotsByRoom(room.id); track slot.id) {
               @let position = getSlotPosition(slot);
@@ -99,4 +99,17 @@
     [slots]="day().slots"
     (newSlots)="createSlots($event)">
   </app-copy-roorm-to-room>
+</p-dialog>
+<p-dialog [modal]="true" [visible]="roomSelectorVisible()" (onHide)="roomSelectorVisible.set(false)"
+  header="{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.ROOM_SELECTOR' | translate }}">
+  <div class="config-form room-form">
+    <label class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.DAY' | translate }}: {{day().date}}</label>
+    <p class="room-warning">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.ROOM_DISABLING_WARNING' | translate }}</p>
+    @for(dr of dayRooms(); track dr.room.id) {
+      <div class="form-section">
+        <p-toggleswitch [(ngModel)]="dr.enable" (onChange)="toggleRoom(dr.room)"></p-toggleswitch>
+        <label class="form-label room-label">{{ dr.room.name }} ({{getSlotsByRoom(dr.room.id).length}} slots)</label>
+      </div>
+    }
+  </div>
 </p-dialog>
