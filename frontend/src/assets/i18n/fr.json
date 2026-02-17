@@ -238,7 +238,22 @@
       "CONFERENCEHALL": {
         "TITLE": "Configuration Conference Hall",
         "CONFERENCE_NAME": "Nom de la conférence dans Conference Hall",
-        "TOKEN": "Token"
+        "TOKEN": "Token",
+        "IMPORT": {
+          "TITLE": "Import des sessions Conference Hall",
+          "BUTTON": "Lancer l'import",
+          "LAST_IMPORT": "Dernier import",
+          "NEVER": "Jamais",
+          "REPORT": "Rapport d'import",
+          "IMPORTED_AT": "Import effectué le",
+          "DATA_TYPE": "Type de données",
+          "ADDED": "Ajouté",
+          "UPDATED": "Modifié",
+          "UNCHANGED": "Non modifié",
+          "SESSION": "Session",
+          "SPEAKER": "Speaker",
+          "TRACK": "Track"
+        }
       },
       "PUBLISH": {
         "TAB": "Publication",
@@ -268,6 +283,7 @@
       "FILTER_STATUS": "Statuts",
       "FILTER_SESSION_TYPE": "Types de session",
       "FILTER_TRACK": "Tracks",
+      "COUNT": "{{filtered}} sessions (sur {{total}})",
       "EMPTY": "Aucune session trouvee",
       "UNKNOWN_SPEAKER": "Speaker inconnu",
       "UNKNOWN_TRACK": "Track inconnu",

@@ -105,7 +105,6 @@ export interface ExternalSystemConfig extends WithId {
   systemName: ExternalSystem;
   env: Environment;
   url: string;
-  token: string;
   parameters: any;
   lastCommunication: string; // date time ISO
 }

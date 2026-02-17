@@ -17,6 +17,7 @@ import { ConferenceTracksConfigComponent } from './conference-tracks-config/conf
 import { ConferenceSessionTypesConfigComponent } from './conference-session-types-config/conference-session-types-config.component';
 import { ConferencePlanningStructureConfigComponent } from './conference-planning-structure-config/conference-planning-structure-config.component';
 import { ConferenceRoomsConfigComponent } from './conference-rooms-config/conference-rooms-config.component';
+import { ConferenceConferencehallImportComponent } from './conference-conferencehall-import/conference-conferencehall-import.component';
 
 @Component({
   selector: 'app-conference-config',
@@ -30,6 +31,7 @@ import { ConferenceRoomsConfigComponent } from './conference-rooms-config/confer
     ConferenceGeneralConfigComponent,
     ConferenceRoomsConfigComponent,
     ConferenceConferencehallConfigComponent,
+    ConferenceConferencehallImportComponent,
     ConferenceVoxxrinConfigComponent,
     ConferenceTracksConfigComponent,
     ConferenceSessionTypesConfigComponent,
@@ -116,7 +118,16 @@ export class ConferenceConfigComponent implements OnInit {
   }
 
   onSave() {
-    this.conferenceService.save(this.conference()!).subscribe({
+    const conference = this.conference()!;
+    const sanitizedConference: Conference = {
+      ...conference,
+      externalSystemConfigs: (conference.externalSystemConfigs ?? []).map((item: any) => {
+        const safeConfig = { ...item };
+        delete safeConfig.token;
+        return safeConfig;
+      }),
+    };
+    this.conferenceService.save(sanitizedConference).subscribe({
       next: (saved) => {
         this._conference.set(saved);
         this.messageService.add({

@@ -240,7 +240,22 @@
       "CONFERENCEHALL": {
         "TITLE": "Conference Hall Configuration",
         "CONFERENCE_NAME": "Conference name in Conference Hall",
-        "TOKEN": "Token"
+        "TOKEN": "Token",
+        "IMPORT": {
+          "TITLE": "Conference Hall Session Import",
+          "BUTTON": "Run import",
+          "LAST_IMPORT": "Last import",
+          "NEVER": "Never",
+          "REPORT": "Import report",
+          "IMPORTED_AT": "Imported at",
+          "DATA_TYPE": "Data type",
+          "ADDED": "Added",
+          "UPDATED": "Updated",
+          "UNCHANGED": "Unchanged",
+          "SESSION": "Session",
+          "SPEAKER": "Speaker",
+          "TRACK": "Track"
+        }
       },
       "PUBLISH": {
         "TAB": "Publish",
@@ -270,6 +285,7 @@
       "FILTER_STATUS": "Statuses",
       "FILTER_SESSION_TYPE": "Session types",
       "FILTER_TRACK": "Tracks",
+      "COUNT": "{{filtered}} sessions (of {{total}})",
       "EMPTY": "No session found",
       "UNKNOWN_SPEAKER": "Unknown speaker",
       "UNKNOWN_TRACK": "Unknown track",

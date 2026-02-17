@@ -33,5 +33,7 @@ export interface Person extends PersistentData {
     photoUrl: string;
     /** List of social network links */
     socialLinks: SocialLink[];
+    /** Speaker identifier from conference Hall */
+    conferenceHallId?: string;
   };
 }

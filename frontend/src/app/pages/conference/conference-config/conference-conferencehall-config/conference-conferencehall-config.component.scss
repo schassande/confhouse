@@ -6,7 +6,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    max-width: 800px;
+    max-width: 980px;
   }
 
   .form-section {
@@ -27,6 +27,36 @@
   .error-message {
     color: #e74c3c;
     font-size: 0.85rem;
+  }
+
+  .format-mapping-section {
+    align-items: flex-start;
+  }
+
+  .mapping-table-container {
+    width: 100%;
+  }
+
+  .mapping-table {
+    display: grid;
+    grid-template-columns: minmax(180px, 280px) 1fr;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+  }
+
+  .mapping-header {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .mapping-cell {
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .mapping-session-type {
+    font-weight: 600;
   }
 }
 

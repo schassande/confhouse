@@ -39,6 +39,11 @@ service cloud.firestore {
       	&& request.auth.token.email in request.resource.data.organizerEmails;
     }
 
+    match /conferenceSecret/{document=**} {
+      allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
+      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+    }
+
     match /session/{document=**} {
       allow create: if request.auth != null;
       allow update, delete: if isConferenceOrganizer(resource.data.conference.conferenceId)
@@ -61,6 +66,10 @@ service cloud.firestore {
         || isSamePerson(request.resource.data.personId);
       allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId)
         || isSamePerson(resource.data.personId);
+    }
+    match /slot-type/{document=**} {
+      allow read;
+      allow write: if false;
     }
 
     match /{document=**} {

@@ -9,6 +9,17 @@
 >
   <ng-template #header>
     <div class="session-list-header">
+      <div class="session-count">
+        {{
+          'SESSION.LIST.COUNT'
+            | translate
+              : {
+                  filtered: filteredSortedSessions().length,
+                  total: sessionsForView().length
+                }
+        }}
+      </div>
+
       <input
         pInputText
         type="text"
@@ -81,9 +92,25 @@
         <div class="line-2">
           <div class="speakers">{{ item.speakerNames.join(', ') }}</div>
           <div class="meta">
-            <p-tag [value]="item.sessionTypeName" severity="info"></p-tag>
-            <p-tag [value]="item.trackName" severity="contrast"></p-tag>
-            <p-tag [value]="item.session.level" severity="info"></p-tag>
+            <p-tag
+              [value]="item.sessionTypeName"
+              [style]="{
+                'background-color': item.sessionTypeColor,
+                color: item.sessionTypeTextColor,
+                border: 'none'
+              }"
+            ></p-tag>
+            <p-tag
+              [value]="item.trackName"
+              [style]="{
+                'background-color': item.trackColor,
+                color: item.trackTextColor,
+                border: 'none'
+              }"
+            ></p-tag>
+            @if (item.session.level) {
+              <p-tag [value]="item.session.level" severity="info"></p-tag>
+            }
           </div>
         </div>
       </div>

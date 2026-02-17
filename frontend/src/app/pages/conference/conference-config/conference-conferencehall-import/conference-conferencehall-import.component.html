@@ -1,0 +1,68 @@
+<section class="conferencehall-import">
+  <h3>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.TITLE' | translate }}</h3>
+
+  <div class="meta-row">
+    <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.LAST_IMPORT' | translate }}</span>
+    <span>
+      @if (lastImportAt()) {
+      {{ lastImportAt() | date : 'dd/MM/yyyy HH:mm:ss' }}
+      } @else {
+      {{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.NEVER' | translate }}
+      }
+    </span>
+  </div>
+
+  <button
+    pButton
+    type="button"
+    [label]="'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.BUTTON' | translate"
+    icon="pi pi-download"
+    [loading]="loading()"
+    [disabled]="loading()"
+    (click)="runImport()"
+  ></button>
+
+  @if (error()) {
+  <div class="error-box">{{ error() }}</div>
+  }
+
+  @if (report(); as result) {
+  <div class="report-box">
+    <h4>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.REPORT' | translate }}</h4>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.IMPORTED_AT' | translate }}</span>
+      <span>{{ result.importedAt | date : 'dd/MM/yyyy HH:mm:ss' }}</span>
+    </div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.DATA_TYPE' | translate }}</th>
+          <th>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.ADDED' | translate }}</th>
+          <th>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.UPDATED' | translate }}</th>
+          <th>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.UNCHANGED' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.SESSION' | translate }}</td>
+          <td>{{ result.sessionAdded }}</td>
+          <td>{{ result.sessionUpdated }}</td>
+          <td>{{ result.sessionUnchanged }}</td>
+        </tr>
+        <tr>
+          <td>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.SPEAKER' | translate }}</td>
+          <td>{{ result.speakerAdded }}</td>
+          <td>{{ result.speakerUpdated }}</td>
+          <td>{{ result.speakerUnchanged }}</td>
+        </tr>
+        <tr>
+          <td>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.TRACK' | translate }}</td>
+          <td>{{ result.trackAdded }}</td>
+          <td>{{ result.trackUpdated }}</td>
+          <td>{{ result.trackUnchanged }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  }
+</section>

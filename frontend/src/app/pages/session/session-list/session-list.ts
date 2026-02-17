@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of, take } from 'rxjs';
 import { SessionService } from '../../../services/session.service';
 import { ActivatedRoute } from '@angular/router';
 import { ConferenceService } from '../../../services/conference.service';
@@ -19,7 +19,11 @@ interface SessionForView {
   session: Session;
   speakerNames: string[];
   sessionTypeName: string;
+  sessionTypeColor: string;
+  sessionTypeTextColor: string;
   trackName: string;
+  trackColor: string;
+  trackTextColor: string;
   statusSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 }
 
@@ -109,18 +113,27 @@ export class SessionList implements OnInit {
 
       const sessionTypeId = session.conference?.sessionTypeId;
       const trackId = session.conference?.trackId;
+      const sessionType = conference?.sessionTypes.find((type) => type.id === sessionTypeId);
+      const track = conference?.tracks.find((item) => item.id === trackId);
+
       const sessionTypeName =
-        conference?.sessionTypes.find((type) => type.id === sessionTypeId)?.name ??
+        sessionType?.name ??
         this.translateService.instant('SESSION.LIST.UNKNOWN_SESSION_TYPE');
       const trackName =
-        conference?.tracks.find((track) => track.id === trackId)?.name ??
+        track?.name ??
         this.translateService.instant('SESSION.LIST.UNKNOWN_TRACK');
+      const sessionTypeColor = sessionType?.color ?? '#64748B';
+      const trackColor = track?.color ?? '#334155';
 
       return {
         session,
         speakerNames: speakers,
         sessionTypeName,
+        sessionTypeColor,
+        sessionTypeTextColor: this.computeTextColorForBackground(sessionTypeColor),
         trackName,
+        trackColor,
+        trackTextColor: this.computeTextColorForBackground(trackColor),
         statusSeverity: this.computeStatusSeverity(session.conference?.status),
       };
     });
@@ -213,6 +226,33 @@ export class SessionList implements OnInit {
     }
   }
 
+  private computeTextColorForBackground(backgroundColor: string): string {
+    const normalized = backgroundColor.trim();
+    const shortHexMatch = normalized.match(/^#([0-9a-fA-F]{3})$/);
+    const fullHexMatch = normalized.match(/^#([0-9a-fA-F]{6})$/);
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    if (shortHexMatch) {
+      const hex = shortHexMatch[1];
+      r = parseInt(`${hex[0]}${hex[0]}`, 16);
+      g = parseInt(`${hex[1]}${hex[1]}`, 16);
+      b = parseInt(`${hex[2]}${hex[2]}`, 16);
+    } else if (fullHexMatch) {
+      const hex = fullHexMatch[1];
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    } else {
+      return '#FFFFFF';
+    }
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6 ? '#111827' : '#FFFFFF';
+  }
+
   private loadSpeakerNames(sessions: Session[]): void {
     const speakerIds = Array.from(
       new Set(
@@ -233,6 +273,7 @@ export class SessionList implements OnInit {
     forkJoin(
       speakerIds.map((speakerId) =>
         this.personService.byId(speakerId).pipe(
+          take(1),
           map((person) => [
             speakerId,
             person ? `${person.firstName} ${person.lastName}`.trim() : this.translateService.instant('SESSION.LIST.UNKNOWN_SPEAKER'),
