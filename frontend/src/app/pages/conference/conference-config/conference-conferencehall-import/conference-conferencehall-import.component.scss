@@ -19,6 +19,12 @@
     align-items: center;
   }
 
+  .actions-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
   .label {
     width: 280px;
     font-weight: 600;

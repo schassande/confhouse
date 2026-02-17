@@ -35,5 +35,7 @@ export interface Person extends PersistentData {
     socialLinks: SocialLink[];
     /** Speaker identifier from conference Hall */
     conferenceHallId?: string;
+    /** List of conferences where the speaker submitted a session */
+    submittedConferenceIds: string[];
   };
 }

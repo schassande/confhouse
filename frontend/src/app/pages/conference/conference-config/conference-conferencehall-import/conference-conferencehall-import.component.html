@@ -1,4 +1,5 @@
 <section class="conferencehall-import">
+  <p-confirmdialog></p-confirmdialog>
   <h3>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.TITLE' | translate }}</h3>
 
   <div class="meta-row">
@@ -12,15 +13,27 @@
     </span>
   </div>
 
-  <button
-    pButton
-    type="button"
-    [label]="'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.BUTTON' | translate"
-    icon="pi pi-download"
-    [loading]="loading()"
-    [disabled]="loading()"
-    (click)="runImport()"
-  ></button>
+  <div class="actions-row">
+    <button
+      pButton
+      type="button"
+      [label]="'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.BUTTON' | translate"
+      icon="pi pi-download"
+      [loading]="importLoading()"
+      [disabled]="loading()"
+      (click)="runImport()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      severity="danger"
+      [label]="'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.RESET_BUTTON' | translate"
+      icon="pi pi-trash"
+      [loading]="resetLoading()"
+      [disabled]="loading()"
+      (click)="runReset()"
+    ></button>
+  </div>
 
   @if (error()) {
   <div class="error-box">{{ error() }}</div>
@@ -32,6 +45,10 @@
     <div class="meta-row">
       <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.IMPORTED_AT' | translate }}</span>
       <span>{{ result.importedAt | date : 'dd/MM/yyyy HH:mm:ss' }}</span>
+    </div>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.EXECUTION_TIME' | translate }}</span>
+      <span>{{ importExecutionTimeSeconds() | number : '1.2-2' }} s</span>
     </div>
     <table class="report-table">
       <thead>
@@ -63,6 +80,28 @@
         </tr>
       </tbody>
     </table>
+  </div>
+  }
+
+  @if (resetReport(); as reset) {
+  <div class="report-box">
+    <h4>{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.RESET_REPORT' | translate }}</h4>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.RESET_AT' | translate }}</span>
+      <span>{{ reset.resetAt | date : 'dd/MM/yyyy HH:mm:ss' }}</span>
+    </div>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.EXECUTION_TIME' | translate }}</span>
+      <span>{{ resetExecutionTimeSeconds() | number : '1.2-2' }} s</span>
+    </div>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.SESSION_DELETED' | translate }}</span>
+      <span>{{ reset.sessionDeleted }}</span>
+    </div>
+    <div class="meta-row">
+      <span class="label">{{ 'CONFERENCE.CONFIG.CONFERENCEHALL.IMPORT.SPEAKER_DELETED' | translate }}</span>
+      <span>{{ reset.speakerDeleted }}</span>
+    </div>
   </div>
   }
 </section>

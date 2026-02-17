@@ -247,6 +247,7 @@
           "LAST_IMPORT": "Last import",
           "NEVER": "Never",
           "REPORT": "Import report",
+          "EXECUTION_TIME": "Execution time",
           "IMPORTED_AT": "Imported at",
           "DATA_TYPE": "Data type",
           "ADDED": "Added",
@@ -254,7 +255,13 @@
           "UNCHANGED": "Unchanged",
           "SESSION": "Session",
           "SPEAKER": "Speaker",
-          "TRACK": "Track"
+          "TRACK": "Track",
+          "RESET_BUTTON": "Reset imported data",
+          "CONFIRM_RESET": "Are you sure you want to delete all conference sessions and orphan Conference Hall speakers without account?",
+          "RESET_REPORT": "Reset report",
+          "RESET_AT": "Reset at",
+          "SESSION_DELETED": "Deleted sessions",
+          "SPEAKER_DELETED": "Deleted speakers"
         }
       },
       "PUBLISH": {
@@ -278,11 +285,12 @@
   "SESSION": {
     "LIST": {
       "TITLE": "Sessions",
+      "PAGE_TITLE": "{{conference}}: List of sessions",
       "SEARCH_PLACEHOLDER": "Search in session words",
       "SORT_BY": "Sort by",
       "SORT_NAME": "Name",
-      "SORT_STATUS_SUBMIT": "Status + submit date",
-      "FILTER_STATUS": "Statuses",
+      "SORT_STATUS_SUBMIT": "Status and submit date",
+      "FILTER_STATUS": "Status",
       "FILTER_SESSION_TYPE": "Session types",
       "FILTER_TRACK": "Tracks",
       "COUNT": "{{filtered}} sessions (of {{total}})",

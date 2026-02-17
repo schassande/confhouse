@@ -245,6 +245,7 @@
           "LAST_IMPORT": "Dernier import",
           "NEVER": "Jamais",
           "REPORT": "Rapport d'import",
+          "EXECUTION_TIME": "Temps d'execution",
           "IMPORTED_AT": "Import effectué le",
           "DATA_TYPE": "Type de données",
           "ADDED": "Ajouté",
@@ -252,7 +253,13 @@
           "UNCHANGED": "Non modifié",
           "SESSION": "Session",
           "SPEAKER": "Speaker",
-          "TRACK": "Track"
+          "TRACK": "Track",
+          "RESET_BUTTON": "Reinitialiser les donnees importees",
+          "CONFIRM_RESET": "Confirmez-vous la suppression de toutes les sessions de la conference et des speakers Conference Hall orphelins sans compte ?",
+          "RESET_REPORT": "Rapport de reinitialisation",
+          "RESET_AT": "Reinitialisation effectuee le",
+          "SESSION_DELETED": "Sessions supprimees",
+          "SPEAKER_DELETED": "Speakers supprimes"
         }
       },
       "PUBLISH": {
@@ -276,6 +283,7 @@
   "SESSION": {
     "LIST": {
       "TITLE": "Sessions",
+      "PAGE_TITLE": "{{conference}}: Liste des sessions",
       "SEARCH_PLACEHOLDER": "Rechercher dans les mots de la session",
       "SORT_BY": "Trier par",
       "SORT_NAME": "Nom",

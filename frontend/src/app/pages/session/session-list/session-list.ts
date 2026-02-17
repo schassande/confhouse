@@ -63,6 +63,7 @@ export class SessionList implements OnInit {
   readonly selectedSessionTypeIds = signal<string[]>([]);
   readonly selectedTrackIds = signal<string[]>([]);
   readonly sortBy = signal<'name' | 'statusSubmitDate'>('name');
+  readonly conferenceName = computed(() => this.conference()?.name?.trim() ?? '');
 
   readonly sortOptions = computed<SelectOption[]>(() => [
     {

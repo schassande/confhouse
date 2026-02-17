@@ -1,4 +1,13 @@
+<h2 class="page-title">
+  @if (conferenceName()) {
+  {{ 'SESSION.LIST.PAGE_TITLE' | translate : { conference: conferenceName() } }}
+  } @else {
+  {{ 'SESSION.LIST.TITLE' | translate }}
+  }
+</h2>
+
 <p-dataview
+  class="session-dataview"
   [value]="filteredSortedSessions()"
   [paginator]="true"
   [rows]="20"
@@ -8,7 +17,67 @@
   currentPageReportTemplate="{first} - {last} / {totalRecords}"
 >
   <ng-template #header>
-    <div class="session-list-header">
+    <div class="session-list-toolbar">
+      <div class="toolbar-row filters-row">
+        <p-multiselect
+          [options]="sessionTypeOptions()"
+          [ngModel]="selectedSessionTypeIds()"
+          (ngModelChange)="selectedSessionTypeIds.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          display="chip"
+          [showToggleAll]="false"
+          [placeholder]="'SESSION.LIST.FILTER_SESSION_TYPE' | translate"
+          class="header-control"
+        ></p-multiselect>
+
+        <p-multiselect
+          [options]="trackOptions()"
+          [ngModel]="selectedTrackIds()"
+          (ngModelChange)="selectedTrackIds.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          display="chip"
+          [showToggleAll]="false"
+          [placeholder]="'SESSION.LIST.FILTER_TRACK' | translate"
+          class="header-control"
+        ></p-multiselect>
+
+        <p-multiselect
+          [options]="statusOptions()"
+          [ngModel]="selectedStatuses()"
+          (ngModelChange)="selectedStatuses.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          display="chip"
+          [showToggleAll]="false"
+          [placeholder]="'SESSION.LIST.FILTER_STATUS' | translate"
+          class="header-control"
+        ></p-multiselect>
+      </div>
+
+      <div class="toolbar-row search-sort-row">
+        <input
+          pInputText
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          [placeholder]="'SESSION.LIST.SEARCH_PLACEHOLDER' | translate"
+          class="header-control header-search"
+        />
+
+        <p-select
+          [options]="sortOptions()"
+          [ngModel]="sortBy()"
+          (ngModelChange)="sortBy.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'SESSION.LIST.SORT_BY' | translate"
+          class="header-control"
+        ></p-select>
+      </div>
+
+      <div class="toolbar-row count-row">
       <div class="session-count">
         {{
           'SESSION.LIST.COUNT'
@@ -19,61 +88,7 @@
                 }
         }}
       </div>
-
-      <input
-        pInputText
-        type="text"
-        [ngModel]="searchText()"
-        (ngModelChange)="searchText.set($event)"
-        [placeholder]="'SESSION.LIST.SEARCH_PLACEHOLDER' | translate"
-        class="header-control header-search"
-      />
-
-      <p-select
-        [options]="sortOptions()"
-        [ngModel]="sortBy()"
-        (ngModelChange)="sortBy.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        [placeholder]="'SESSION.LIST.SORT_BY' | translate"
-        class="header-control"
-      ></p-select>
-
-      <p-multiselect
-        [options]="statusOptions()"
-        [ngModel]="selectedStatuses()"
-        (ngModelChange)="selectedStatuses.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        display="chip"
-        [showToggleAll]="false"
-        [placeholder]="'SESSION.LIST.FILTER_STATUS' | translate"
-        class="header-control"
-      ></p-multiselect>
-
-      <p-multiselect
-        [options]="sessionTypeOptions()"
-        [ngModel]="selectedSessionTypeIds()"
-        (ngModelChange)="selectedSessionTypeIds.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        display="chip"
-        [showToggleAll]="false"
-        [placeholder]="'SESSION.LIST.FILTER_SESSION_TYPE' | translate"
-        class="header-control"
-      ></p-multiselect>
-
-      <p-multiselect
-        [options]="trackOptions()"
-        [ngModel]="selectedTrackIds()"
-        (ngModelChange)="selectedTrackIds.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        display="chip"
-        [showToggleAll]="false"
-        [placeholder]="'SESSION.LIST.FILTER_TRACK' | translate"
-        class="header-control"
-      ></p-multiselect>
+      </div>
     </div>
   </ng-template>
 

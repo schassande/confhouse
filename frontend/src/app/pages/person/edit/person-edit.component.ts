@@ -105,6 +105,8 @@ export class PersonEditComponent {
             bio: person.speaker.bio,
             reference: person.speaker.reference,
             photoUrl: person.speaker.photoUrl,
+            conferenceHallId: person.speaker.conferenceHallId,
+            submittedConferenceIds: [...(person.speaker.submittedConferenceIds ?? [])],
             socialLinks: person.speaker.socialLinks
               ? person.speaker.socialLinks.map((sl) => ({ ...sl }))
               : [],
@@ -120,21 +122,8 @@ export class PersonEditComponent {
     const person = this.editingPerson();
     if (!person) return;
 
-    if (!person.speaker) {
-      person.speaker = {
-        company: '',
-        bio: '',
-        reference: '',
-        photoUrl: '',
-        socialLinks: [],
-      };
-    }
-
-    if (!person.speaker.socialLinks) {
-      person.speaker.socialLinks = [];
-    }
-
-    person.speaker.socialLinks.push({ network: '', url: '' });
+    const speaker = this.ensureSpeaker(person);
+    speaker.socialLinks.push({ network: '', url: '' });
     this.editingPerson.set({ ...person }); // Trigger reactivity
   }
 
@@ -156,13 +145,30 @@ export class PersonEditComponent {
     const person = this.editingPerson();
     if (!person) return;
 
-    person.speaker = {
-      company: '',
-      bio: '',
-      reference: '',
-      photoUrl: '',
-      socialLinks: [],
-    };
+    this.ensureSpeaker(person);
     this.editingPerson.set({ ...person }); // Trigger reactivity
+  }
+
+  private ensureSpeaker(person: Person): NonNullable<Person['speaker']> {
+    if (!person.speaker) {
+      person.speaker = {
+        company: '',
+        bio: '',
+        reference: '',
+        photoUrl: '',
+        socialLinks: [],
+        submittedConferenceIds: [],
+      };
+      return person.speaker;
+    }
+
+    if (!Array.isArray(person.speaker.socialLinks)) {
+      person.speaker.socialLinks = [];
+    }
+    if (!Array.isArray(person.speaker.submittedConferenceIds)) {
+      person.speaker.submittedConferenceIds = [];
+    }
+
+    return person.speaker;
   }
 }
