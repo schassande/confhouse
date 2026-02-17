@@ -235,6 +235,11 @@
         "FETCH_SUCCESS": "{{count}} sessions fetched successfully",
         "FETCH_ERROR": "Error fetching sessions from API"
       },
+      "CONFERENCEHALL": {
+        "TITLE": "Configuration Conference Hall",
+        "CONFERENCE_NAME": "Nom de la conférence dans Conference Hall",
+        "TOKEN": "Token"
+      },
       "PUBLISH": {
         "TAB": "Publication",
         "TITLE": "Publication du programme",
