@@ -102,28 +102,35 @@ async function authorizeRequest(req: any, db: admin.firestore.Firestore): Promis
 }
 
 /**
- * Deletes all sessions attached to the given conference and returns the deleted count.
+ * Deletes only Conference Hall imported sessions attached to the given conference
+ * (sessions having a non-empty `conference.conferenceHallId`) and returns the deleted count.
  */
 async function deleteConferenceSessions(db: admin.firestore.Firestore, conferenceId: string): Promise<number> {
   const sessionsSnap = await db.collection('session')
     .where('conference.conferenceId', '==', conferenceId)
     .get();
+  const sessionIdsToDelete = sessionsSnap.docs
+    .filter((doc) => String((doc.data() as any)?.conference?.conferenceHallId ?? '').trim().length > 0)
+    .map((doc) => doc.id);
+
   logger.info('resetConferenceHallImport sessions loaded', {
     conferenceId,
-    sessionCount: sessionsSnap.size,
+    loadedSessionCount: sessionsSnap.size,
+    sessionCountToDelete: sessionIdsToDelete.length,
   });
 
-  await deleteByDocIds(db, 'session', sessionsSnap.docs.map((doc) => doc.id));
+  await deleteByDocIds(db, 'session', sessionIdsToDelete);
   logger.info('resetConferenceHallImport sessions deleted', {
     conferenceId,
-    sessionDeleted: sessionsSnap.size,
+    sessionDeleted: sessionIdsToDelete.length,
   });
-  return sessionsSnap.size;
+  return sessionIdsToDelete.length;
 }
 
 /**
  * Deletes orphan Conference Hall speakers:
  * - preloads persons linked to this conference with `speaker.submittedConferenceIds`
+ * - keeps only persons having a non-empty `speaker.conferenceHallId`
  * - keeps only persons with `hasAccount = false`
  * - keeps only persons that are not linked to any other conference
  * Returns the number of deleted speakers.
@@ -140,6 +147,11 @@ async function deleteOrphanConferenceHallSpeakers(db: admin.firestore.Firestore,
   const personsToDelete: PersonDeletionCandidate[] = [];
   for (const personDoc of personsSnap.docs) {
     const data = personDoc.data() as any;
+    const conferenceHallId = String(data?.speaker?.conferenceHallId ?? '').trim();
+    if (!conferenceHallId) {
+      continue;
+    }
+
     const hasAccount = !!data?.hasAccount;
     if (hasAccount) {
       continue;
