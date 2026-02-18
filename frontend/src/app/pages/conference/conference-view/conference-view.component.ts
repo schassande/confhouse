@@ -24,9 +24,9 @@ export class ConferenceViewComponent {
   lang = computed(() => this.translateService.getCurrentLang());
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.conferenceService.byId(id).subscribe((conf: Conference | undefined) => this._conference.set(conf));
+    const conferenceId = this.route.snapshot.paramMap.get('conferenceId');
+    if (conferenceId) {
+      this.conferenceService.byId(conferenceId).subscribe((conf: Conference | undefined) => this._conference.set(conf));
     }
   }
 

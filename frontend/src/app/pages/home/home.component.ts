@@ -3,15 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ConferenceService } from '../../services/conference.service';
 import { Conference } from '../../model/conference.model';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router, RouterModule } from '@angular/router';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
+import { Router } from '@angular/router';
 import { UserSignService } from '../../services/usersign.service';
+import { DataViewModule } from 'primeng/dataview';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterModule, TableModule, ButtonModule],
+  imports: [CommonModule, TranslateModule, DataViewModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,10 +29,14 @@ export class HomeComponent {
     this.conferenceService.all().subscribe((confs: Conference[]) => this._conferences.set(confs));
   }
 
-  createConference() {
-    this.router.navigate(['/conference', 'create']);
-  }
   conferenceToDates(conf: Conference): string[] {
     return conf.days.map(d => d.date);
+  }
+
+  openConference(conf: Conference): void {
+    const email = this.person()?.email;
+    const isOrganizer = !!email && conf.organizerEmails.includes(email);
+    const route = isOrganizer ? ['/conference', conf.id, 'manage'] : ['/conference', conf.id];
+    void this.router.navigate(route);
   }
 }

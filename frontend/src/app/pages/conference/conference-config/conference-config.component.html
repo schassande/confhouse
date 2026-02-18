@@ -36,7 +36,6 @@
       <p-tab [value]="2">{{'CONFERENCE.CONFIG.TRACKS.TAB' | translate}}</p-tab>
       <p-tab [value]="3">{{'CONFERENCE.CONFIG.ROOMS.TAB' | translate}}</p-tab>
       <p-tab [value]="4">{{'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate}}</p-tab>
-      <p-tab [value]="5">{{'CONFERENCE.CONFIG.SESSION_SOURCE.TAB' | translate}}</p-tab>
       <!--
       <p-tab [value]="6">{{'CONFERENCE.CONFIG.PUBLISH.TAB' | translate}}</p-tab>
       -->
@@ -56,10 +55,6 @@
       </p-tabpanel>      
       <p-tabpanel [value]="4">
         <app-conference-planning-structure-config [conference]="conf"></app-conference-planning-structure-config>
-      </p-tabpanel>      
-      <p-tabpanel [value]="5">
-        <app-conference-conferencehall-config [conference]="conf"></app-conference-conferencehall-config>
-        <app-conference-conferencehall-import [conference]="conf"></app-conference-conferencehall-import>
       </p-tabpanel>      
       <p-tabpanel [value]="6">
         <app-conference-voxxrin-config [conference]="conf"></app-conference-voxxrin-config>

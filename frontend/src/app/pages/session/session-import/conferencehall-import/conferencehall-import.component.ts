@@ -4,18 +4,22 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { Conference } from '../../../../model/conference.model';
-import { ConferenceHallImportReport, ConferenceHallResetReport, ConferenceHallService } from '../../../../services/conference-hall.service';
+import {
+  ConferenceHallImportReport,
+  ConferenceHallResetReport,
+  ConferenceHallService,
+} from '../../../../services/conference-hall.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-conference-conferencehall-import',
+  selector: 'app-conferencehall-import',
   imports: [CommonModule, ButtonModule, ConfirmDialogModule, TranslateModule],
   providers: [ConfirmationService],
-  templateUrl: './conference-conferencehall-import.component.html',
-  styleUrls: ['./conference-conferencehall-import.component.scss'],
+  templateUrl: './conferencehall-import.component.html',
+  styleUrls: ['./conferencehall-import.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConferenceConferencehallImportComponent {
+export class ConferencehallImportComponent {
   readonly conference = input.required<Conference>();
   private readonly conferenceHallService = inject(ConferenceHallService);
   private readonly translateService = inject(TranslateService);

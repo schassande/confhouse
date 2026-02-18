@@ -11,13 +11,11 @@ import { ToastModule } from 'primeng/toast';
 import { TranslateModule } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { ConferenceGeneralConfigComponent } from './conference-general-config/conference-general-config.component';
-import { ConferenceConferencehallConfigComponent } from './conference-conferencehall-config/conference-conferencehall-config.component';
 import { ConferenceVoxxrinConfigComponent } from './conference-voxxrin-config/conference-voxxrin-config.component';
 import { ConferenceTracksConfigComponent } from './conference-tracks-config/conference-tracks-config.component';
 import { ConferenceSessionTypesConfigComponent } from './conference-session-types-config/conference-session-types-config.component';
 import { ConferencePlanningStructureConfigComponent } from './conference-planning-structure-config/conference-planning-structure-config.component';
 import { ConferenceRoomsConfigComponent } from './conference-rooms-config/conference-rooms-config.component';
-import { ConferenceConferencehallImportComponent } from './conference-conferencehall-import/conference-conferencehall-import.component';
 
 @Component({
   selector: 'app-conference-config',
@@ -30,8 +28,6 @@ import { ConferenceConferencehallImportComponent } from './conference-conference
     TranslateModule,
     ConferenceGeneralConfigComponent,
     ConferenceRoomsConfigComponent,
-    ConferenceConferencehallConfigComponent,
-    ConferenceConferencehallImportComponent,
     ConferenceVoxxrinConfigComponent,
     ConferenceTracksConfigComponent,
     ConferenceSessionTypesConfigComponent,
@@ -63,7 +59,7 @@ export class ConferenceConfigComponent implements OnInit {
   }
 
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id = this.route.snapshot.paramMap.get('conferenceId');
     // console.log('ConferenceConfigComponent initialized with id:', id);
     if (id) {
       this.conferenceService.byId(id).subscribe({

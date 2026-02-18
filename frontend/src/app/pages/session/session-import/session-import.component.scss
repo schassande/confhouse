@@ -1,0 +1,58 @@
+.session-import {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 12px;
+}
+
+.session-import :where(.meta-row) {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.session-import :where(.actions-row) {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.session-import :where(.label) {
+  width: 280px;
+  font-weight: 600;
+}
+
+.session-import :where(.report-box) {
+  border-top: 1px solid #ddd;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-import :where(.report-table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.session-import :where(.report-table th, .report-table td) {
+  border: 1px solid #ddd;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.session-import :where(.report-table th) {
+  background-color: #f8f9fa;
+  font-weight: 700;
+}
+
+.session-import :where(.error-box) {
+  color: #b42318;
+  background-color: #fef3f2;
+  border: 1px solid #fecdca;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+}

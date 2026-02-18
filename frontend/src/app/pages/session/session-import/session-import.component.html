@@ -1,0 +1,10 @@
+<section class="session-import">
+  @if (effectiveConference(); as conf) {
+    <app-conferencehall-config [conference]="conf"></app-conferencehall-config>
+    <app-conferencehall-import [conference]="conf"></app-conferencehall-import>
+  } @else if (loading()) {
+    <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
+  } @else {
+    <p>{{ 'CONFERENCE.NOT_FOUND' | translate }}</p>
+  }
+</section>

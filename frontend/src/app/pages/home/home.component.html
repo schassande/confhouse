@@ -1,41 +1,33 @@
 <section class="home-container">
   <h1>{{ 'HOME.TITLE' | translate }}</h1>
-  <div class="home-actions">
-    <button pButton type="button" icon="pi pi-plus" (click)="createConference()" [label]="'HOME.CREATE_CONF' | translate" class="p-button-success"></button>
-  </div>
   @if (conferences() === undefined) {
     <p>{{ 'HOME.LOADING' | translate }}</p>
   } @else if (conferences()?.length === 0) {
     <p>{{ 'HOME.NO_CONFS' | translate }}</p>
   } @else {
-    <p-table [value]="conferences() || []" styleClass="p-datatable-sm" [paginator]="true" [rows]="5" [responsiveLayout]="'scroll'">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>{{ 'HOME.CONF_NAME' | translate }}</th>
-          <th>{{ 'HOME.CONF_DATES' | translate }}</th>
-          <th>{{ 'HOME.CONF_LOCATION' | translate }}</th>
-          <th></th>
-        </tr>
+    <p-dataview [value]="conferences() || []" [paginator]="true" [rows]="12" layout="list">
+      <ng-template #list let-items>
+        <div class="conference-list">
+          @for (conf of items; track conf.id) {
+            <article
+              class="conference-card"
+              role="button"
+              tabindex="0"
+              (click)="openConference(conf)"
+              (keydown.enter)="openConference(conf)"
+              (keydown.space)="openConference(conf); $event.preventDefault()"
+            >
+              <h2>{{ conf.name }}</h2>
+              <p class="conference-location">{{ conf.location }}</p>
+              <ul class="conference-dates">
+                @for (date of conferenceToDates(conf); track date) {
+                  <li>{{ date }}</li>
+                }
+              </ul>
+            </article>
+          }
+        </div>
       </ng-template>
-      <ng-template pTemplate="body" let-conf>
-        <tr>
-          <td><strong>{{ conf.name }}</strong></td>
-          <td>
-            <ul>
-              @for(date of conferenceToDates(conf); track date) {
-                <li>{{ date }}</li>
-              }
-            </ul>
-          </td>
-          <td>{{ conf.location }}</td>
-          <td>
-            <button pButton type="button" icon="pi pi-search" class="p-button-text p-button-sm" [routerLink]="['/conference', conf.id]"></button>
-            @if (person() && (person()!.isPlatformAdmin || conf.organizerEmails.includes(person()!.email))) {
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" [routerLink]="['/conference', conf.id, 'edit']"></button>
-            }
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+    </p-dataview>
   }
 </section>

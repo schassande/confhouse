@@ -1,0 +1,11 @@
+<section class="conference-manage-container">
+  <h1>Gestion de la conference</h1>
+  <p class="subtitle">Choisissez l'action a effectuer.</p>
+
+  <div class="actions" *ngIf="conferenceId() as id">
+    <a class="action-link" [routerLink]="['/conference', id, 'edit']">Configuration generale</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'sessions']">Gerer les sessions</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'sessions', 'import']">Importer les sessions</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'speakers']">Gerer les speakers</a>
+  </div>
+</section>

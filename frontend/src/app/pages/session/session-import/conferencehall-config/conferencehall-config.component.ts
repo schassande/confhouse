@@ -9,84 +9,13 @@ import { debounceTime, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
 
 @Component({
-  selector: 'app-conference-conferencehall-config',
+  selector: 'app-conferencehall-config',
   imports: [CommonModule, ReactiveFormsModule, TranslateModule, InputTextModule],
-  template: `
-    <div class="conferencehall-config">
-      @if (currentForm(); as form) {
-      <form [formGroup]="form" class="config-form">
-        <div class="form-section">
-          <label for="conferenceHallName" class="form-label">
-            {{ 'CONFERENCE.CONFIG.CONFERENCEHALL.CONFERENCE_NAME' | translate }}
-          </label>
-          <input
-            id="conferenceHallName"
-            pInputText
-            formControlName="conferenceHallName"
-            type="text"
-            class="w-full"
-          />
-          @if (form.get('conferenceHallName')?.invalid && form.get('conferenceHallName')?.touched) {
-          <small class="error-message">
-            {{ 'VALIDATION.REQUIRED' | translate }}
-          </small>
-          }
-        </div>
-
-        <div class="form-section">
-          <label for="token" class="form-label">
-            {{ 'CONFERENCE.CONFIG.CONFERENCEHALL.TOKEN' | translate }}
-          </label>
-          <input
-            id="token"
-            pInputText
-            formControlName="token"
-            type="text"
-            autocomplete="off"
-            class="w-full"
-          />
-          @if (form.get('token')?.invalid && form.get('token')?.touched) {
-          <small class="error-message">
-            {{ 'VALIDATION.REQUIRED' | translate }}
-          </small>
-          }
-        </div>
-
-        <div class="form-section format-mapping-section">
-          <label class="form-label">
-            Mapping formats
-          </label>
-          <div class="mapping-table-container">
-            @if (conference().sessionTypes.length) {
-            <div class="mapping-table" formGroupName="sessionTypeFormatMapping">
-              <div class="mapping-header">Type de session</div>
-              <div class="mapping-header">Format Conference Hall</div>
-              @for (sessionType of conference().sessionTypes; track sessionType.id) {
-              <div class="mapping-cell mapping-session-type">{{ sessionType.name }}</div>
-              <div class="mapping-cell">
-                <input
-                  pInputText
-                  [formControlName]="sessionType.id"
-                  type="text"
-                  class="w-full"
-                  [placeholder]="'Ex: Quickie, Deep Dive...'"
-                />
-              </div>
-              }
-            </div>
-            } @else {
-            <small>Aucun type de session configure.</small>
-            }
-          </div>
-        </div>
-      </form>
-      }
-    </div>
-  `,
-  styleUrls: ['./conference-conferencehall-config.component.scss'],
+  templateUrl: './conferencehall-config.component.html',
+  styleUrls: ['./conferencehall-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConferenceConferencehallConfigComponent implements OnInit {
+export class ConferencehallConfigComponent implements OnInit {
   readonly conference = input.required<Conference>();
 
   private readonly fb = inject(FormBuilder);
