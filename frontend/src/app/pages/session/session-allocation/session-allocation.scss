@@ -1,5 +1,5 @@
 $tick-width: 75px;
-$tick-height: 50px;
+$slot-row-height: 70px;
 $room-width: 250px;
 $header-height: 40px;
 
@@ -9,6 +9,7 @@ $header-height: 40px;
 
 .page-title {
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .allocation-layout {
@@ -30,6 +31,11 @@ $header-height: 40px;
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.available-panel h3 {
+  padding-top: 15px;
+  text-align: center;
 }
 
 .day-planning-section + .day-planning-section {
@@ -58,8 +64,8 @@ $header-height: 40px;
   align-items: center;
   justify-content: center;
   width: calc(#{$room-width} - 4px);
-  top: calc((#{$tick-height} * var(--start-tick, 0)) + 2px);
-  height: max(calc((#{$tick-height} * var(--duration, 1)) - 4px), 3rem);
+  top: calc((#{$slot-row-height} * var(--start-tick, 0)) + 2px);
+  height: calc(#{$slot-row-height} - 4px);
   left: calc((#{$room-width} * var(--room-col-idx, 0)) + 2px);
   overflow: hidden;
   z-index: 2;
@@ -128,7 +134,7 @@ $header-height: 40px;
 .planning {
   position: relative;
   width: calc($tick-width + ($room-width * var(--nb-rooms, 1)));
-  height: calc($header-height + ($tick-height * var(--nb-ticks, 1)));
+  height: calc($header-height + ($slot-row-height * var(--nb-ticks, 1)));
 }
 
 .room-grid,
@@ -168,7 +174,7 @@ $header-height: 40px;
 
 .tick {
   width: $tick-width;
-  height: $tick-height;
+  height: $slot-row-height;
   border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: flex-start;
@@ -183,7 +189,7 @@ $header-height: 40px;
 }
 
 .tick-line {
-  height: $tick-height;
+  height: $slot-row-height;
   border-top: 1px solid #e2e8f0;
   border-left: 1px solid #e2e8f0;
   background: #ffffff;
@@ -200,9 +206,13 @@ $header-height: 40px;
     overflow: visible;
   }
 
+  .planning {
+    width: calc($tick-width + (220px * var(--nb-rooms, 1)));
+  }
+
   .slot-card {
-    width: 220px;
-    left: calc(220px * var(--room-col-idx, 0));
+    width: calc(220px - 4px);
+    left: calc((220px * var(--room-col-idx, 0)) + 2px);
   }
 
   .room-grid {

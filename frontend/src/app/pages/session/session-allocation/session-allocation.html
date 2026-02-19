@@ -48,14 +48,14 @@
         <app-unallocated-session-list
           [items]="unallocatedSessionItems()"
           [draggable]="true"
+          [dropEnabled]="true"
           (sessionDragStarted)="onUnallocatedDragStart($event.event, $event.sessionId)"
           (sessionDragEnded)="onDragEnd()"
+          (listDropRequested)="onUnallocatedDrop($event)"
         ></app-unallocated-session-list>
       </aside>
 
       <div class="planning-panel">
-        <h3>{{ 'SESSION.ALLOCATION.PLANNING' | translate }}</h3>
-
         @for (dayPlanning of dayPlanningViews(); track dayPlanning.day.id) {
           <section class="day-planning-section">
             <div class="day-header">
@@ -65,7 +65,10 @@
                 type="button"
                 size="small"
                 severity="danger"
-                [label]="'SESSION.ALLOCATION.RESET_DAY' | translate"
+                icon="pi pi-trash"
+                [text]="true"
+                [rounded]="true"
+                [ariaLabel]="'SESSION.ALLOCATION.RESET_DAY' | translate"
                 (click)="resetDayAllocations(dayPlanning.day)"
                 [disabled]="saving()"
               ></button>
