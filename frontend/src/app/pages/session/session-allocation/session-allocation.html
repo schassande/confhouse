@@ -84,7 +84,7 @@
 
                   @for (tick of dayPlanning.timelineTicks; track tick.label) {
                     <div class="tick" aria-hidden="true">
-                      @if (tick.main) {
+                      @if (tick.main || $first) {
                         <span class="tick-label">{{ tick.label }}</span>
                       }
                     </div>

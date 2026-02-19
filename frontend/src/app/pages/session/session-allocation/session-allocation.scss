@@ -1,3 +1,8 @@
+$tick-width: 75px;
+$tick-height: 50px;
+$room-width: 250px;
+$header-height: 40px;
+
 .session-allocation-page {
   padding: 1rem;
 }
@@ -30,7 +35,7 @@
 }
 
 .day-planning-section + .day-planning-section {
-  margin-top: 1rem;
+  margin-top: 0.7rem;
 }
 
 .day-header {
@@ -47,13 +52,13 @@
 .slot-card {
   border: 1px solid #94a3b8;
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0.4rem;
   background: #ffffff;
   position: absolute;
-  width: 250px;
-  top: calc(30px * var(--start-tick, 0));
-  height: calc(30px * var(--duration, 1));
-  left: calc(250px * var(--room-col-idx, 0));
+  width: $room-width;
+  top: calc(#{$tick-height} * var(--start-tick, 0));
+  height: calc(#{$tick-height} * var(--duration, 1));
+  left: calc(#{$room-width} * var(--room-col-idx, 0));
   overflow: hidden;
   z-index: 2;
   cursor: pointer;
@@ -106,12 +111,6 @@
 .picker-actions {
   margin-bottom: 0.7rem;
 }
-
-/* Planning grid */
-$tick-width: 75px;
-$tick-height: 30px;
-$room-width: 250px;
-$header-height: 44px;
 
 .planning-parent {
   overflow-x: auto;
@@ -174,7 +173,7 @@ $header-height: 44px;
 }
 
 .tick-label {
-  padding-top: 3px;
+  padding-top: 2px;
 }
 
 .tick-line {

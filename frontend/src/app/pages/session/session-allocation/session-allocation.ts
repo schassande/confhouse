@@ -45,6 +45,11 @@ interface TimelineTick {
   main: boolean;
 }
 
+interface TimelineRange {
+  start: number;
+  end: number;
+}
+
 interface DayPlanningView {
   day: Day;
   enabledRooms: Room[];
@@ -177,8 +182,9 @@ export class SessionAllocation implements OnInit {
     const slotTypeById = this.slotTypeById();
     return (conference.days ?? []).map((day) => {
       const enabledRooms = this.computeEnabledRooms(day, conference);
-      const timelineTicks = this.computeTimelineTicks(day);
-      const slotViews = this.computeSlotViews(day, enabledRooms, slotTypeById);
+      const timelineRange = this.computeTimelineRange(day, enabledRooms, slotTypeById);
+      const timelineTicks = this.computeTimelineTicks(timelineRange);
+      const slotViews = this.computeSlotViews(day, enabledRooms, slotTypeById, timelineRange.start);
       return {
         day,
         enabledRooms,
@@ -700,17 +706,48 @@ export class SessionAllocation implements OnInit {
     return conference.rooms.filter((room) => room.isSessionRoom && !disabledRooms.has(room.id));
   }
 
-  private computeTimelineTicks(day: Day): TimelineTick[] {
-    const start = this.computeTimeOfDay(day, day.beginTime);
-    const end = this.computeTimeOfDay(day, day.endTime);
+  private computeTimelineRange(day: Day, enabledRooms: Room[], slotTypeById: Map<string, SlotType>): TimelineRange {
+    const dayStart = this.computeTimeOfDay(day, day.beginTime);
+    const dayEnd = this.computeTimeOfDay(day, day.endTime);
+    const enabledRoomIds = new Set(enabledRooms.map((room) => room.id));
+    const sessionSlots = day.slots.filter(
+      (slot) => !!slotTypeById.get(slot.slotTypeId)?.isSession && enabledRoomIds.has(slot.roomId)
+    );
+
+    if (!sessionSlots.length) {
+      return {
+        start: dayStart,
+        end: dayEnd,
+      };
+    }
+
+    let minStart = Number.POSITIVE_INFINITY;
+    let maxEnd = Number.NEGATIVE_INFINITY;
+    sessionSlots.forEach((slot) => {
+      const slotStart = this.computeTimeOfDay(day, slot.startTime);
+      const slotEnd = slotStart + (slot.duration * 60000);
+      minStart = Math.min(minStart, slotStart);
+      maxEnd = Math.max(maxEnd, slotEnd);
+    });
+
+    const stepMs = this.tickStep * 60000;
+    const alignedStart = dayStart + (Math.floor((minStart - dayStart) / stepMs) * stepMs);
+    const alignedEnd = dayStart + (Math.ceil((maxEnd - dayStart) / stepMs) * stepMs);
+
+    return {
+      start: Math.max(dayStart, alignedStart),
+      end: Math.min(dayEnd, alignedEnd),
+    };
+  }
+
+  private computeTimelineTicks(range: TimelineRange): TimelineTick[] {
     const ticks: TimelineTick[] = [];
-    let idx = 0;
-    for (let current = start; current <= end; current += this.tickStep * 60000) {
+    for (let current = range.start; current <= range.end; current += this.tickStep * 60000) {
+      const currentDate = new Date(current);
       ticks.push({
-        label: this.conferenceService.formatHour(new Date(current)),
-        main: idx % 2 === 0,
+        label: this.conferenceService.formatHour(currentDate),
+        main: currentDate.getMinutes() === 0,
       });
-      idx += 1;
       if (ticks.length > 1000) {
         break;
       }
@@ -718,9 +755,13 @@ export class SessionAllocation implements OnInit {
     return ticks;
   }
 
-  private computeSlotViews(day: Day, enabledRooms: Room[], slotTypeById: Map<string, SlotType>): SlotView[] {
+  private computeSlotViews(
+    day: Day,
+    enabledRooms: Room[],
+    slotTypeById: Map<string, SlotType>,
+    timelineStart: number
+  ): SlotView[] {
     const roomIndexById = new Map<string, number>(enabledRooms.map((room, idx) => [room.id, idx]));
-    const dayStart = this.computeTimeOfDay(day, day.beginTime);
 
     return day.slots
       .filter((slot) => !!slotTypeById.get(slot.slotTypeId)?.isSession)
@@ -731,7 +772,7 @@ export class SessionAllocation implements OnInit {
         }
         const room = enabledRooms[roomColIdx];
         const slotStart = this.computeTimeOfDay(day, slot.startTime);
-        const deltaMinutes = (slotStart - dayStart) / 60000;
+        const deltaMinutes = (slotStart - timelineStart) / 60000;
         return {
           key: this.toSlotKey(day.id, slot.id, slot.roomId),
           day,
