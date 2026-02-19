@@ -93,6 +93,17 @@
   "CONFERENCE": {
     "LOADING": "Chargement de la conférence...",
     "NOT_FOUND": "Conférence non trouvée",
+    "MANAGE": {
+      "TITLE": "Gestion de la conférence",
+      "SUBTITLE": "Choisissez l'action à effectuer.",
+      "ACTIONS": {
+        "CONFIG": "Configuration générale",
+        "IMPORT": "Importer les sessions",
+        "ALLOCATION": "Allouer les sessions",
+        "SESSIONS": "Gérer les sessions",
+        "SPEAKERS": "Gérer les speakers"
+      }
+    },
     "CONFIG": {
       "TITLE": "Configuration de la conférence",
       "GENERAL": {

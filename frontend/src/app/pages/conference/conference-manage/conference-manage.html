@@ -1,12 +1,27 @@
 <section class="conference-manage-container">
-  <h1>Gestion de la conference</h1>
-  <p class="subtitle">Choisissez l'action a effectuer.</p>
+  <h1>{{ 'CONFERENCE.MANAGE.TITLE' | translate }}</h1>
+  <p class="subtitle">{{ 'CONFERENCE.MANAGE.SUBTITLE' | translate }}</p>
 
   <div class="actions" *ngIf="conferenceId() as id">
-    <a class="action-link" [routerLink]="['/conference', id, 'edit']">Configuration generale</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'sessions', 'import']">Importer les sessions</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'allocation']">Allouer les sessions</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'sessions']">Gerer les sessions</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'speakers']">Gerer les speakers</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'edit']">
+      <i class="pi pi-cog"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.CONFIG' | translate }}</span>
+    </a>
+    <a class="action-link" [routerLink]="['/conference', id, 'sessions', 'import']">
+      <i class="pi pi-download"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.IMPORT' | translate }}</span>
+    </a>
+    <a class="action-link" [routerLink]="['/conference', id, 'allocation']">
+      <i class="pi pi-calendar"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.ALLOCATION' | translate }}</span>
+    </a>
+    <a class="action-link" [routerLink]="['/conference', id, 'sessions']">
+      <i class="pi pi-list"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.SESSIONS' | translate }}</span>
+    </a>
+    <a class="action-link" [routerLink]="['/conference', id, 'speakers']">
+      <i class="pi pi-users"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.SPEAKERS' | translate }}</span>
+    </a>
   </div>
 </section>
