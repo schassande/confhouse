@@ -1,0 +1,43 @@
+<div class="count">
+  {{
+    countKey()
+      | translate
+        : {
+            count: items().length
+          }
+  }}
+</div>
+
+@if (!items().length) {
+  <p class="empty-message">{{ emptyKey() | translate }}</p>
+} @else {
+  <div class="session-list-wrapper">
+    <p-dataview [value]="items()" layout="list" class="session-dataview">
+      <ng-template #list let-items>
+        <div class="session-list">
+          @for (item of items; track item.sessionId) {
+            <div
+              class="session-item"
+              [ngStyle]="{
+                'background-color': item.backgroundColor,
+                color: item.textColor,
+                'border-color': item.textColor
+              }"
+              role="button"
+              tabindex="0"
+              (click)="onItemClick(item.sessionId)"
+              (keydown.enter)="onItemClick(item.sessionId)"
+              [draggable]="draggable()"
+              (dragstart)="onDragStart($event, item.sessionId)"
+              (dragend)="onDragEnd()"
+            >
+              <div class="session-title">{{ item.title }}</div>
+              <div class="session-meta">{{ item.speakersLabel }}</div>
+              <div class="session-meta">{{ item.sessionTypeLabel }}</div>
+            </div>
+          }
+        </div>
+      </ng-template>
+    </p-dataview>
+  </div>
+}

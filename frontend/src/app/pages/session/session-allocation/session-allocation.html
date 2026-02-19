@@ -1,0 +1,176 @@
+<section class="session-allocation-page">
+  <p-confirmdialog></p-confirmdialog>
+  <h2 class="page-title">
+    {{ 'SESSION.ALLOCATION.TITLE' | translate }}
+  </h2>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() | translate }}</p>
+  } @else if (!days().length) {
+    <p class="empty-message">{{ 'SESSION.ALLOCATION.NO_DAYS' | translate }}</p>
+  } @else {
+    <div class="allocation-layout">
+      <aside class="available-panel">
+        <h3>{{ 'SESSION.ALLOCATION.UNALLOCATED' | translate }}</h3>
+
+        <div class="filters">
+          <input
+            pInputText
+            type="text"
+            [ngModel]="unallocatedSearchText()"
+            (ngModelChange)="unallocatedSearchText.set($event)"
+            [placeholder]="'SESSION.ALLOCATION.FILTER_KEYWORD' | translate"
+          />
+
+          <p-multiselect
+            [options]="sessionTypeOptions()"
+            [ngModel]="selectedSessionTypeIds()"
+            (ngModelChange)="selectedSessionTypeIds.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            display="chip"
+            [showToggleAll]="false"
+            [placeholder]="'SESSION.ALLOCATION.FILTER_SESSION_TYPE' | translate"
+          ></p-multiselect>
+
+          <p-multiselect
+            [options]="trackOptions()"
+            [ngModel]="selectedTrackIds()"
+            (ngModelChange)="selectedTrackIds.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            display="chip"
+            [showToggleAll]="false"
+            [placeholder]="'SESSION.ALLOCATION.FILTER_TRACK' | translate"
+          ></p-multiselect>
+        </div>
+
+        <app-unallocated-session-list
+          [items]="unallocatedSessionItems()"
+          [draggable]="true"
+          (sessionDragStarted)="onUnallocatedDragStart($event.event, $event.sessionId)"
+          (sessionDragEnded)="onDragEnd()"
+        ></app-unallocated-session-list>
+      </aside>
+
+      <div class="planning-panel">
+        <h3>{{ 'SESSION.ALLOCATION.PLANNING' | translate }}</h3>
+
+        @for (dayPlanning of dayPlanningViews(); track dayPlanning.day.id) {
+          <section class="day-planning-section">
+            <div class="day-header">
+              <h4 class="day-title">{{ dayLabel(dayPlanning.day) }}</h4>
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="danger"
+                [label]="'SESSION.ALLOCATION.RESET_DAY' | translate"
+                (click)="resetDayAllocations(dayPlanning.day)"
+                [disabled]="saving()"
+              ></button>
+            </div>
+            <div class="planning-parent">
+              <div
+                class="planning"
+                [style.--nb-rooms]="dayPlanning.enabledRooms.length"
+                [style.--nb-ticks]="dayPlanning.timelineTicks.length"
+              >
+                <div class="room-grid" [style.--nb-rooms]="dayPlanning.enabledRooms.length">
+                  <div class="header-cell timeline-header-cell"></div>
+                  @for (room of dayPlanning.enabledRooms; track room.id) {
+                    <div class="header-cell room-header-cell">{{ room.name }}</div>
+                  }
+
+                  @for (tick of dayPlanning.timelineTicks; track tick.label) {
+                    <div class="tick" aria-hidden="true">
+                      @if (tick.main) {
+                        <span class="tick-label">{{ tick.label }}</span>
+                      }
+                    </div>
+                    @for (room of dayPlanning.enabledRooms; track room.id) {
+                      <div class="tick-line" aria-hidden="true"></div>
+                    }
+                  }
+                </div>
+
+                <div class="slots-layer">
+                  @for (slotView of dayPlanning.slotViews; track slotView.key) {
+                    <div
+                      class="slot-card"
+                      [ngStyle]="slotStyle(slotView)"
+                      [class.drop-target]="dropTargetSlotKey() === slotView.key"
+                      [draggable]="!!selectedSessionId(slotView)"
+                      (dragstart)="onSlotDragStart($event, slotView)"
+                      (dragend)="onDragEnd()"
+                      (dragover)="onDragOver($event, slotView)"
+                      (dragenter)="onDragEnter(slotView.key)"
+                      (dragleave)="onDragLeave(slotView.key)"
+                      (drop)="onSlotDrop($event, slotView)"
+                      (click)="openSessionPicker(slotView)"
+                    >
+                      <span class="slot-text">{{ slotText(slotView) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+
+    <p-dialog
+      [modal]="true"
+      [visible]="sessionPickerVisible()"
+      [style]="{ width: '40rem' }"
+      [header]="'SESSION.ALLOCATION.PICKER_TITLE' | translate"
+      (onHide)="closeSessionPicker()"
+    >
+      @if (selectedSlotForPicker(); as slotView) {
+        <div class="picker-meta">
+          {{ slotView.room.name }} | {{ slotView.slot.startTime }} - {{ slotView.slot.endTime }}
+        </div>
+
+        <div class="picker-filters">
+          <input
+            pInputText
+            type="text"
+            [ngModel]="pickerSearchText()"
+            (ngModelChange)="pickerSearchText.set($event)"
+            [placeholder]="'SESSION.ALLOCATION.FILTER_KEYWORD' | translate"
+          />
+
+          <p-multiselect
+            [options]="trackOptions()"
+            [ngModel]="selectedPickerTrackIds()"
+            (ngModelChange)="selectedPickerTrackIds.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            display="chip"
+            [showToggleAll]="false"
+            [placeholder]="'SESSION.ALLOCATION.FILTER_TRACK' | translate"
+          ></p-multiselect>
+        </div>
+
+        <div class="picker-actions">
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            [label]="'SESSION.ALLOCATION.CLEAR_SLOT' | translate"
+            [disabled]="!selectedSessionId(slotView)"
+            (click)="onPickerClearSlot()"
+          ></button>
+        </div>
+
+        <app-unallocated-session-list
+          [items]="pickerSessionItems()"
+          [draggable]="false"
+          (sessionSelected)="onPickerSessionSelected($event)"
+          [countKey]="'SESSION.ALLOCATION.PICKER_COUNT'"
+        ></app-unallocated-session-list>
+      }
+    </p-dialog>
+  }
+</section>

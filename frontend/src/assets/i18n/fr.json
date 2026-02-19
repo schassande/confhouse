@@ -315,6 +315,26 @@
       "ERROR_LOAD": "Impossible de charger la session",
       "ERROR_SAVE": "Impossible de sauvegarder la session"
     },
+    "ALLOCATION": {
+      "TITLE": "Allocation des sessions",
+      "PLANNING": "Planning",
+      "UNALLOCATED": "Sessions non allouees",
+      "NO_DAYS": "Aucun jour de planning defini.",
+      "NO_SESSION_SLOTS": "Aucun slot de session pour cette journee.",
+      "FILTER_SESSION_TYPE": "Types de session",
+      "FILTER_TRACK": "Tracks",
+      "FILTER_KEYWORD": "Mot-cle (min 3 caracteres)",
+      "COUNT": "{{count}} session(s) disponible(s)",
+      "PICKER_COUNT": "{{count}} session(s) disponible(s) pour ce slot",
+      "NO_UNALLOCATED": "Aucune session non allouee.",
+      "SELECT_PLACEHOLDER": "Selectionner une session",
+      "NONE": "Aucune session",
+      "PICKER_TITLE": "Choisir une session pour le slot",
+      "CLEAR_SLOT": "Vider le slot",
+      "RESET_DAY": "Reset",
+      "CONFIRM_RESET_DAY": "Confirmez-vous la suppression de toutes les allocations de la journee ?",
+      "ERROR_NOT_FOUND": "Conference introuvable"
+    },
     "STATUS": {
       "UNKNOWN": "Inconnu",
       "DRAFT": "Brouillon",

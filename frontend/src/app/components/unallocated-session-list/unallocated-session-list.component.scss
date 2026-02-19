@@ -1,0 +1,40 @@
+.count {
+  margin: 0.8rem 0 0.4rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.session-list-wrapper {
+  max-height: 800px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.session-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.session-item {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.session-title {
+  font-weight: 700;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.session-meta {
+  font-size: 0.82rem;
+}
+
+.empty-message {
+  color: #64748b;
+  margin: 0.2rem 0;
+}

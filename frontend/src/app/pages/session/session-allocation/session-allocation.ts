@@ -1,0 +1,897 @@
+import { CommonModule } from '@angular/common';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { catchError, firstValueFrom, forkJoin, map, of, take } from 'rxjs';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
+import {
+  UnallocatedSessionListComponent,
+  UnallocatedSessionListItem,
+} from '../../../components/unallocated-session-list/unallocated-session-list.component';
+import { Conference, Day, Room, SessionType, Slot, Track } from '../../../model/conference.model';
+import { SlotType } from '../../../model/slot-type.model';
+import { Session, SessionAllocation as SessionAllocationModel, SessionStatus } from '../../../model/session.model';
+import { ConferenceService } from '../../../services/conference.service';
+import { PersonService } from '../../../services/person.service';
+import { SessionAllocationService } from '../../../services/session-allocation.service';
+import { SessionService } from '../../../services/session.service';
+import { SlotTypeService } from '../../../services/slot-type.service';
+
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
+interface SlotView {
+  key: string;
+  day: Day;
+  room: Room;
+  slot: Slot;
+  roomColIdx: number;
+  startTick: number;
+  durationTick: number;
+}
+
+interface TimelineTick {
+  label: string;
+  main: boolean;
+}
+
+interface DayPlanningView {
+  day: Day;
+  enabledRooms: Room[];
+  timelineTicks: TimelineTick[];
+  slotViews: SlotView[];
+  hasSessionSlots: boolean;
+}
+
+interface DragPayload {
+  sessionId: string;
+  sourceSlotKey?: string;
+}
+
+@Component({
+  selector: 'app-session-allocation',
+  imports: [
+    ButtonModule,
+    CommonModule,
+    ConfirmDialogModule,
+    DialogModule,
+    FormsModule,
+    InputTextModule,
+    MultiSelectModule,
+    UnallocatedSessionListComponent,
+    TranslateModule,
+  ],
+  providers: [ConfirmationService],
+  templateUrl: './session-allocation.html',
+  styleUrl: './session-allocation.scss',
+})
+export class SessionAllocation implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly translateService = inject(TranslateService);
+  private readonly conferenceService = inject(ConferenceService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly personService = inject(PersonService);
+  private readonly sessionService = inject(SessionService);
+  private readonly sessionAllocationService = inject(SessionAllocationService);
+  private readonly slotTypeService = inject(SlotTypeService);
+
+  readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
+  readonly loading = signal(true);
+  readonly saving = signal(false);
+  readonly errorMessage = signal('');
+  readonly conference = signal<Conference | undefined>(undefined);
+  readonly sessions = signal<Session[]>([]);
+  readonly speakerDisplayById = signal<Map<string, string>>(new Map());
+  readonly allocations = signal<SessionAllocationModel[]>([]);
+  readonly slotTypes = signal<SlotType[]>([]);
+  readonly selectedSessionTypeIds = signal<string[]>([]);
+  readonly selectedTrackIds = signal<string[]>([]);
+  readonly unallocatedSearchText = signal('');
+  readonly draggingPayload = signal<DragPayload | null>(null);
+  readonly dropTargetSlotKey = signal('');
+  readonly sessionPickerVisible = signal(false);
+  readonly selectedSlotForPicker = signal<SlotView | undefined>(undefined);
+  readonly selectedPickerTrackIds = signal<string[]>([]);
+  readonly pickerSearchText = signal('');
+  private readonly tickStep = 30;
+
+  readonly days = computed(() => this.conference()?.days ?? []);
+
+  readonly sessionTypeOptions = computed<SelectOption[]>(() =>
+    (this.conference()?.sessionTypes ?? []).map((sessionType) => ({
+      label: sessionType.name,
+      value: sessionType.id,
+    }))
+  );
+
+  readonly trackOptions = computed<SelectOption[]>(() =>
+    (this.conference()?.tracks ?? []).map((track) => ({
+      label: track.name,
+      value: track.id,
+    }))
+  );
+
+  private readonly sessionById = computed(() => {
+    const map = new Map<string, Session>();
+    this.sessions().forEach((session) => {
+      if (session.id) {
+        map.set(session.id, session);
+      }
+    });
+    return map;
+  });
+
+  private readonly slotTypeById = computed(() => {
+    const map = new Map<string, SlotType>();
+    this.slotTypes().forEach((slotType) => map.set(slotType.id, slotType));
+    return map;
+  });
+
+  private readonly trackById = computed(() => {
+    const map = new Map<string, Track>();
+    (this.conference()?.tracks ?? []).forEach((track) => map.set(this.normalizeKey(track.id), track));
+    return map;
+  });
+
+  private readonly sessionTypeById = computed(() => {
+    const map = new Map<string, SessionType>();
+    (this.conference()?.sessionTypes ?? []).forEach((sessionType) => map.set(sessionType.id, sessionType));
+    return map;
+  });
+
+  readonly allocationBySlotKey = computed(() => {
+    const map = new Map<string, SessionAllocationModel>();
+    this.allocations().forEach((allocation) => {
+      map.set(this.toSlotKey(allocation.dayId, allocation.slotId, allocation.roomId), allocation);
+    });
+    return map;
+  });
+
+  readonly allocationBySessionId = computed(() => {
+    const map = new Map<string, SessionAllocationModel>();
+    this.allocations().forEach((allocation) => {
+      if (!map.has(allocation.sessionId)) {
+        map.set(allocation.sessionId, allocation);
+      }
+    });
+    return map;
+  });
+
+  readonly dayPlanningViews = computed<DayPlanningView[]>(() => {
+    const conference = this.conference();
+    if (!conference) {
+      return [];
+    }
+    const slotTypeById = this.slotTypeById();
+    return (conference.days ?? []).map((day) => {
+      const enabledRooms = this.computeEnabledRooms(day, conference);
+      const timelineTicks = this.computeTimelineTicks(day);
+      const slotViews = this.computeSlotViews(day, enabledRooms, slotTypeById);
+      return {
+        day,
+        enabledRooms,
+        timelineTicks,
+        slotViews,
+        hasSessionSlots: slotViews.length > 0,
+      };
+    });
+  });
+
+  readonly unallocatedSessions = computed<Session[]>(() => {
+    const allocatedSessionIds = new Set(this.allocations().map((allocation) => allocation.sessionId));
+    const filteredSessionTypeIds = this.selectedSessionTypeIds();
+    const filteredTrackIds = this.selectedTrackIds();
+    const allowedStatuses = new Set<SessionStatus>(['ACCEPTED', 'SPEAKER_CONFIRMED']);
+    const statusAndTypeFiltered = this.sessions()
+      .filter((session) => {
+        if (!session.id || allocatedSessionIds.has(session.id)) {
+          return false;
+        }
+        const status = session.conference?.status;
+        if (!status || !allowedStatuses.has(status)) {
+          return false;
+        }
+        const sessionTypeId = session.conference?.sessionTypeId ?? '';
+        const trackId = session.conference?.trackId ?? '';
+        if (filteredSessionTypeIds.length > 0 && !filteredSessionTypeIds.includes(sessionTypeId)) {
+          return false;
+        }
+        if (filteredTrackIds.length > 0 && !filteredTrackIds.includes(trackId)) {
+          return false;
+        }
+        return true;
+      });
+
+    return this.filterSessionsByKeyword(statusAndTypeFiltered, this.unallocatedSearchText())
+      .sort((a, b) => a.title.localeCompare(b.title));
+  });
+
+  readonly unallocatedSessionItems = computed<UnallocatedSessionListItem[]>(() =>
+    this.unallocatedSessions().map((session) => ({
+      sessionId: session.id,
+      title: session.title,
+      speakersLabel: this.sessionSpeakersLabel(session),
+      sessionTypeLabel: this.sessionTypeLabel(session),
+      backgroundColor: this.sessionTrackColor(session),
+      textColor: this.sessionTrackTextColor(session),
+    }))
+  );
+
+  readonly pickerSessionItems = computed<UnallocatedSessionListItem[]>(() => {
+    const slot = this.selectedSlotForPicker();
+    const pickerTrackIds = this.selectedPickerTrackIds();
+    const baseSessions = slot
+      ? this.unallocatedSessions().filter((session) => (session.conference?.sessionTypeId ?? '') === slot.slot.sessionTypeId)
+      : this.unallocatedSessions();
+    const filteredByTrack = pickerTrackIds.length > 0
+      ? baseSessions.filter((session) => pickerTrackIds.includes(session.conference?.trackId ?? ''))
+      : baseSessions;
+    const filteredByKeyword = this.filterSessionsByKeyword(filteredByTrack, this.pickerSearchText());
+    const items = filteredByKeyword.map((session) => ({
+      sessionId: session.id,
+      title: session.title,
+      speakersLabel: this.sessionSpeakersLabel(session),
+      sessionTypeLabel: this.sessionTypeLabel(session),
+      backgroundColor: this.sessionTrackColor(session),
+      textColor: this.sessionTrackTextColor(session),
+    }));
+    if (!slot) return items;
+
+    const current = this.selectedSession(slot);
+    if (!current || !current.id) {
+      return items;
+    }
+    if (!this.isSessionTypeCompatible(current, slot)) {
+      return items;
+    }
+    if (items.some((item) => item.sessionId === current.id)) {
+      return items;
+    }
+    return [
+      {
+        sessionId: current.id,
+        title: current.title,
+        speakersLabel: this.sessionSpeakersLabel(current),
+        sessionTypeLabel: this.sessionTypeLabel(current),
+        backgroundColor: this.sessionTrackColor(current),
+        textColor: this.sessionTrackTextColor(current),
+      },
+      ...items,
+    ];
+  });
+
+  ngOnInit(): void {
+    const conferenceId = this.conferenceId();
+    if (!conferenceId) {
+      this.errorMessage.set('SESSION.ALLOCATION.ERROR_NOT_FOUND');
+      this.loading.set(false);
+      return;
+    }
+
+    this.conferenceService
+      .byId(conferenceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((conference) => {
+        this.conference.set(conference);
+      });
+
+    this.sessionService
+      .byConferenceId(conferenceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sessions) => {
+        const validSessions = sessions.filter((session) => !!session.id);
+        this.sessions.set(validSessions);
+        this.loadSpeakerDisplay(validSessions);
+      });
+
+    this.sessionAllocationService
+      .byConferenceId(conferenceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((allocations) => {
+        this.allocations.set(allocations);
+      });
+
+    this.slotTypeService
+      .init()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((slotTypes) => {
+        this.slotTypes.set(slotTypes);
+      });
+
+    this.loading.set(false);
+  }
+
+  slotSessionTypeLabel(slotView: SlotView): string {
+    return this.sessionTypeById().get(slotView.slot.sessionTypeId)?.name ?? slotView.slot.sessionTypeId;
+  }
+
+  dayLabel(day: Day): string {
+    const date = new Date(`${day.date}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return day.date;
+    }
+    const lang = (this.translateService.currentLang || this.translateService.getDefaultLang() || 'en').toLowerCase();
+    const weekday = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(date);
+    return `${weekday} ${day.date}`;
+  }
+
+  slotText(slotView: SlotView): string {
+    return this.selectedSession(slotView)?.title ?? '';
+  }
+
+  slotStyle(slotView: SlotView): Record<string, string | number> {
+    const session = this.selectedSession(slotView);
+    const backgroundColor = session ? this.sessionTrackColor(session) : '#FFFFFF';
+    const textColor = session ? this.sessionTrackTextColor(session) : '#0F172A';
+
+    return {
+      '--start-tick': slotView.startTick,
+      '--duration': slotView.durationTick,
+      '--room-col-idx': slotView.roomColIdx,
+      'background-color': backgroundColor,
+      color: textColor,
+    };
+  }
+
+  sessionTrackLabel(session: Session): string {
+    const track = this.resolveTrack(session);
+    if (track) {
+      return track.name;
+    }
+    return session.conference?.trackId ?? '';
+  }
+
+  sessionSpeakersLabel(session: Session): string {
+    const namesById = this.speakerDisplayById();
+    const names = [session.speaker1Id, session.speaker2Id, session.speaker3Id]
+      .filter((speakerId): speakerId is string => !!speakerId)
+      .map((speakerId) => namesById.get(speakerId))
+      .filter((value): value is string => !!value);
+
+    return names.join(', ');
+  }
+
+  sessionTypeLabel(session: Session): string {
+    const sessionTypeId = session.conference?.sessionTypeId ?? '';
+    return this.sessionTypeById().get(sessionTypeId)?.name ?? sessionTypeId;
+  }
+
+  sessionTrackColor(session: Session): string {
+    return this.resolveTrack(session)?.color ?? '#E2E8F0';
+  }
+
+  sessionTrackTextColor(session: Session): string {
+    return this.computeTextColorForBackground(this.sessionTrackColor(session));
+  }
+
+  selectedSessionId(slotView: SlotView): string | null {
+    return this.allocationBySlotKey().get(slotView.key)?.sessionId ?? null;
+  }
+
+  selectedSession(slotView: SlotView): Session | undefined {
+    const sessionId = this.selectedSessionId(slotView);
+    if (!sessionId) {
+      return undefined;
+    }
+    return this.sessionById().get(sessionId);
+  }
+
+  openSessionPicker(slotView: SlotView): void {
+    this.selectedSlotForPicker.set(slotView);
+    this.selectedPickerTrackIds.set([...(this.selectedTrackIds() ?? [])]);
+    this.pickerSearchText.set(this.unallocatedSearchText());
+    this.sessionPickerVisible.set(true);
+  }
+
+  closeSessionPicker(): void {
+    this.selectedSlotForPicker.set(undefined);
+    this.selectedPickerTrackIds.set([]);
+    this.pickerSearchText.set('');
+    this.sessionPickerVisible.set(false);
+  }
+
+  async onPickerSessionSelected(sessionId: string): Promise<void> {
+    const slot = this.selectedSlotForPicker();
+    if (!slot) {
+      return;
+    }
+    if (!this.isSessionTypeCompatibleById(sessionId, slot)) {
+      return;
+    }
+    await this.assignSessionToSlot(sessionId, slot);
+    this.closeSessionPicker();
+  }
+
+  async onPickerClearSlot(): Promise<void> {
+    const slot = this.selectedSlotForPicker();
+    if (!slot) {
+      return;
+    }
+    await this.clearSlot(slot);
+    this.closeSessionPicker();
+  }
+
+  onDragOver(event: DragEvent, slotView: SlotView): void {
+    const payload = this.readDragPayload(event);
+    const sessionId = payload?.sessionId ?? '';
+
+    event.preventDefault();
+    if (!event.dataTransfer) {
+      return;
+    }
+    if (!sessionId || !this.isSessionTypeCompatibleById(sessionId, slotView)) {
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    event.dataTransfer.dropEffect = 'move';
+  }
+
+  onDragEnter(slotKey: string): void {
+    this.dropTargetSlotKey.set(slotKey);
+  }
+
+  onDragLeave(slotKey: string): void {
+    if (this.dropTargetSlotKey() === slotKey) {
+      this.dropTargetSlotKey.set('');
+    }
+  }
+
+  onDragEnd(): void {
+    this.draggingPayload.set(null);
+    this.dropTargetSlotKey.set('');
+  }
+
+  onUnallocatedDragStart(event: DragEvent, sessionId: string): void {
+    this.setDragPayload(event, { sessionId });
+  }
+
+  onSlotDragStart(event: DragEvent, slotView: SlotView): void {
+    const sessionId = this.selectedSessionId(slotView);
+    if (!sessionId) {
+      return;
+    }
+    this.setDragPayload(event, {
+      sessionId,
+      sourceSlotKey: slotView.key,
+    });
+  }
+
+  async onSlotDrop(event: DragEvent, slotView: SlotView): Promise<void> {
+    event.preventDefault();
+    this.dropTargetSlotKey.set('');
+    const payload = this.readDragPayload(event);
+    this.draggingPayload.set(null);
+    if (!payload?.sessionId) {
+      return;
+    }
+    if (!this.isSessionTypeCompatibleById(payload.sessionId, slotView)) {
+      return;
+    }
+    await this.assignSessionToSlot(payload.sessionId, slotView);
+  }
+
+  async resetDayAllocations(day: Day): Promise<void> {
+    const dayAllocations = this.allocations().filter((allocation) => allocation.dayId === day.id);
+    if (!dayAllocations.length) {
+      return;
+    }
+
+    const confirmed = await this.confirmResetDay();
+    if (!confirmed) {
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      const toDeleteIds = dayAllocations.map((allocation) => allocation.id).filter((id) => !!id);
+      const toDeleteIdSet = new Set(toDeleteIds);
+      const sessionIdsToDeallocate = Array.from(
+        new Set(dayAllocations.map((allocation) => allocation.sessionId).filter((id) => !!id))
+      ).filter((sessionId) => !this.hasRemainingAllocationAfterRemoval(sessionId, toDeleteIdSet));
+
+      for (const sessionId of sessionIdsToDeallocate) {
+        await this.updateSessionStatusForDeallocation(sessionId);
+      }
+
+      await Promise.all(toDeleteIds.map((id) => this.sessionAllocationService.delete(id)));
+      await this.reloadAllocationContext();
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private confirmResetDay(): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.confirmationService.confirm({
+        message: this.translateService.instant('SESSION.ALLOCATION.CONFIRM_RESET_DAY'),
+        header: this.translateService.instant('SESSION.ALLOCATION.RESET_DAY'),
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonProps: {
+          label: this.translateService.instant('COMMON.REMOVE'),
+          severity: 'danger',
+        },
+        rejectButtonProps: {
+          label: this.translateService.instant('COMMON.CANCEL'),
+          severity: 'secondary',
+        },
+        accept: () => resolve(true),
+        reject: () => resolve(false),
+      });
+    });
+  }
+
+  private async clearSlot(slotView: SlotView): Promise<void> {
+    const current = this.allocationBySlotKey().get(slotView.key);
+    if (!current?.id) {
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      await this.sessionAllocationService.delete(current.id);
+      this.allocations.update((values) => values.filter((allocation) => allocation.id !== current.id));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private async assignSessionToSlot(sessionId: string, slotView: SlotView): Promise<void> {
+    const conferenceId = this.conferenceId();
+    if (!conferenceId) {
+      return;
+    }
+    if (!this.isSessionTypeCompatibleById(sessionId, slotView)) {
+      return;
+    }
+
+    const currentTargetAllocation = this.allocationBySlotKey().get(slotView.key);
+    const existingSessionAllocation = this.allocationBySessionId().get(sessionId);
+    const replacedSessionId = currentTargetAllocation?.sessionId;
+
+    if (currentTargetAllocation?.sessionId === sessionId) {
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      if (replacedSessionId && replacedSessionId !== sessionId) {
+        await this.updateSessionStatusForDeallocation(replacedSessionId);
+      }
+
+      await this.updateSessionStatusForAllocation(sessionId);
+
+      if (
+        existingSessionAllocation?.id
+        && this.toSlotKey(existingSessionAllocation.dayId, existingSessionAllocation.slotId, existingSessionAllocation.roomId) !== slotView.key
+      ) {
+        await this.sessionAllocationService.delete(existingSessionAllocation.id);
+      }
+
+      const allocationToSave: SessionAllocationModel = {
+        ...(currentTargetAllocation ?? {
+          id: '',
+          lastUpdated: '',
+        }),
+        conferenceId,
+        dayId: slotView.day.id,
+        slotId: slotView.slot.id,
+        roomId: slotView.room.id,
+        sessionId,
+      };
+
+      const saved = await firstValueFrom(this.sessionAllocationService.save(allocationToSave));
+      this.updateLocalAllocationsAfterSave(saved, slotView.key);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private async updateSessionStatusForAllocation(sessionId: string): Promise<void> {
+    const session = this.sessionById().get(sessionId);
+    if (!session?.conference) {
+      return;
+    }
+
+    const currentStatus = session.conference.status;
+    const nextStatus = this.statusAfterAllocation(currentStatus);
+    if (!nextStatus || nextStatus === currentStatus) {
+      return;
+    }
+
+    const updated: Session = {
+      ...session,
+      conference: {
+        ...session.conference,
+        status: nextStatus,
+      },
+    };
+
+    const saved = await firstValueFrom(this.sessionService.save(updated));
+    this.sessions.update((values) =>
+      values.map((item) => (item.id === saved.id ? saved : item))
+    );
+  }
+
+  private statusAfterAllocation(currentStatus: SessionStatus): SessionStatus | null {
+    if (currentStatus === 'ACCEPTED') {
+      return 'SCHEDULED';
+    }
+    if (currentStatus === 'SPEAKER_CONFIRMED') {
+      return 'PROGRAMMED';
+    }
+    return null;
+  }
+
+  private async updateSessionStatusForDeallocation(sessionId: string): Promise<void> {
+    const session = this.sessionById().get(sessionId);
+    if (!session?.conference) {
+      return;
+    }
+
+    const currentStatus = session.conference.status;
+    const nextStatus = this.statusAfterDeallocation(currentStatus);
+    if (!nextStatus || nextStatus === currentStatus) {
+      return;
+    }
+
+    const updated: Session = {
+      ...session,
+      conference: {
+        ...session.conference,
+        status: nextStatus,
+      },
+    };
+
+    const saved = await firstValueFrom(this.sessionService.save(updated));
+    this.sessions.update((values) =>
+      values.map((item) => (item.id === saved.id ? saved : item))
+    );
+  }
+
+  private statusAfterDeallocation(currentStatus: SessionStatus): SessionStatus | null {
+    if (currentStatus === 'SCHEDULED') {
+      return 'ACCEPTED';
+    }
+    if (currentStatus === 'PROGRAMMED') {
+      return 'SPEAKER_CONFIRMED';
+    }
+    return null;
+  }
+
+  private updateLocalAllocationsAfterSave(saved: SessionAllocationModel, targetSlotKey: string): void {
+    this.allocations.update((values) => {
+      const next = values.filter((allocation) => {
+        if (allocation.id === saved.id) {
+          return false;
+        }
+        if (allocation.sessionId === saved.sessionId) {
+          return false;
+        }
+        return this.toSlotKey(allocation.dayId, allocation.slotId, allocation.roomId) !== targetSlotKey;
+      });
+      next.push(saved);
+      return next;
+    });
+  }
+
+  private toSlotKey(dayId: string, slotId: string, roomId: string): string {
+    return `${dayId}::${slotId}::${roomId}`;
+  }
+
+  private isSessionTypeCompatibleById(sessionId: string, slotView: SlotView): boolean {
+    const session = this.sessionById().get(sessionId);
+    if (!session) {
+      return false;
+    }
+    return this.isSessionTypeCompatible(session, slotView);
+  }
+
+  private isSessionTypeCompatible(session: Session, slotView: SlotView): boolean {
+    const sessionTypeId = session.conference?.sessionTypeId ?? '';
+    return sessionTypeId === (slotView.slot.sessionTypeId ?? '');
+  }
+
+  private hasRemainingAllocationAfterRemoval(sessionId: string, removedAllocationIds: Set<string>): boolean {
+    return this.allocations().some((allocation) => {
+      if (allocation.sessionId !== sessionId) {
+        return false;
+      }
+      const allocationId = allocation.id ?? '';
+      return !removedAllocationIds.has(allocationId);
+    });
+  }
+
+  private computeTimeOfDay(day: Day, timeStr: string): number {
+    return new Date(`${day.date}T${timeStr}:00`).getTime();
+  }
+
+  private computeEnabledRooms(day: Day, conference: Conference): Room[] {
+    const disabledRooms = new Set(day.disabledRoomIds ?? []);
+    return conference.rooms.filter((room) => room.isSessionRoom && !disabledRooms.has(room.id));
+  }
+
+  private computeTimelineTicks(day: Day): TimelineTick[] {
+    const start = this.computeTimeOfDay(day, day.beginTime);
+    const end = this.computeTimeOfDay(day, day.endTime);
+    const ticks: TimelineTick[] = [];
+    let idx = 0;
+    for (let current = start; current <= end; current += this.tickStep * 60000) {
+      ticks.push({
+        label: this.conferenceService.formatHour(new Date(current)),
+        main: idx % 2 === 0,
+      });
+      idx += 1;
+      if (ticks.length > 1000) {
+        break;
+      }
+    }
+    return ticks;
+  }
+
+  private computeSlotViews(day: Day, enabledRooms: Room[], slotTypeById: Map<string, SlotType>): SlotView[] {
+    const roomIndexById = new Map<string, number>(enabledRooms.map((room, idx) => [room.id, idx]));
+    const dayStart = this.computeTimeOfDay(day, day.beginTime);
+
+    return day.slots
+      .filter((slot) => !!slotTypeById.get(slot.slotTypeId)?.isSession)
+      .map((slot) => {
+        const roomColIdx = roomIndexById.get(slot.roomId);
+        if (roomColIdx === undefined) {
+          return undefined;
+        }
+        const room = enabledRooms[roomColIdx];
+        const slotStart = this.computeTimeOfDay(day, slot.startTime);
+        const deltaMinutes = (slotStart - dayStart) / 60000;
+        return {
+          key: this.toSlotKey(day.id, slot.id, slot.roomId),
+          day,
+          slot,
+          room,
+          roomColIdx,
+          startTick: deltaMinutes / this.tickStep,
+          durationTick: slot.duration / this.tickStep,
+        };
+      })
+      .filter((value): value is SlotView => !!value)
+      .sort((a, b) => {
+        if (a.roomColIdx !== b.roomColIdx) {
+          return a.roomColIdx - b.roomColIdx;
+        }
+        return a.slot.startTime.localeCompare(b.slot.startTime);
+      });
+  }
+
+  private resolveTrack(session: Session): Track | undefined {
+    const trackId = this.normalizeKey(session.conference?.trackId ?? '');
+    if (!trackId) {
+      return undefined;
+    }
+    return this.trackById().get(trackId);
+  }
+
+  private normalizeKey(value: string): string {
+    return String(value ?? '').trim().toLowerCase();
+  }
+
+  private computeTextColorForBackground(backgroundColor: string): string {
+    const normalized = backgroundColor.trim();
+    const shortHexMatch = normalized.match(/^#([0-9a-fA-F]{3})$/);
+    const fullHexMatch = normalized.match(/^#([0-9a-fA-F]{6})$/);
+
+    let r = 255;
+    let g = 255;
+    let b = 255;
+
+    if (shortHexMatch) {
+      const hex = shortHexMatch[1];
+      r = parseInt(`${hex[0]}${hex[0]}`, 16);
+      g = parseInt(`${hex[1]}${hex[1]}`, 16);
+      b = parseInt(`${hex[2]}${hex[2]}`, 16);
+    } else if (fullHexMatch) {
+      const hex = fullHexMatch[1];
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    }
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.62 ? '#0F172A' : '#FFFFFF';
+  }
+
+  private loadSpeakerDisplay(sessions: Session[]): void {
+    const speakerIds = Array.from(
+      new Set(
+        sessions.flatMap((session) =>
+          [session.speaker1Id, session.speaker2Id, session.speaker3Id].filter(
+            (speakerId): speakerId is string => !!speakerId
+          )
+        )
+      )
+    );
+
+    if (!speakerIds.length) {
+      this.speakerDisplayById.set(new Map());
+      return;
+    }
+
+    forkJoin(
+      speakerIds.map((speakerId) =>
+        this.personService.byId(speakerId).pipe(
+          take(1),
+          map((person) => [speakerId, this.formatSpeaker(person?.lastName, person?.firstName, person?.speaker?.company)] as const),
+          catchError(() => of([speakerId, ''] as const))
+        )
+      )
+    ).subscribe((entries) => {
+      this.speakerDisplayById.set(new Map(entries));
+    });
+  }
+
+  private formatSpeaker(lastName?: string, firstName?: string, company?: string): string {
+    const fullName = [lastName ?? '', firstName ?? ''].join(' ').trim();
+    if (!fullName) {
+      return '';
+    }
+    const companyPart = (company ?? '').trim();
+    return companyPart ? `${fullName} (${companyPart})` : fullName;
+  }
+
+  private async reloadAllocationContext(): Promise<void> {
+    const conferenceId = this.conferenceId();
+    if (!conferenceId) {
+      return;
+    }
+
+    const [sessions, allocations] = await Promise.all([
+      firstValueFrom(this.sessionService.byConferenceId(conferenceId)),
+      firstValueFrom(this.sessionAllocationService.byConferenceId(conferenceId)),
+    ]);
+
+    const validSessions = sessions.filter((session) => !!session.id);
+    this.sessions.set(validSessions);
+    this.allocations.set(allocations);
+    this.loadSpeakerDisplay(validSessions);
+  }
+
+  private filterSessionsByKeyword(sessions: Session[], keyword: string): Session[] {
+    const query = (keyword ?? '').trim().toLowerCase();
+    if (query.length < 3) {
+      return sessions;
+    }
+    return sessions.filter((session) => (session.search ?? '').toLowerCase().includes(query));
+  }
+
+  private setDragPayload(event: DragEvent, payload: DragPayload): void {
+    this.draggingPayload.set(payload);
+    if (!event.dataTransfer) {
+      return;
+    }
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+  }
+
+  private readDragPayload(event: DragEvent): DragPayload | null {
+    const transferRaw = event.dataTransfer?.getData('text/plain');
+    if (transferRaw) {
+      try {
+        const parsed = JSON.parse(transferRaw) as DragPayload;
+        if (parsed?.sessionId) {
+          return parsed;
+        }
+      } catch {
+        return this.draggingPayload();
+      }
+    }
+    return this.draggingPayload();
+  }
+}

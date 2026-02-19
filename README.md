@@ -112,13 +112,15 @@ stateDiagram-v2
     WAITLISTED --> ACCEPTED: Replaces another approved session
 
     ACCEPTED --> SPEAKER_CONFIRMED: Speaker confirms participation
-    ACCEPTED --> SCHEDULED: Committee  schedules the session
+    ACCEPTED --> SCHEDULED: Committee schedules the session
 
     SCHEDULED --> DECLINED_BY_SPEAKER: The speaker declines the session
     SCHEDULED --> PROGRAMMED: Speaker confirms (post-scheduling)
+    SCHEDULED --> ACCEPTED: Committee unschedules the session
 
     SPEAKER_CONFIRMED --> PROGRAMMED: Committee schedules the session
 
+    PROGRAMMED --> SPEAKER_CONFIRMED: Committee unschedules the session
     PROGRAMMED --> CANCELLED: Speaker cancels
 
 ```

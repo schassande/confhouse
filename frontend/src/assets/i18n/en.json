@@ -317,6 +317,26 @@
       "ERROR_LOAD": "Unable to load session",
       "ERROR_SAVE": "Unable to save session"
     },
+    "ALLOCATION": {
+      "TITLE": "Session Allocation",
+      "PLANNING": "Planning",
+      "UNALLOCATED": "Unallocated sessions",
+      "NO_DAYS": "No planning day defined.",
+      "NO_SESSION_SLOTS": "No session slots found for this day.",
+      "FILTER_SESSION_TYPE": "Session types",
+      "FILTER_TRACK": "Tracks",
+      "FILTER_KEYWORD": "Keyword (min 3 chars)",
+      "COUNT": "{{count}} session(s) available",
+      "PICKER_COUNT": "{{count}} session(s) available for this slot",
+      "NO_UNALLOCATED": "No unallocated session.",
+      "SELECT_PLACEHOLDER": "Select a session",
+      "NONE": "No session",
+      "PICKER_TITLE": "Choose a session for slot",
+      "CLEAR_SLOT": "Clear slot",
+      "RESET_DAY": "Reset",
+      "CONFIRM_RESET_DAY": "Are you sure you want to remove all allocations for this day?",
+      "ERROR_NOT_FOUND": "Conference not found"
+    },
     "STATUS": {
       "UNKNOWN": "Unknown",
       "DRAFT": "Draft",

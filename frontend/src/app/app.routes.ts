@@ -15,6 +15,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { SessionList } from './pages/session/session-list/session-list';
 import { SessionEdit } from './pages/session/session-edit/session-edit';
 import { SessionImportComponent } from './pages/session/session-import/session-import.component';
+import { SessionAllocation } from './pages/session/session-allocation/session-allocation';
 import { ConferenceOrganizerGuard } from './guards/conference-organizer.guard';
 
 export const routes: Routes = [
@@ -24,6 +25,7 @@ export const routes: Routes = [
 	{ path: 'conference/:conferenceId/manage', component: ConferenceManage, canActivate: [AuthGuard, ConferenceOrganizerGuard] },
 	{ path: 'conference/:conferenceId/speakers', component: ConferenceSpeakers, canActivate: [AuthGuard, ConferenceOrganizerGuard] },
 	{ path: 'conference/:conferenceId/sessions', component: SessionList, canActivate: [AuthGuard, ConferenceOrganizerGuard] },
+	{ path: 'conference/:conferenceId/allocation', component: SessionAllocation, canActivate: [AuthGuard, ConferenceOrganizerGuard] },
 	{ path: 'conference/:conferenceId/sessions/import', component: SessionImportComponent, canActivate: [AuthGuard, ConferenceOrganizerGuard] },
 	{ path: 'conference/:conferenceId/sessions/:sessionId/edit', component: SessionEdit, canActivate: [AuthGuard] },
 	{ path: 'conference/:conferenceId', component: ConferenceViewComponent },

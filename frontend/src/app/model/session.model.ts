@@ -118,6 +118,4 @@ export interface SessionAllocation extends PersistentData {
   roomId: string;
   /** Session ID */
   sessionId: string;
-  /** Allocation status */
-  status: string;
 }

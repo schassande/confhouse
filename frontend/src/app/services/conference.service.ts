@@ -47,7 +47,7 @@ export class ConferenceService extends FirestoreGenericService<Conference> {
     if (!room) {
       errors.push('UNEXISTING_ROOM');
     }
-    if (day.disabledRoomIds && day.disabledRoomIds.length && day.disabledRoomIds.findIndex(rid => rid === slot.roomId)) {
+    if (day.disabledRoomIds?.includes(slot.roomId)) {
       errors.push('ROOM_DISABLED');
     }
     const slotType: SlotType|undefined = slotTypes.find(st => st.id === slot.slotTypeId);
