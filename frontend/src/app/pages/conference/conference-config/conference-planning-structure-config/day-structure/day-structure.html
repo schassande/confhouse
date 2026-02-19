@@ -16,6 +16,14 @@
         [showTime]="true" [timeOnly]="true" hourFormat="24" size="small"
         (onSelect)="changeEndTime($event)"></p-datepicker>
     </div>
+    <div class="form-section" style="padding-left:10px;">
+      <button
+        pButton
+        size="small"
+        severity="danger"
+        [disabled]="day().slots.length === 0"
+        (click)="confirmResetSlots()">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.RESET_SLOTS' | translate }}</button>
+    </div>
   </div>  
   <div class="planning-parent">
     <div class="planning">
@@ -82,6 +90,7 @@
   @if (editedSlot()) {
     <app-slot-editor  
       [slot]="editedSlot()!"
+      [slotAllocated]="editedSlotIsAllocated()"
       [rooms]="rooms()"
       [slotTypes]="slotTypes()"
       [sessionTypes]="sessionTypes()"
@@ -100,6 +109,13 @@
     (newSlots)="createSlots($event)">
   </app-copy-roorm-to-room>
 </p-dialog>
+<p-dialog [modal]="true" [visible]="copyDayVisible()" (onHide)="copyDayVisible.set(false)"
+  header="{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.COPY_DAY_TO_DAY' | translate }}">
+  <app-copy-day-to-day
+    [days]="days()"
+    (copyRequested)="onCopyDayRequested($event)">
+  </app-copy-day-to-day>
+</p-dialog>
 <p-dialog [modal]="true" [visible]="roomSelectorVisible()" (onHide)="roomSelectorVisible.set(false)"
   header="{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.ROOM_SELECTOR' | translate }}">
   <div class="config-form room-form">
@@ -113,3 +129,4 @@
     }
   </div>
 </p-dialog>
+<p-confirmdialog />

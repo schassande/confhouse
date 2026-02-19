@@ -11,16 +11,23 @@ import { SlotEditorComponent } from '../slot-editor/slot-editor';
 import { DialogModule } from 'primeng/dialog';
 import { ConferenceService } from '../../../../../services/conference.service';
 import { CopyRoormToRoom } from '../copy-roorm-to-room/copy-roorm-to-room';
+import { CopyDayToDay, DayToDayCopyRequest } from '../copy-day-to-day/copy-day-to-day';
 import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { SessionAllocation } from '../../../../../model/session.model';
+import { SessionAllocationService } from '../../../../../services/session-allocation.service';
+import { SessionDeallocationService } from '../../../../../services/session-deallocation.service';
 
 @Component({
   selector: 'app-day-structure',
   imports: [
     ButtonModule,
+    CopyDayToDay,
     CommonModule,
     CopyRoormToRoom,
+    ConfirmDialogModule,
     DatePickerModule,
     DialogModule,
     FormsModule,
@@ -32,19 +39,26 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
   templateUrl: './day-structure.html',
   styleUrl: './day-structure.scss',
   standalone: true,
+  providers: [ConfirmationService],
 })
 export class DayStructure implements OnInit {
 
   private readonly slotTypeService = inject(SlotTypeService);
   protected readonly conferenceService = inject(ConferenceService);
   private readonly translateService = inject(TranslateService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly sessionAllocationService = inject(SessionAllocationService);
+  private readonly sessionDeallocationService = inject(SessionDeallocationService);
   protected readonly defaultLanguage = signal<string>('EN');
 
+  conferenceId = input.required<string>();
   rooms = input.required<Room[]>();
+  days = input.required<Day[]>();
   day = model.required<Day>();
   sessionTypes = input.required<SessionType[]>();
   slotTypes = signal<SlotType[]>([]);
   dayChanged = output<Day>();
+  copyDayRequested = output<DayToDayCopyRequest>();
 
   // Shared day bounds (ISO strings). Tu peux les exposer en @Input si tu veux.
   dayStartIso = computed(() => this.day().beginTime ? this.day().beginTime : '09:00');
@@ -59,6 +73,12 @@ export class DayStructure implements OnInit {
 
   dayRooms = signal<DayRoom[]>([]);
   enabledRooms = computed(() => this.dayRooms().filter(dr => dr.enable).map(dr => dr.room));
+  allocations = signal<SessionAllocation[]>([]);
+  allocatedSlotIds = computed(() => new Set(this.allocations().map(a => a.slotId)));
+  editedSlotIsAllocated = computed(() => {
+    const editedSlotId = this.editedSlot()?.id;
+    return !!editedSlotId && this.allocatedSlotIds().has(editedSlotId);
+  });
 
   private readonly tickStep = 30;
   private readonly tickMainRatio = 2;
@@ -103,8 +123,10 @@ export class DayStructure implements OnInit {
     { label: 'New Slot', icon: 'pi pi-plus', command: () => this.onSlotAdd() },
     { label: 'Select rooms', icon: 'pi pi-clone', command: () => this.roomSelectorVisible.set(true) },
     { label: 'Copy Room to Room', icon: 'pi pi-clone', command: () => this.copyRoomVisible.set(true) },
+    { label: 'Copy Day to Day', icon: 'pi pi-clone', command: () => this.copyDayVisible.set(true) },
   ];
   copyRoomVisible = signal<boolean>(false);
+  copyDayVisible = signal<boolean>(false);
   roomSelectorVisible = signal<boolean>(false);
 
   constructor() {
@@ -142,6 +164,11 @@ export class DayStructure implements OnInit {
     this.slotTypeService.init().subscribe(slotTypes => {
       this.slotTypes.set(slotTypes);
     });
+    if (this.conferenceId()) {
+      this.sessionAllocationService.byConferenceId(this.conferenceId()).subscribe(allocations => {
+        this.allocations.set(allocations);
+      });
+    }
     this.translateService.onLangChange.subscribe(ev => this.defaultLanguage.set(ev.lang.toLocaleUpperCase()));
   }
 
@@ -241,11 +268,19 @@ export class DayStructure implements OnInit {
     this.dayChanged.emit(this.day());
   }
  
-  onSlotSave(slot: Slot) {
+  async onSlotSave(slot: Slot) {
     this.slotEditorVisible.set(false);
     this.editedSlot.set(undefined);
     if (slot && this.conferenceService.isValidSlot(slot, 
         this.day(), this.slotTypes(), this.sessionTypes(), this.rooms()).length === 0) {
+      const existingSlot = slot.id ? this.day().slots.find(s => s.id === slot.id) : undefined;
+      const mustDeallocate = !!existingSlot
+        && this.allocatedSlotIds().has(existingSlot.id)
+        && (existingSlot.slotTypeId !== slot.slotTypeId
+          || existingSlot.sessionTypeId !== slot.sessionTypeId);
+      if (mustDeallocate) {
+        await this.deallocateSlots([existingSlot!.id]);
+      }
       this.day.update(day => {
         if (slot.id && slot.id.length >= 0) {
           // update an existing slot from the list
@@ -271,10 +306,13 @@ export class DayStructure implements OnInit {
     this.slotEditorVisible.set(false);
     this.editedSlot.set(undefined);
   }
-  onSlotEditRemove(slotId: string|undefined) {
+  async onSlotEditRemove(slotId: string|undefined) {
     this.slotEditorVisible.set(false);
     this.editedSlot.set(undefined);
     let changed = false;
+    if (slotId && this.allocatedSlotIds().has(slotId)) {
+      await this.deallocateSlots([slotId]);
+    }
     this.day.update(day => {
       if (slotId && slotId.length >= 0) {
         // delete an existing slot from the list
@@ -293,22 +331,24 @@ export class DayStructure implements OnInit {
     console.log('createSlots', newslots);
     if (!newslots || newslots.length === 0) return;
     this.day.update(day => {
-      let changed = false;
-      newslots.forEach(newSlot => {
-        // check the new slot does not overlap another slot
-        const errors = this.conferenceService.isValidSlot(newSlot, 
-            this.day(), this.slotTypes(), this.sessionTypes(), this.rooms());
-        if (errors.length === 0) {
-          console.log('Slot valid:', newSlot)
-          day.slots.push(newSlot);
-          changed = true;
-        } else {
-          console.log('Slot rejected:', newSlot, 'errors', errors)
-        }
-      })
-      return changed ? {...day} : day;
+      const accepted = this.conferenceService.filterCompatibleSlots(
+        newslots,
+        day,
+        this.slotTypes(),
+        this.sessionTypes(),
+        this.rooms()
+      );
+      if (accepted.length === 0) {
+        return day;
+      }
+      day.slots.push(...accepted);
+      return { ...day };
     });
     this.dayChanged.emit(this.day());
+  }
+  onCopyDayRequested(request: DayToDayCopyRequest) {
+    this.copyDayVisible.set(false);
+    this.copyDayRequested.emit(request);
   }
   toggleRoom(room: Room) {
     const dr = this.dayRooms().find(dr => dr.room.id === room.id);
@@ -325,7 +365,46 @@ export class DayStructure implements OnInit {
       }
       return {...day};
     });
-  }  
+  }
+
+  confirmResetSlots() {
+    this.confirmationService.confirm({
+      message: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.CONFIRM_RESET_SLOTS'),
+      header: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.RESET_SLOTS'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: this.translateService.instant('COMMON.REMOVE'),
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: this.translateService.instant('COMMON.CANCEL'),
+        severity: 'secondary',
+      },
+      accept: () => this.resetSlots(),
+    });
+  }
+
+  private async resetSlots() {
+    if (!this.day().slots || this.day().slots.length === 0) {
+      return;
+    }
+    const slotsToRemove = [...this.day().slots];
+    await this.deallocateSlots(slotsToRemove.map(slot => slot.id));
+    this.day.update(day => ({ ...day, slots: [] }));
+    this.dayChanged.emit(this.day());
+  }
+
+  private async deallocateSlots(slotIds: string[]): Promise<void> {
+    const cleanIds = slotIds.filter(id => !!id);
+    if (!this.conferenceId() || cleanIds.length === 0) {
+      return;
+    }
+    await this.sessionDeallocationService.deallocateBySlotIds(this.conferenceId(), cleanIds, {
+      allAllocations: this.allocations(),
+    });
+    const removedIds = new Set(cleanIds);
+    this.allocations.update(allocations => allocations.filter(a => !removedIds.has(a.slotId)));
+  }
 } 
 interface Tick { 
   label: string;

@@ -35,6 +35,7 @@ export class SlotEditorComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   slot = input.required<Slot>();
+  slotAllocated = input<boolean>(false);
   rooms = input.required<Room[]>();
   slotTypes = input.required<SlotType[]>();
   sessionTypes = input.required<SessionType[]>();

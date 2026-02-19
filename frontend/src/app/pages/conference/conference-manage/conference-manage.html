@@ -4,9 +4,9 @@
 
   <div class="actions" *ngIf="conferenceId() as id">
     <a class="action-link" [routerLink]="['/conference', id, 'edit']">Configuration generale</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'sessions']">Gerer les sessions</a>
-    <a class="action-link" [routerLink]="['/conference', id, 'allocation']">Allouer les sessions</a>
     <a class="action-link" [routerLink]="['/conference', id, 'sessions', 'import']">Importer les sessions</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'allocation']">Allouer les sessions</a>
+    <a class="action-link" [routerLink]="['/conference', id, 'sessions']">Gerer les sessions</a>
     <a class="action-link" [routerLink]="['/conference', id, 'speakers']">Gerer les speakers</a>
   </div>
 </section>

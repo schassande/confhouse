@@ -21,6 +21,7 @@ import { Session, SessionAllocation as SessionAllocationModel, SessionStatus } f
 import { ConferenceService } from '../../../services/conference.service';
 import { PersonService } from '../../../services/person.service';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
+import { SessionDeallocationService } from '../../../services/session-deallocation.service';
 import { SessionService } from '../../../services/session.service';
 import { SlotTypeService } from '../../../services/slot-type.service';
 
@@ -83,6 +84,7 @@ export class SessionAllocation implements OnInit {
   private readonly personService = inject(PersonService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
+  private readonly sessionDeallocationService = inject(SessionDeallocationService);
   private readonly slotTypeService = inject(SlotTypeService);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
@@ -493,17 +495,18 @@ export class SessionAllocation implements OnInit {
 
     this.saving.set(true);
     try {
-      const toDeleteIds = dayAllocations.map((allocation) => allocation.id).filter((id) => !!id);
-      const toDeleteIdSet = new Set(toDeleteIds);
-      const sessionIdsToDeallocate = Array.from(
-        new Set(dayAllocations.map((allocation) => allocation.sessionId).filter((id) => !!id))
-      ).filter((sessionId) => !this.hasRemainingAllocationAfterRemoval(sessionId, toDeleteIdSet));
-
-      for (const sessionId of sessionIdsToDeallocate) {
-        await this.updateSessionStatusForDeallocation(sessionId);
+      const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+        this.conferenceId(),
+        dayAllocations,
+        {
+          allAllocations: this.allocations(),
+          sessions: this.sessions(),
+        }
+      );
+      if (updatedSessions.length > 0) {
+        const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
+        this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
       }
-
-      await Promise.all(toDeleteIds.map((id) => this.sessionAllocationService.delete(id)));
       await this.reloadAllocationContext();
     } finally {
       this.saving.set(false);
@@ -538,7 +541,18 @@ export class SessionAllocation implements OnInit {
 
     this.saving.set(true);
     try {
-      await this.sessionAllocationService.delete(current.id);
+      const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+        this.conferenceId(),
+        [current],
+        {
+          allAllocations: this.allocations(),
+          sessions: this.sessions(),
+        }
+      );
+      if (updatedSessions.length > 0) {
+        const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
+        this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
+      }
       this.allocations.update((values) => values.filter((allocation) => allocation.id !== current.id));
     } finally {
       this.saving.set(false);
@@ -565,7 +579,19 @@ export class SessionAllocation implements OnInit {
     this.saving.set(true);
     try {
       if (replacedSessionId && replacedSessionId !== sessionId) {
-        await this.updateSessionStatusForDeallocation(replacedSessionId);
+        const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+          conferenceId,
+          [currentTargetAllocation!],
+          {
+            allAllocations: this.allocations(),
+            sessions: this.sessions(),
+            deleteAllocations: false,
+          }
+        );
+        if (updatedSessions.length > 0) {
+          const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
+          this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
+        }
       }
 
       await this.updateSessionStatusForAllocation(sessionId);
@@ -632,42 +658,6 @@ export class SessionAllocation implements OnInit {
     return null;
   }
 
-  private async updateSessionStatusForDeallocation(sessionId: string): Promise<void> {
-    const session = this.sessionById().get(sessionId);
-    if (!session?.conference) {
-      return;
-    }
-
-    const currentStatus = session.conference.status;
-    const nextStatus = this.statusAfterDeallocation(currentStatus);
-    if (!nextStatus || nextStatus === currentStatus) {
-      return;
-    }
-
-    const updated: Session = {
-      ...session,
-      conference: {
-        ...session.conference,
-        status: nextStatus,
-      },
-    };
-
-    const saved = await firstValueFrom(this.sessionService.save(updated));
-    this.sessions.update((values) =>
-      values.map((item) => (item.id === saved.id ? saved : item))
-    );
-  }
-
-  private statusAfterDeallocation(currentStatus: SessionStatus): SessionStatus | null {
-    if (currentStatus === 'SCHEDULED') {
-      return 'ACCEPTED';
-    }
-    if (currentStatus === 'PROGRAMMED') {
-      return 'SPEAKER_CONFIRMED';
-    }
-    return null;
-  }
-
   private updateLocalAllocationsAfterSave(saved: SessionAllocationModel, targetSlotKey: string): void {
     this.allocations.update((values) => {
       const next = values.filter((allocation) => {
@@ -699,16 +689,6 @@ export class SessionAllocation implements OnInit {
   private isSessionTypeCompatible(session: Session, slotView: SlotView): boolean {
     const sessionTypeId = session.conference?.sessionTypeId ?? '';
     return sessionTypeId === (slotView.slot.sessionTypeId ?? '');
-  }
-
-  private hasRemainingAllocationAfterRemoval(sessionId: string, removedAllocationIds: Set<string>): boolean {
-    return this.allocations().some((allocation) => {
-      if (allocation.sessionId !== sessionId) {
-        return false;
-      }
-      const allocationId = allocation.id ?? '';
-      return !removedAllocationIds.has(allocationId);
-    });
   }
 
   private computeTimeOfDay(day: Day, timeStr: string): number {

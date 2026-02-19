@@ -9,6 +9,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
 import { DayStructure } from './day-structure/day-structure';
 import { ConferenceService } from '../../../../services/conference.service';
+import { SlotTypeService } from '../../../../services/slot-type.service';
+import { SlotType } from '../../../../model/slot-type.model';
+import { DayToDayCopyRequest } from './copy-day-to-day/copy-day-to-day';
 
 @Component({
   selector: 'app-conference-planning-structure-config',
@@ -25,11 +28,13 @@ import { ConferenceService } from '../../../../services/conference.service';
 })
 export class ConferencePlanningStructureConfigComponent implements OnInit {
   private readonly conferenceService = inject(ConferenceService);
+  private readonly slotTypeService = inject(SlotTypeService);
   private readonly translateService = inject(TranslateService);
   private readonly messageService = inject(MessageService);
 
   readonly conference = input.required<Conference>();
   days = signal<Day[]>([]);
+  slotTypes = signal<SlotType[]>([]);
   currentDayIdx = signal(-1); // zero based index
   currentDay = computed(() => this.days().length > 0 
     ? this.days()[this.currentDayIdx()] 
@@ -53,6 +58,7 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     });    
   }
   ngOnInit(): void {
+    this.slotTypeService.init().subscribe(slotTypes => this.slotTypes.set(slotTypes));
     // Initialize current day based on conference planning
     this.days.set(this.conference().days || []);
     if (this.days().length > 0) {
@@ -155,6 +161,40 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
       }
       this.conference().days = days;
       return days;
+    });
+  }
+  copyDayToDay(request: DayToDayCopyRequest) {
+    if (!request || request.sourceDayId === request.targetDayId) {
+      return;
+    }
+    this.days.update(days => {
+      const sourceDay = days.find(d => d.id === request.sourceDayId);
+      const targetDayIdx = days.findIndex(d => d.id === request.targetDayId);
+      if (!sourceDay || targetDayIdx < 0) {
+        return days;
+      }
+      const candidates = sourceDay.slots.map(slot => ({
+        ...slot,
+        id: this.conferenceService.generateSlotId(),
+        overflowRoomIds: [...(slot.overflowRoomIds || [])]
+      }));
+      const accepted = this.conferenceService.filterCompatibleSlots(
+        candidates,
+        days[targetDayIdx],
+        this.slotTypes(),
+        this.conference().sessionTypes,
+        this.conference().rooms
+      );
+      if (accepted.length === 0) {
+        return days;
+      }
+      const newDays = [...days];
+      newDays[targetDayIdx] = {
+        ...newDays[targetDayIdx],
+        slots: [...newDays[targetDayIdx].slots, ...accepted]
+      };
+      this.conference().days = newDays;
+      return newDays;
     });
   }
   private updateIndexes(days: Day[]) {

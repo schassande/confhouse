@@ -57,6 +57,15 @@
     }
   }
 }
+.allocation-warning {
+  color: #b45309;
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+}
 :host ::ng-deep .time-picker-small {
   width: 90px;
 }

@@ -81,6 +81,27 @@ export class ConferenceService extends FirestoreGenericService<Conference> {
     }
     return errors;
   }
+  public filterCompatibleSlots(
+    candidates: Slot[],
+    targetDay: Day,
+    slotTypes: SlotType[],
+    sessionTypes: SessionType[],
+    rooms: Room[]
+  ): Slot[] {
+    const accepted: Slot[] = [];
+    const workingDay: Day = {
+      ...targetDay,
+      slots: [...targetDay.slots]
+    };
+    for (const candidate of candidates) {
+      const errors = this.isValidSlot(candidate, workingDay, slotTypes, sessionTypes, rooms);
+      if (errors.length === 0) {
+        accepted.push(candidate);
+        workingDay.slots.push(candidate);
+      }
+    }
+    return accepted;
+  }
   public getSlotOverlapedSlots(existingSlots: Slot[], aSlot: Slot): Slot[] {
     return existingSlots.filter(slot => {
       if (slot.id === aSlot.id // same slot => not an overlap

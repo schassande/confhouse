@@ -1,0 +1,13 @@
+<div class="config-form">
+  <div class="form-section">
+    <label for="sourceDay" class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.SOURCE_DAY' | translate }}</label>
+    <p-select [options]="days()" [(ngModel)]="sourceDay" optionLabel="date" class="w-full md:w-56" />
+  </div>
+  <div class="form-section">
+    <label for="targetDay" class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TARGET_DAY' | translate }}</label>
+    <p-select [options]="days()" [(ngModel)]="targetDay" optionLabel="date" class="w-full md:w-56" />
+  </div>
+  <div style="height: 75px;"></div>
+  <button pButton size="small" class="ml-2" severity="success" [disabled]="!readyToCopy()"
+    (click)="onCopy()">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.COPY_DAY' | translate }}</button>
+</div>

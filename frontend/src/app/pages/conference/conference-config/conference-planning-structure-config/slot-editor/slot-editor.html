@@ -1,5 +1,8 @@
 @if (form(); as form) {
   <form [formGroup]="form" class="config-form">
+    @if (slotAllocated()) {
+      <p class="allocation-warning">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.ALLOCATED_WARNING' | translate }}</p>
+    }
     <div class="form-section">
       <label for="slotTypeId" class="form-label">{{ 'CONFERENCE.CONFIG.SLOT_EDITOR.SLOT_TYPE' | translate }}</label>
       <p-select [options]="slotTypes()" formControlName="slotTypeId" 

@@ -39,9 +39,12 @@
     @if (currentDay()) {
       <app-day-structure 
         [day]="currentDay()!" 
+        [days]="days()"
+        [conferenceId]="conference()!.id"
         [rooms]="conference()!.rooms"
         [sessionTypes]="conference()!.sessionTypes"
         (dayChanged)="dayChanged($event)"
+        (copyDayRequested)="copyDayToDay($event)"
         ></app-day-structure>
 
       
