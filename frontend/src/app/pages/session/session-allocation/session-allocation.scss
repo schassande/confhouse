@@ -20,8 +20,6 @@ $header-height: 40px;
 
 .planning-panel,
 .available-panel {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
   padding: 0.9rem;
   background: #ffffff;
 }
@@ -41,12 +39,13 @@ $header-height: 40px;
 .day-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .day-title {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 .slot-card {
@@ -121,13 +120,14 @@ $header-height: 40px;
 .planning-parent {
   overflow-x: auto;
   overflow-y: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .planning {
   position: relative;
-  min-width: calc($tick-width + ($room-width * var(--nb-rooms, 1)));
+  width: calc($tick-width + ($room-width * var(--nb-rooms, 1)));
   height: calc($header-height + ($tick-height * var(--nb-ticks, 1)));
 }
 
