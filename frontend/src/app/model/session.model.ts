@@ -55,8 +55,19 @@ export interface Session extends PersistentData {
   }
 }
 
-export type SessionStatus = 'DRAFT' | 'SUBMITTED' | 'ACCEPTED' | 'BACKUP' | 'REJECTED' | 'PLANIFIED' | 'CONFIRMED' | 'VALIDATED' | 'CANCELLED';
+export type SessionStatus = 'DRAFT' // La session est en cours de déclaration par le speaker dans l'application mais elle n'est pas soumises
+  | 'SUBMITTED' // La session a été soumises / proposées  à la conference
+  | 'REJECTED'  // Le comité/jury de la conférence a rejecté la proposition
+  | 'WAITLISTED' // Le comité/jury de la conférence a décidé de garder cette proposition sur liste d'attente en cas d'annulation d'autres sessions acceptées
+  | 'ACCEPTED'  // Le comité/jury de la conférence a accepté la proposition
+  | 'SPEAKER_CONFIRMED' // Le speaker a confirmé sa participation
+  | 'SCHEDULED' // // Le comité/jury de la conférence a planifié la session avant d'avoir la confirmation de la participation par le speaker
+  | 'DECLINED_BY_SPEAKER' // Le Speaker a refusé de participation après que le comité/jury ait accepté la proposition.
+  | 'PROGRAMMED' // La session est planifié dans le programme et le speaker a confirmé sa participation.
+  | 'CANCELLED' // Après que la session ait été programmé (planifié + confirmation participation speaker), le speaker a du annulé sa participation
+  ;
 export type SessionLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+
 /**
  * Represents an overridden field for a session in a conference.
  */

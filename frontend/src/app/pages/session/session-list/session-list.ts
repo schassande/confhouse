@@ -236,14 +236,17 @@ export class SessionList implements OnInit {
 
   private computeStatusSeverity(status: SessionStatus | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     switch (status) {
-      case 'ACCEPTED':
-      case 'VALIDATED':
-      case 'CONFIRMED':
+      case 'PROGRAMMED':
+      case 'SPEAKER_CONFIRMED':
+      case 'SCHEDULED':
         return 'success';
       case 'SUBMITTED':
-      case 'PLANIFIED':
-      case 'BACKUP':
+      case 'ACCEPTED':
         return 'info';
+      case 'WAITLISTED':
+      case 'DRAFT':
+        return 'warn';
+      case 'DECLINED_BY_SPEAKER':
       case 'REJECTED':
       case 'CANCELLED':
         return 'danger';

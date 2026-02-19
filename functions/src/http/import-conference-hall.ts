@@ -663,6 +663,8 @@ async function upsertSessionsBatch(
   for (let index = 0; index < proposals.length; index += 1) {
     const proposal = proposals[index];
     try {
+      const existingSession = sessionsByChId.get(proposal.id);
+      const existingSessionStatus = String(existingSession?.conference?.status ?? '').trim();
       const speakerIds = (proposal.speakers ?? [])
         .map((speaker) => speakerPersonIdByConferenceHallId.get(String(speaker?.id ?? '').trim()) ?? '')
         .filter((id) => id.length > 0);
@@ -671,9 +673,9 @@ async function upsertSessionsBatch(
         conference,
         conferenceId,
         speakerIds,
-        sessionTypeFormatMapping
+        sessionTypeFormatMapping,
+        existingSessionStatus
       );
-      const existingSession = sessionsByChId.get(proposal.id);
 
       if (!existingSession) {
         const ref = db.collection(FIRESTORE_COLLECTIONS.SESSION).doc();
@@ -979,9 +981,10 @@ function mapSession(
   conference: any,
   conferenceId: string,
   speakerIds: string[],
-  sessionTypeFormatMapping: SessionTypeFormatMapping
+  sessionTypeFormatMapping: SessionTypeFormatMapping,
+  currentStatus?: string | null
 ): any {
-  const status = mapStatus(proposal.deliberationStatus, proposal.confirmationStatus);
+  const status = mapStatus(proposal.deliberationStatus, proposal.confirmationStatus, currentStatus);
   const level = mapLevel(proposal.level);
   const sessionTypeId = findSessionId(conference, proposal.formats ?? [], sessionTypeFormatMapping);
   const mappedSessionType = (conference.sessionTypes ?? []).find((item: any) => item.id === sessionTypeId);
@@ -1024,11 +1027,37 @@ function mapSession(
 /**
  * Maps Conference Hall statuses to local session status.
  */
-function mapStatus(deliberationStatus?: string | null, confirmationStatus?: string | null): string {
-  if (deliberationStatus === 'ACCEPTED') return 'ACCEPTED';
-  if (confirmationStatus === 'CONFIRMED') return 'CONFIRMED';
-  if (deliberationStatus === 'REJECTED') return 'REJECTED';
-  return 'SUBMITTED';
+function mapStatus(
+  deliberationStatus?: string | null,
+  confirmationStatus?: string | null,
+  currentStatus?: string | null
+): string {
+
+  if (deliberationStatus === 'REJECTED') {
+    return 'REJECTED';
+
+  } else if (deliberationStatus === 'PENDING') {
+    return currentStatus === 'WAITLISTED' ?  'WAITLISTED' : 'SUBMITTED';
+
+  } else if (deliberationStatus == 'ACCEPTED') {
+    const isSpeakerConfirmed = confirmationStatus === 'CONFIRMED';
+    const isSpeakerDeclined = confirmationStatus === 'DECLINED';
+    const isAlreadyScheduled = currentStatus && ['SCHEDULED', 'PROGRAMMED'].includes(currentStatus);
+
+    if (isSpeakerDeclined) {
+      return 'PROGRAMMED' == currentStatus  ? 'CANCELLED' : 'DECLINED_BY_SPEAKER';
+
+    } else if (isSpeakerConfirmed) {
+      return isAlreadyScheduled ? 'PROGRAMMED' : 'SPEAKER_CONFIRMED';
+
+    } else {
+      return isAlreadyScheduled ? 'SCHEDULED' : 'ACCEPTED';
+    }
+
+  } else {
+    // deliberation === null
+    return 'SUBMITTED';
+  }
 }
 
 /**

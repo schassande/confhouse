@@ -96,4 +96,29 @@ For advanced configuration, see the Firebase and Angular documentation.
 ### Sponsor
 - **Edit Sponsor Popup:** Edit sponsor details in a popup dialog.
 
+## model
 
+### Session status diagram:
+
+```mermaid
+stateDiagram-v2
+    [*] --> SUBMITTED
+
+    SUBMITTED --> REJECTED: Committee rejects the session proposal
+    SUBMITTED --> ACCEPTED: Committee accepts the session proposal
+    SUBMITTED --> WAITLISTED: Committee waitlists the proposal
+
+    WAITLISTED --> REJECTED: Waitlist not needed
+    WAITLISTED --> ACCEPTED: Replaces another approved session
+
+    ACCEPTED --> SPEAKER_CONFIRMED: Speaker confirms participation
+    ACCEPTED --> SCHEDULED: Committee  schedules the session
+
+    SCHEDULED --> DECLINED_BY_SPEAKER: The speaker declines the session
+    SCHEDULED --> PROGRAMMED: Speaker confirms (post-scheduling)
+
+    SPEAKER_CONFIRMED --> PROGRAMMED: Committee schedules the session
+
+    PROGRAMMED --> CANCELLED: Speaker cancels
+
+```
