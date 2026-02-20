@@ -166,7 +166,8 @@
           <p-tablist>
             <p-tab [value]="0">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_PERSON' | translate }}</p-tab>
             <p-tab [value]="1">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_SPEAKER' | translate }}</p-tab>
-            <p-tab [value]="2">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_AVAILABILITY' | translate }}</p-tab>
+            <p-tab [value]="2">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_SESSIONS' | translate }}</p-tab>
+            <p-tab [value]="3">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_AVAILABILITY' | translate }}</p-tab>
           </p-tablist>
           <p-tabpanels>
             <p-tabpanel [value]="0">
@@ -254,6 +255,51 @@
               </div>
             </p-tabpanel>
             <p-tabpanel [value]="2">
+              <p-dataview [value]="editingSessionViews()" layout="list">
+                <ng-template #list let-items>
+                  <div class="speaker-session-list">
+                    @for (item of items; track item.id) {
+                      <div class="speaker-session-item">
+                        <div class="speaker-session-main">
+                          <div class="speaker-session-title">{{ item.title }}</div>
+                          <div class="speaker-session-speakers">{{ item.speakersLabel }}</div>
+                          <div class="speaker-session-slot">
+                            @if (item.slotLabel) {
+                              {{ item.slotLabel }}
+                            } @else {
+                              {{ 'CONFERENCE.SPEAKERS.EDIT.SESSION_NOT_ALLOCATED' | translate }}
+                            }
+                          </div>
+                          <div class="speaker-session-badges">
+                            <span
+                              class="meta-badge"
+                              [style.background-color]="item.sessionTypeBackgroundColor"
+                              [style.color]="item.sessionTypeTextColor"
+                            >
+                              {{ item.sessionTypeLabel }}
+                            </span>
+                            <span
+                              class="meta-badge"
+                              [style.background-color]="item.trackBackgroundColor"
+                              [style.color]="item.trackTextColor"
+                            >
+                              {{ item.trackLabel }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="speaker-session-status">
+                          <app-session-status-badge [status]="item.status"></app-session-status-badge>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </ng-template>
+                <ng-template #emptymessage>
+                  <div class="empty-message">{{ 'CONFERENCE.SPEAKERS.EDIT.SESSIONS_EMPTY' | translate }}</div>
+                </ng-template>
+              </p-dataview>
+            </p-tabpanel>
+            <p-tabpanel [value]="3">
               <div class="availability-list">
                 @for (dayAvailability of editingDayAvailabilities(); track dayAvailability.dayId) {
                   <div class="availability-day">

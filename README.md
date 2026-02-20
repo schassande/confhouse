@@ -126,12 +126,10 @@ stateDiagram-v2
 
 ```
 TODO list :
-- ajout speaker,
 - Ajout session
 - Afficher dans l'édition d'une session le slot ou il est alloué
-- Afficher dans l'édition d'un speaker (onglet Sessions)
-   - la liste des sessions soumises et retenues
-   - les slot ou il est alloué
+- Cancel session
+- Cancel speaker
 - Prendre en compte les contraintes d'indispo des speakers dans l'allocation
 - Allocation : combo pour afficher les sessions d'un speaker donné. ça ne laisse visible que ses sessions + affichage de la liste des slots/session sous la combo
 - Allocation : mode d'affichage spéciale pour voir les langs

@@ -129,6 +129,7 @@
         "TITLE_CREATE": "Speaker creation",
         "TAB_PERSON": "Person",
         "TAB_SPEAKER": "Speaker",
+        "TAB_SESSIONS": "Sessions",
         "TAB_AVAILABILITY": "Availability",
         "FIRST_NAME": "First name",
         "LAST_NAME": "Last name",
@@ -140,7 +141,9 @@
         "SOCIAL_NETWORK": "Network",
         "SOCIAL_URL": "URL",
         "ADD": "Add",
-        "CALCULATED_UNAVAILABLE": "Calculated unavailable slots"
+        "CALCULATED_UNAVAILABLE": "Calculated unavailable slots",
+        "SESSIONS_EMPTY": "No session",
+        "SESSION_NOT_ALLOCATED": "Not allocated"
       }
     },
     "CONFIG": {

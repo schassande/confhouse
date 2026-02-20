@@ -183,6 +183,52 @@
   margin-bottom: 0.5rem;
 }
 
+.speaker-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.speaker-session-item {
+  width: 100%;
+  border: 1px solid var(--p-surface-300);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.speaker-session-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.speaker-session-title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.speaker-session-speakers,
+.speaker-session-slot {
+  color: var(--p-text-muted-color);
+  overflow-wrap: anywhere;
+}
+
+.speaker-session-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.speaker-session-status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+}
+
 .availability-list {
   display: flex;
   flex-direction: column;
@@ -244,5 +290,13 @@
 
   .social-row {
     grid-template-columns: 1fr;
+  }
+
+  .speaker-session-item {
+    flex-direction: column;
+  }
+
+  .speaker-session-status {
+    align-items: flex-start;
   }
 }

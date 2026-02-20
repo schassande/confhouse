@@ -17,11 +17,13 @@ import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { Conference, Day, Slot } from '../../../model/conference.model';
 import { Person } from '../../../model/person.model';
-import { Session } from '../../../model/session.model';
+import { Session, SessionAllocation } from '../../../model/session.model';
 import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
+import { SessionAllocationService } from '../../../services/session-allocation.service';
 import { SessionService } from '../../../services/session.service';
 
 interface SelectOption {
@@ -56,6 +58,20 @@ interface DayAvailabilityEditor {
   isDayAvailable: boolean;
 }
 
+interface SpeakerSessionView {
+  id: string;
+  title: string;
+  speakersLabel: string;
+  slotLabel: string;
+  status: string;
+  sessionTypeLabel: string;
+  sessionTypeBackgroundColor: string;
+  sessionTypeTextColor: string;
+  trackLabel: string;
+  trackBackgroundColor: string;
+  trackTextColor: string;
+}
+
 @Component({
   selector: 'app-conference-speakers',
   imports: [
@@ -73,6 +89,7 @@ interface DayAvailabilityEditor {
     CheckboxModule,
     TextareaModule,
     SliderModule,
+    SessionStatusBadgeComponent,
   ],
   templateUrl: './conference-speakers.html',
   styleUrl: './conference-speakers.scss',
@@ -82,6 +99,7 @@ export class ConferenceSpeakers implements OnInit {
   private readonly conferenceService = inject(ConferenceService);
   private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
   private readonly sessionService = inject(SessionService);
+  private readonly sessionAllocationService = inject(SessionAllocationService);
   private readonly personService = inject(PersonService);
   private readonly translateService = inject(TranslateService);
 
@@ -90,6 +108,7 @@ export class ConferenceSpeakers implements OnInit {
   readonly conference = signal<Conference | undefined>(undefined);
   readonly conferenceSpeakers = signal<ConferenceSpeaker[]>([]);
   readonly sessions = signal<Session[]>([]);
+  readonly sessionAllocations = signal<SessionAllocation[]>([]);
   readonly personsById = signal<Map<string, Person>>(new Map());
   readonly selectedSessionTypeIds = signal<string[]>([]);
   readonly searchText = signal('');
@@ -130,6 +149,79 @@ export class ConferenceSpeakers implements OnInit {
       map.set(sessionType.id, sessionType.name);
     });
     return map;
+  });
+
+  private readonly sessionAllocationBySessionId = computed(() => {
+    const map = new Map<string, SessionAllocation>();
+    this.sessionAllocations().forEach((allocation) => {
+      const sessionId = String(allocation.sessionId ?? '').trim();
+      if (!sessionId || map.has(sessionId)) {
+        return;
+      }
+      map.set(sessionId, allocation);
+    });
+    return map;
+  });
+
+  readonly editingSessionViews = computed<SpeakerSessionView[]>(() => {
+    const conferenceSpeaker = this.editingConferenceSpeaker();
+    const conference = this.conference();
+    if (!conferenceSpeaker || !conference) {
+      return [];
+    }
+
+    const sessionIds = conferenceSpeaker.sessionIds ?? [];
+    const sessionById = this.sessionById();
+    const personsById = this.personsById();
+    const sessionAllocationBySessionId = this.sessionAllocationBySessionId();
+
+    return sessionIds
+      .map((sessionId) => {
+        const session = sessionById.get(sessionId);
+        if (!session) {
+          return null;
+        }
+
+        const sessionType = conference.sessionTypes.find(
+          (item) => item.id === String(session.conference?.sessionTypeId ?? '').trim()
+        );
+        const track = conference.tracks.find(
+          (item) => item.id === String(session.conference?.trackId ?? '').trim()
+        );
+        const sessionTypeBackgroundColor = sessionType?.color ?? '#E2E8F0';
+        const trackBackgroundColor = track?.color ?? '#334155';
+
+        const speakerNames = [session.speaker1Id, session.speaker2Id, session.speaker3Id]
+          .map((id) => String(id ?? '').trim())
+          .filter((id) => !!id)
+          .map((speakerId) => {
+            const person = personsById.get(speakerId);
+            if (!person) {
+              return '';
+            }
+            return `${String(person.firstName ?? '').trim()} ${String(person.lastName ?? '').trim()}`.trim();
+          })
+          .filter((name) => !!name);
+
+        const allocation = sessionAllocationBySessionId.get(session.id);
+        const slotLabel = this.buildSessionSlotLabel(allocation, conference.days ?? []);
+
+        return {
+          id: session.id,
+          title: String(session.title ?? '').trim(),
+          speakersLabel: speakerNames.join(', '),
+          slotLabel,
+          status: String(session.conference?.status ?? 'UNKNOWN').trim() || 'UNKNOWN',
+          sessionTypeLabel: sessionType?.name ?? String(session.conference?.sessionTypeId ?? '').trim(),
+          sessionTypeBackgroundColor,
+          sessionTypeTextColor: this.computeTextColorForBackground(sessionTypeBackgroundColor),
+          trackLabel: track?.name ?? String(session.conference?.trackId ?? '').trim(),
+          trackBackgroundColor,
+          trackTextColor: this.computeTextColorForBackground(trackBackgroundColor),
+        } as SpeakerSessionView;
+      })
+      .filter((value): value is SpeakerSessionView => !!value)
+      .sort((a, b) => a.title.localeCompare(b.title));
   });
 
   readonly speakerViews = computed<ConferenceSpeakerView[]>(() => {
@@ -226,12 +318,14 @@ export class ConferenceSpeakers implements OnInit {
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
       conferenceSpeakers: this.conferenceSpeakerService.byConferenceId(conferenceId).pipe(take(1)),
       sessions: this.sessionService.byConferenceId(conferenceId).pipe(take(1)),
+      sessionAllocations: this.sessionAllocationService.byConferenceId(conferenceId).pipe(take(1)),
       persons: this.personService.bySubmittedConferenceId(conferenceId).pipe(take(1)),
     }).subscribe({
-      next: ({ conference, conferenceSpeakers, sessions, persons }) => {
+      next: ({ conference, conferenceSpeakers, sessions, sessionAllocations, persons }) => {
         this.conference.set(conference);
         this.conferenceSpeakers.set(conferenceSpeakers);
         this.sessions.set(sessions);
+        this.sessionAllocations.set(sessionAllocations);
         this.personsById.set(new Map(persons.filter((person) => !!person.id).map((person) => [person.id, person])));
         this.loading.set(false);
       },
@@ -599,6 +693,21 @@ export class ConferenceSpeakers implements OnInit {
     const lang = (this.translateService.currentLang || this.translateService.getDefaultLang() || 'en').toLowerCase();
     const weekday = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(date);
     return `${weekday} ${day.date}`;
+  }
+
+  private buildSessionSlotLabel(allocation: SessionAllocation | undefined, days: Day[]): string {
+    if (!allocation) {
+      return '';
+    }
+    const day = days.find((candidate) => candidate.id === allocation.dayId);
+    if (!day) {
+      return '';
+    }
+    const slot = (day.slots ?? []).find((candidate) => candidate.id === allocation.slotId);
+    if (!slot) {
+      return '';
+    }
+    return `${day.date} ${slot.startTime} - ${slot.endTime}`;
   }
 
   private computeUnavailableSlotsId(days: Day[], dayAvailabilities: DayAvailabilityEditor[]): string[] {
