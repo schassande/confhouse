@@ -152,8 +152,13 @@ export class MainMenuComponent {
   }
 
   private setLanguage(lang: 'en' | 'fr') {
-    this.translate.use(lang);
-    this._currentLang.set(lang);
+    void this.signupService.updatePreferredLanguage(lang).then(() => {
+      this._currentLang.set(lang);
+    }).catch((error) => {
+      console.error('Error updating preferred language', error);
+      void this.translate.use(lang);
+      this._currentLang.set(lang);
+    });
   }
 
   private isConferenceManagementRoute(url: string): boolean {

@@ -19,6 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { functionBaseUrl } from './constantes';
 import { RedirectService } from './redirect.service';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class UserSignService {
@@ -27,6 +28,7 @@ export class UserSignService {
   private readonly redirectService = inject(RedirectService);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
   private readonly _user = signal<User | null>(null);
   private readonly _person = signal<Person | null>(null);
   person = computed(() => this._person());
@@ -41,8 +43,7 @@ export class UserSignService {
         // User is authenticated - fetch Person from database
         const person = await firstValueFrom(this.personService.findByEmail(firebaseUser.email));
         if (person) {
-          this._person.set(person);
-          this._user.set(firebaseUser);
+          this.setAuthenticatedContext(firebaseUser, person);
           const url = this.redirectService.get(); 
           if (url && url.startsWith('/')) {
             this.redirectService.clear();
@@ -105,8 +106,7 @@ export class UserSignService {
 
     // If successful, set signals
     if (databasePerson) {
-      this._person.set(databasePerson);
-      this._user.set(cred.user);
+      this.setAuthenticatedContext(cred.user, databasePerson);
     }
     return databasePerson;
   }
@@ -138,8 +138,7 @@ export class UserSignService {
 
     // If successful, set signals
     if (person) {
-        this._person.set(person);
-        this._user.set(cred.user);
+        this.setAuthenticatedContext(cred.user, person);
     }    
     return person;
   }
@@ -157,8 +156,7 @@ export class UserSignService {
     const person = await firstValueFrom(this.personService.findByEmail(email));
     
     if (person) {
-      this._person.set(person);
-      this._user.set(cred.user);
+      this.setAuthenticatedContext(cred.user, person);
     }
     
     return person;
@@ -179,8 +177,7 @@ export class UserSignService {
     const person = await firstValueFrom(this.personService.findByEmail(user.email));
     
     if (person) {
-      this._person.set(person);
-      this._user.set(cred.user);
+      this.setAuthenticatedContext(cred.user, person);
     }
     
     return person;
@@ -202,5 +199,45 @@ export class UserSignService {
    */
   async sendPasswordReset(email: string): Promise<void> {
     return await sendPasswordResetEmail(this.auth, email);
+  }
+
+  async updatePreferredLanguage(lang: 'en' | 'fr'): Promise<void> {
+    const normalized: 'en' | 'fr' = lang === 'fr' ? 'fr' : 'en';
+    const current = this._person();
+
+    if (!current) {
+      if (this.translate.currentLang !== normalized) {
+        await this.translate.use(normalized);
+      }
+      return;
+    }
+
+    if ((current.preferredLanguage || 'en').toLowerCase() === normalized) {
+      if (this.translate.currentLang !== normalized) {
+        await this.translate.use(normalized);
+      }
+      return;
+    }
+
+    const updated: Person = { ...current, preferredLanguage: normalized };
+    const saved = await firstValueFrom(this.personService.save(updated));
+    this._person.set(saved);
+    if (this.translate.currentLang !== normalized) {
+      await this.translate.use(normalized);
+    }
+  }
+
+  private setAuthenticatedContext(user: User, person: Person): void {
+    this._person.set(person);
+    this._user.set(user);
+    this.applyPreferredLanguage(person);
+  }
+
+  private applyPreferredLanguage(person: Person): void {
+    const preferred = (person.preferredLanguage || 'en').toLowerCase();
+    const lang: 'en' | 'fr' = preferred === 'fr' ? 'fr' : 'en';
+    if (this.translate.currentLang !== lang) {
+      void this.translate.use(lang);
+    }
   }
 }
