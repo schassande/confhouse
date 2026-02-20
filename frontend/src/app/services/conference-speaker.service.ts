@@ -53,6 +53,10 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     return from(this.syncFromSessionInternal(session, previousSession));
   }
 
+  removeSessionFromConferenceSpeakers(conferenceId: string, sessionId: string): Observable<void> {
+    return from(this.removeSessionFromConferenceSpeakersInternal(conferenceId, sessionId));
+  }
+
   private async syncFromSessionInternal(session: Session, previousSession?: Session): Promise<void> {
     const conferenceId = String(session.conference?.conferenceId ?? '').trim();
     const sessionId = String(session.id ?? '').trim();
@@ -140,6 +144,52 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
       batch.set(doc(this.db, `${this.getCollectionName()}/${nextConferenceSpeaker.id}`), nextConferenceSpeaker);
       opCount += 1;
     }
+
+    if (opCount > 0) {
+      await batch.commit();
+    }
+  }
+
+  private async removeSessionFromConferenceSpeakersInternal(conferenceId: string, sessionId: string): Promise<void> {
+    const normalizedConferenceId = String(conferenceId ?? '').trim();
+    const normalizedSessionId = String(sessionId ?? '').trim();
+    if (!normalizedConferenceId || !normalizedSessionId) {
+      return;
+    }
+
+    const snap = await getDocs(
+      query(
+        collection(this.db, this.getCollectionName()),
+        where('conferenceId', '==', normalizedConferenceId)
+      )
+    );
+
+    const batch = writeBatch(this.db);
+    let opCount = 0;
+
+    snap.forEach((docSnap) => {
+      const existing = { ...(docSnap.data() as ConferenceSpeaker), id: docSnap.id };
+      const currentSessionIds = this.normalizeIds(existing.sessionIds);
+      if (!currentSessionIds.includes(normalizedSessionId)) {
+        return;
+      }
+
+      const nextSessionIds = currentSessionIds.filter((id) => id !== normalizedSessionId);
+      if (nextSessionIds.length === 0) {
+        batch.delete(doc(this.db, `${this.getCollectionName()}/${existing.id}`));
+        opCount += 1;
+        return;
+      }
+
+      const nextConferenceSpeaker: ConferenceSpeaker = {
+        ...existing,
+        unavailableSlotsId: this.normalizeIds(existing.unavailableSlotsId),
+        sessionIds: nextSessionIds,
+        lastUpdated: Date.now().toString(),
+      };
+      batch.set(doc(this.db, `${this.getCollectionName()}/${existing.id}`), nextConferenceSpeaker);
+      opCount += 1;
+    });
 
     if (opCount > 0) {
       await batch.commit();

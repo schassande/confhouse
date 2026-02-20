@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
-import { forkJoin, Observable, of, switchMap, take } from 'rxjs';
+import { forkJoin, from, map, Observable, of, switchMap, take } from 'rxjs';
 import { Conference, SessionType, Track } from '../../../model/conference.model';
 import { Person } from '../../../model/person.model';
 import { OverriddenField, Session, SessionAllocation, SessionLevel, SessionStatus } from '../../../model/session.model';
@@ -83,6 +85,7 @@ const SESSION_STATUS_TRANSITIONS: Record<SessionStatus, SessionStatusTransition[
     AutoCompleteModule,
     ButtonModule,
     CommonModule,
+    ConfirmDialogModule,
     InputTextModule,
     ReactiveFormsModule,
     SelectModule,
@@ -90,6 +93,7 @@ const SESSION_STATUS_TRANSITIONS: Record<SessionStatus, SessionStatusTransition[
     TextareaModule,
     TranslateModule,
   ],
+  providers: [ConfirmationService],
   templateUrl: './session-edit.html',
   styleUrl: './session-edit.scss',
 })
@@ -102,10 +106,13 @@ export class SessionEdit implements OnInit {
   private readonly conferenceService = inject(ConferenceService);
   private readonly personService = inject(PersonService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly translateService = inject(TranslateService);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly createMode = signal(false);
+  readonly pendingDeallocation = signal(false);
   readonly errorMessage = signal('');
   readonly conference = signal<Conference | undefined>(undefined);
   readonly initialSession = signal<Session | undefined>(undefined);
@@ -301,11 +308,41 @@ export class SessionEdit implements OnInit {
 
     this.saving.set(true);
     const previousSession = this.createMode() ? undefined : initial;
+    const shouldDeleteAllocation = this.pendingDeallocation();
+    const currentSessionId = String(initial.id ?? '').trim();
     this.sessionService.save(updated).pipe(
       take(1),
-      switchMap((savedSession) => this.conferenceSpeakerService.syncFromSession(savedSession, previousSession))
+      switchMap((savedSession) =>
+        this.conferenceSpeakerService.syncFromSession(savedSession, previousSession).pipe(map(() => savedSession))
+      ),
+      switchMap((savedSession) => {
+        if (!shouldDeleteAllocation || this.createMode()) {
+          return of(savedSession);
+        }
+        const allocation = this.findSessionAllocationBySessionId(currentSessionId || String(savedSession.id ?? '').trim());
+        if (!allocation?.id) {
+          return of(savedSession);
+        }
+        return from(this.sessionAllocationService.delete(allocation.id)).pipe(map(() => savedSession));
+      }),
+      switchMap((savedSession) => {
+        if (!shouldDeleteAllocation || this.createMode()) {
+          return of(savedSession);
+        }
+        const conferenceId = String(savedSession.conference?.conferenceId ?? '').trim();
+        const sessionId = String(savedSession.id ?? '').trim();
+        return this.conferenceSpeakerService.removeSessionFromConferenceSpeakers(conferenceId, sessionId).pipe(
+          map(() => savedSession)
+        );
+      })
     ).subscribe({
       next: () => {
+        if (shouldDeleteAllocation) {
+          this.sessionAllocations.update((values) =>
+            values.filter((allocation) => String(allocation.sessionId ?? '').trim() !== currentSessionId)
+          );
+          this.pendingDeallocation.set(false);
+        }
         this.saving.set(false);
         const conferenceId = this.route.snapshot.paramMap.get('conferenceId');
         if (conferenceId) {
@@ -359,6 +396,29 @@ export class SessionEdit implements OnInit {
     if (!isAllowed) {
       return;
     }
+    const currentStatus = this.selectedStatus();
+    if (this.requiresTransitionDeallocationConfirmation(currentStatus, transition)) {
+      this.confirmationService.confirm({
+        message: this.translateService.instant('SESSION.EDIT.DEALLOCATION_CONFIRM_MESSAGE'),
+        header: this.translateService.instant('SESSION.EDIT.DEALLOCATION_CONFIRM_TITLE'),
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonProps: {
+          label: this.translateService.instant('SESSION.EDIT.DEALLOCATION_CONFIRM_ACCEPT'),
+          severity: 'danger',
+        },
+        rejectButtonProps: {
+          label: this.translateService.instant('COMMON.CANCEL'),
+          severity: 'secondary',
+        },
+        accept: () => {
+          this.selectedStatus.set(transition.to);
+          this.pendingDeallocation.set(true);
+        },
+      });
+      return;
+    }
+
+    this.pendingDeallocation.set(false);
     this.selectedStatus.set(transition.to);
   }
 
@@ -557,6 +617,25 @@ export class SessionEdit implements OnInit {
       (item) => String(item.label ?? '').trim().toLowerCase() === normalized
     );
     return String(match?.value?.id ?? '').trim();
+  }
+
+  private requiresTransitionDeallocationConfirmation(
+    currentStatus: SessionStatus | '',
+    transition: SessionStatusTransition
+  ): boolean {
+    const isProgrammedCancellation = currentStatus === 'PROGRAMMED' && transition.actionKey === 'CANCEL';
+    const isScheduledDecline = currentStatus === 'SCHEDULED' && transition.actionKey === 'DECLINE_SPEAKER';
+    return isProgrammedCancellation || isScheduledDecline;
+  }
+
+  private findSessionAllocationBySessionId(sessionId: string): SessionAllocation | undefined {
+    const normalized = String(sessionId ?? '').trim();
+    if (!normalized) {
+      return undefined;
+    }
+    return this.sessionAllocations().find(
+      (allocation) => String(allocation.sessionId ?? '').trim() === normalized
+    );
   }
 }
 
