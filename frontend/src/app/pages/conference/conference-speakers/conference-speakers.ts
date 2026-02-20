@@ -11,6 +11,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
@@ -64,6 +65,7 @@ interface DayAvailabilityEditor {
     DataViewModule,
     InputTextModule,
     MultiSelectModule,
+    SelectModule,
     DialogModule,
     TabsModule,
     ButtonModule,
@@ -94,9 +96,14 @@ export class ConferenceSpeakers implements OnInit {
   readonly hasUnavailableSlotFilter = signal(false);
   readonly hasMultipleSessionsFilter = signal(false);
   readonly editDialogVisible = signal(false);
+  readonly createMode = signal(false);
   readonly editingConferenceSpeaker = signal<ConferenceSpeaker | null>(null);
   readonly editingPerson = signal<Person | null>(null);
   readonly editingDayAvailabilities = signal<DayAvailabilityEditor[]>([]);
+  readonly languageOptions = signal([
+    { label: 'English', value: 'en' },
+    { label: 'Français', value: 'fr' },
+  ]);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
 
@@ -249,6 +256,7 @@ export class ConferenceSpeakers implements OnInit {
     const personCopy = this.deepCopyPerson(view.person);
     this.ensureSpeaker(personCopy);
 
+    this.createMode.set(false);
     this.editingConferenceSpeaker.set(conferenceSpeakerCopy);
     this.editingPerson.set(personCopy);
     this.editingDayAvailabilities.set(
@@ -262,6 +270,7 @@ export class ConferenceSpeakers implements OnInit {
 
   closeSpeakerEdit(): void {
     this.editDialogVisible.set(false);
+    this.createMode.set(false);
     this.editingConferenceSpeaker.set(null);
     this.editingPerson.set(null);
     this.editingDayAvailabilities.set([]);
@@ -287,7 +296,49 @@ export class ConferenceSpeakers implements OnInit {
   }
 
   onAddSpeaker(): void {
-    console.info('[ConferenceSpeakers] Add speaker button clicked');
+    const conferenceId = this.conferenceId();
+    if (!conferenceId) {
+      return;
+    }
+
+    const person: Person = {
+      id: '',
+      lastUpdated: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      hasAccount: false,
+      isPlatformAdmin: false,
+      isSpeaker: true,
+      preferredLanguage: 'en',
+      search: '',
+      speaker: {
+        company: '',
+        bio: '',
+        reference: '',
+        photoUrl: '',
+        submittedConferenceIds: [conferenceId],
+        socialLinks: [],
+        conferenceHallId: ''
+      },
+    };
+
+    const conferenceSpeaker: ConferenceSpeaker = {
+      id: '',
+      lastUpdated: '',
+      conferenceId,
+      personId: '',
+      unavailableSlotsId: [],
+      sessionIds: [],
+      source: 'MANUAL',
+      sourceId: '',
+    };
+
+    this.createMode.set(true);
+    this.editingConferenceSpeaker.set(conferenceSpeaker);
+    this.editingPerson.set(person);
+    this.editingDayAvailabilities.set(this.buildDayAvailabilityEditors(this.conference()?.days ?? [], []));
+    this.editDialogVisible.set(true);
   }
 
   onDayRangeChange(dayAvailability: DayAvailabilityEditor, value: number[] | null): void {
@@ -318,36 +369,58 @@ export class ConferenceSpeakers implements OnInit {
     if (!conferenceSpeaker || !person) {
       return;
     }
+    if (!this.isSpeakerFormValid(person)) {
+      return;
+    }
+    const isCreateMode = this.createMode();
 
     const conferenceDays = this.conference()?.days ?? [];
     const unavailableSlotsId = this.computeUnavailableSlotsId(conferenceDays, this.editingDayAvailabilities());
-    const nextConferenceSpeaker: ConferenceSpeaker = {
-      ...conferenceSpeaker,
-      unavailableSlotsId,
-    };
     const nextPerson = this.deepCopyPerson(person);
-    this.ensureSpeaker(nextPerson);
+    const speaker = this.ensureSpeaker(nextPerson);
+    this.ensureSubmittedConferenceId(speaker);
+    if (isCreateMode) {
+      nextPerson.hasAccount = false;
+      nextPerson.isPlatformAdmin = false;
+    }
 
     this.saving.set(true);
     try {
       console.log('[ConferenceSpeakers] Saving person in collection "person"...', {
         personId: nextPerson.id,
         conferenceId: this.conferenceId(),
+        createMode: isCreateMode,
       });
       let savedPerson: Person;
       try {
-        savedPerson = await firstValueFrom(this.personService.save(nextPerson));
-        console.log('[ConferenceSpeakers] Saved person in collection "person".', {
+        savedPerson = await firstValueFrom(
+          isCreateMode
+            ? this.personService.createViaFunction(nextPerson)
+            : this.personService.save(nextPerson)
+        );
+        console.log('[ConferenceSpeakers] Saved person.', {
           personId: savedPerson.id,
+          createMode: isCreateMode,
         });
       } catch (error) {
-        console.error('[ConferenceSpeakers] Failed saving collection "person".', {
+        console.error('[ConferenceSpeakers] Failed saving person.', {
           personId: nextPerson.id,
           conferenceId: this.conferenceId(),
+          createMode: isCreateMode,
           error,
         });
         throw error;
       }
+
+      const nextConferenceSpeaker: ConferenceSpeaker = {
+        ...conferenceSpeaker,
+        conferenceId: this.conferenceId(),
+        personId: savedPerson.id,
+        unavailableSlotsId,
+        sessionIds: isCreateMode ? [] : [...(conferenceSpeaker.sessionIds ?? [])],
+        source: isCreateMode ? 'MANUAL' : (conferenceSpeaker.source ?? 'MANUAL'),
+        sourceId: isCreateMode ? '' : String(conferenceSpeaker.sourceId ?? '').trim(),
+      };
 
       console.log('[ConferenceSpeakers] Saving conference speaker in collection "conference-speaker"...', {
         conferenceSpeakerId: nextConferenceSpeaker.id,
@@ -376,7 +449,9 @@ export class ConferenceSpeakers implements OnInit {
         return next;
       });
       this.conferenceSpeakers.update((current) =>
-        current.map((item) => (item.id === savedConferenceSpeaker.id ? savedConferenceSpeaker : item))
+        current.some((item) => item.id === savedConferenceSpeaker.id)
+          ? current.map((item) => (item.id === savedConferenceSpeaker.id ? savedConferenceSpeaker : item))
+          : [...current, savedConferenceSpeaker]
       );
       this.closeSpeakerEdit();
     } catch (error) {
@@ -447,8 +522,35 @@ export class ConferenceSpeakers implements OnInit {
     return person.speaker;
   }
 
+  private ensureSubmittedConferenceId(speaker: NonNullable<Person['speaker']>): void {
+    const conferenceId = this.conferenceId();
+    if (!conferenceId) {
+      return;
+    }
+    const ids = new Set(
+      (speaker.submittedConferenceIds ?? [])
+        .map((id) => String(id ?? '').trim())
+        .filter((id) => !!id)
+    );
+    ids.add(conferenceId);
+    speaker.submittedConferenceIds = Array.from(ids).sort((a, b) => a.localeCompare(b));
+  }
+
   private normalizeSearchText(value: string): string {
     return String(value ?? '').trim().toLowerCase();
+  }
+
+  isSpeakerFormValid(person: Person | null): boolean {
+    if (!person) {
+      return false;
+    }
+    return this.isRequiredTextFilled(person.firstName)
+      && this.isRequiredTextFilled(person.lastName)
+      && this.isRequiredTextFilled(person.email);
+  }
+
+  isRequiredTextFilled(value: string | null | undefined): boolean {
+    return String(value ?? '').trim().length > 0;
   }
 
   private buildDayAvailabilityEditors(days: Day[], unavailableSlotsId: string[]): DayAvailabilityEditor[] {
@@ -530,8 +632,8 @@ export class ConferenceSpeakers implements OnInit {
     const slotStart = this.timeToMinutes(slot.startTime);
     const slotEnd = this.timeToMinutes(slot.endTime);
     const [availableStart, availableEnd] = range;
-    const overlapsAvailability = slotStart < availableEnd && availableStart < slotEnd;
-    return !overlapsAvailability;
+    const isFullyInsideAvailability = slotStart >= availableStart && slotEnd <= availableEnd;
+    return !isFullyInsideAvailability;
   }
 
   private normalizeRange(range: [number, number], min: number, max: number): [number, number] {

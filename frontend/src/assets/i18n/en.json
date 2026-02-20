@@ -126,6 +126,7 @@
       "EMPTY": "No speaker",
       "EDIT": {
         "TITLE": "Speaker edition",
+        "TITLE_CREATE": "Speaker creation",
         "TAB_PERSON": "Person",
         "TAB_SPEAKER": "Speaker",
         "TAB_AVAILABILITY": "Availability",
@@ -418,4 +419,3 @@
     }
   }
 }
-

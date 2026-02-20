@@ -1,14 +1,19 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
 import { Person } from '../model/person.model';
-import { map, Observable, from, of } from 'rxjs';
+import { map, Observable, from, of, catchError, throwError } from 'rxjs';
 import { getDocs, orderBy as fbOrderBy, startAfter as fbStartAfter, limit as fbLimit, query as fbQuery, startAt as fbStartAt, endAt as fbEndAt, where as fbWhere } from 'firebase/firestore';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { functionBaseUrl } from './constantes';
 
 /**
  * Service for Person persistent documents in Firestore.
  */
 @Injectable({ providedIn: 'root' })
 export class PersonService extends FirestoreGenericService<Person> {
+  private readonly http = inject(HttpClient);
+
   protected override getCollectionName(): string {
     return 'person';
   }
@@ -32,6 +37,29 @@ export class PersonService extends FirestoreGenericService<Person> {
     item.isSpeaker = !!item.speaker;
     item.search = this.computeSearchField(item);
     return super.save(item);
+  }
+
+  /**
+   * Create person via Cloud Function to maintain email uniqueness index.
+   * If email already exists, returns the existing person.
+   */
+  public createViaFunction(person: Person): Observable<Person> {
+    return this.http.post<{ person: Person }>(`${functionBaseUrl}createPerson`, person).pipe(
+      map((response) => response.person),
+      catchError((error: any) => {
+        if (error?.status === 409) {
+          return this.findByEmail(person.email).pipe(
+            map((existing) => {
+              if (!existing) {
+                throw error;
+              }
+              return existing;
+            })
+          );
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   findByEmail(email: string): Observable<Person | undefined> {

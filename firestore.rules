@@ -43,15 +43,11 @@ service cloud.firestore {
 
     match /person/{document=**} {
       allow read; 
-      allow update: if request.auth != null
-        && (
-          request.auth.token.email == resource.data.email
-          || canOrganizerEditPersonFromExistingSubmissions()
-        );
+      allow update, create: if request.auth != null
+        && (request.auth.token.email == resource.data.email
+          || canOrganizerEditPersonFromExistingSubmissions());
       allow delete: if request.auth != null
       	&& request.auth.token.email == resource.data.email;
-      allow create: if request.auth != null 
-      	&& request.auth.token.email == request.resource.data.email;
     }
 
     match /person_emails/{email} {

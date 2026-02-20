@@ -148,7 +148,7 @@
   position="top"
   styleClass="speaker-edit-dialog"
   [style]="{ width: '95vw', maxWidth: '900px' }"
-  [header]="'CONFERENCE.SPEAKERS.EDIT.TITLE' | translate"
+  [header]="(createMode() ? 'CONFERENCE.SPEAKERS.EDIT.TITLE_CREATE' : 'CONFERENCE.SPEAKERS.EDIT.TITLE') | translate"
   (onHide)="closeSpeakerEdit()"
 >
   @if (editingPerson(); as person) {
@@ -174,15 +174,37 @@
                 <div class="form-group">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.FIRST_NAME' | translate }}</label>
                   <input pInputText [(ngModel)]="person.firstName" class="w-full" />
+                  @if (!isRequiredTextFilled(person.firstName)) {
+                    <small>{{ 'VALIDATION.REQUIRED' | translate }}</small>
+                  }
                 </div>
                 <div class="form-group">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.LAST_NAME' | translate }}</label>
                   <input pInputText [(ngModel)]="person.lastName" class="w-full" />
+                  @if (!isRequiredTextFilled(person.lastName)) {
+                    <small>{{ 'VALIDATION.REQUIRED' | translate }}</small>
+                  }
                 </div>
-              </div>
-            </p-tabpanel>
-            <p-tabpanel [value]="1">
-              <div class="form-grid">
+                <div class="form-group">
+                  <label>{{ 'PERSON.EDIT.EMAIL' | translate }}</label>
+                  <input pInputText [(ngModel)]="person.email" type="email" class="w-full" [disabled]="!createMode()" />
+                  @if (!createMode()) {
+                    <small>{{ 'PERSON.EDIT.EMAIL_DISABLED' | translate }}</small>
+                  } @else if (!isRequiredTextFilled(person.email)) {
+                    <small>{{ 'VALIDATION.REQUIRED' | translate }}</small>
+                  }
+                </div>
+                <div class="form-group">
+                  <label>{{ 'PERSON.EDIT.LANGUAGE' | translate }}</label>
+                  <p-select
+                    [(ngModel)]="person.preferredLanguage"
+                    [options]="languageOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [disabled]="!createMode()"
+                    class="w-full"
+                  ></p-select>
+                </div>
                 <div class="form-group">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.COMPANY' | translate }}</label>
                   <input pInputText [(ngModel)]="person.speaker!.company" class="w-full" />
@@ -190,14 +212,6 @@
                 <div class="form-group">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.PHOTO_URL' | translate }}</label>
                   <input pInputText [(ngModel)]="person.speaker!.photoUrl" class="w-full" />
-                </div>
-                <div class="form-group full-row">
-                  <label>{{ 'CONFERENCE.SPEAKERS.EDIT.REFERENCE' | translate }}</label>
-                  <textarea pTextarea [(ngModel)]="person.speaker!.reference" rows="4" class="w-full"></textarea>
-                </div>
-                <div class="form-group full-row">
-                  <label>{{ 'CONFERENCE.SPEAKERS.EDIT.BIO' | translate }}</label>
-                  <textarea pTextarea [(ngModel)]="person.speaker!.bio" rows="4" class="w-full"></textarea>
                 </div>
               </div>
 
@@ -225,6 +239,18 @@
                   severity="secondary"
                   (click)="addSocialLink()"
                 ></button>
+              </div>
+            </p-tabpanel>
+            <p-tabpanel [value]="1">
+              <div class="form-grid">
+                <div class="form-group full-row">
+                  <label>{{ 'CONFERENCE.SPEAKERS.EDIT.REFERENCE' | translate }}</label>
+                  <textarea pTextarea [(ngModel)]="person.speaker!.reference" rows="4" class="w-full"></textarea>
+                </div>
+                <div class="form-group full-row">
+                  <label>{{ 'CONFERENCE.SPEAKERS.EDIT.BIO' | translate }}</label>
+                  <textarea pTextarea [(ngModel)]="person.speaker!.bio" rows="4" class="w-full"></textarea>
+                </div>
               </div>
             </p-tabpanel>
             <p-tabpanel [value]="2">
@@ -278,6 +304,7 @@
             label="{{ 'COMMON.SAVE' | translate }}"
             (click)="saveSpeakerEdit()"
             [loading]="saving()"
+            [disabled]="!isSpeakerFormValid(editingPerson())"
           ></button>
         </div>
       </div>
