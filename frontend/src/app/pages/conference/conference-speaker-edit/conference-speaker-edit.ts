@@ -94,10 +94,10 @@ export class ConferenceSpeakerEdit implements OnInit {
   ]);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
-  readonly pageTitle = computed(() =>
+  readonly speakerPageTitleKey = computed(() =>
     this.createMode()
-      ? 'CONFERENCE.SPEAKERS.EDIT.TITLE_CREATE'
-      : 'CONFERENCE.SPEAKERS.EDIT.TITLE'
+      ? 'CONFERENCE.SPEAKERS.EDIT.PAGE_TITLE_CREATE'
+      : 'CONFERENCE.SPEAKERS.EDIT.PAGE_TITLE'
   );
 
   private readonly sessionById = computed(() => {

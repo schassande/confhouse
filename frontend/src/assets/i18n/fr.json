@@ -127,6 +127,8 @@
       "EDIT": {
         "TITLE": "Edition Speaker",
         "TITLE_CREATE": "Speaker creation",
+        "PAGE_TITLE": "Edition speaker de {{conference}}",
+        "PAGE_TITLE_CREATE": "Creation speaker de {{conference}}",
         "TAB_PERSON": "Personne",
         "TAB_SPEAKER": "Speaker",
         "TAB_SESSIONS": "Sessions",
