@@ -1,5 +1,17 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, User, sendPasswordResetEmail, setPersistence, browserLocalPersistence, onAuthStateChanged } from '@angular/fire/auth';
+import { Auth } from '@angular/fire/auth';
+import {
+  browserLocalPersistence,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  setPersistence,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  User,
+} from 'firebase/auth';
 import { PersonService } from './person.service';
 import { Person } from '../model/person.model';
 import { firstValueFrom } from 'rxjs';

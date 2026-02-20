@@ -2,15 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
 import { ConferenceSpeaker, SubmitSource } from '../model/speaker.model';
 import { Session } from '../model/session.model';
-import {
-  Firestore,
-  collection,
-  doc,
-  getDocs,
-  query,
-  where,
-  writeBatch,
-} from '@angular/fire/firestore';
+import { Firestore } from '@angular/fire/firestore';
+import { collection, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { from, map, Observable } from 'rxjs';
 
 /**

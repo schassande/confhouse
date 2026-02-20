@@ -1,9 +1,22 @@
-import { inject, Injectable } from '@angular/core';
+import { EnvironmentInjector, inject, Injectable, runInInjectionContext } from '@angular/core';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore';
+import { Firestore, collectionData, docData } from '@angular/fire/firestore';
 import { from, map, Observable } from 'rxjs';
 import { PersistentData } from '../model/persistant.model';
-import { Firestore, collection, collectionData, doc, setDoc, deleteDoc, docData, CollectionReference, DocumentData, Query } from '@angular/fire/firestore';
-import { getDocs, limit, query, QueryDocumentSnapshot, QuerySnapshot } from 'firebase/firestore';
+import {
+  collection,
+  CollectionReference,
+  deleteDoc,
+  doc,
+  DocumentData,
+  getDocs,
+  limit,
+  query,
+  Query,
+  QueryDocumentSnapshot,
+  QuerySnapshot,
+  setDoc,
+} from 'firebase/firestore';
 
 /**
  * Generic service for Firestore persistent documents.
@@ -11,6 +24,7 @@ import { getDocs, limit, query, QueryDocumentSnapshot, QuerySnapshot } from 'fir
  */
 export abstract class FirestoreGenericService<T extends PersistentData> {
   protected firestore = inject(Firestore)
+  private readonly injector = inject(EnvironmentInjector);
 
   protected abstract getCollectionName(): string;
 
@@ -20,13 +34,19 @@ export abstract class FirestoreGenericService<T extends PersistentData> {
     return collection(this.firestore, this.getCollectionName());
   }
   public all(): Observable<T[]> {
-    return collectionData(this.itemsCollection(), { idField: 'id' }) as Observable<T[]>;
+    return runInInjectionContext(
+      this.injector,
+      () => collectionData(this.itemsCollection(), { idField: 'id' }) as Observable<T[]>
+    );
   }
 
   public byId(id: string): Observable<T | undefined> {
     const path = `${this.getCollectionName()}/${id}`;
     const itemDoc = doc(this.firestore, path);
-    return docData(itemDoc, { idField: 'id' }) as Observable<T | undefined>;
+    return runInInjectionContext(
+      this.injector,
+      () => docData(itemDoc, { idField: 'id' }) as Observable<T | undefined>
+    );
   }
   public save(item: T): Observable<T> {
     if (item.id) {
