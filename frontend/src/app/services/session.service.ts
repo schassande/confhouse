@@ -18,7 +18,13 @@ export class SessionService extends FirestoreGenericService<Session> {
    */
   byConferenceId(conferenceId: string): Observable<Session[]> {
     return from(getDocs(fbQuery(this.itemsCollection(), fbWhere('conference.conferenceId', '==', conferenceId)))).pipe(
-      map((qs) => qs.docs.map((qds) => qds.data() as Session))
+      map((qs) =>
+        qs.docs.map((qds) => {
+          const session = qds.data() as Session;
+          session.id = qds.id;
+          return session;
+        })
+      )
     );
   }
 

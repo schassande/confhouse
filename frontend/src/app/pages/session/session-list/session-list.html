@@ -89,7 +89,14 @@
           }}
         </div>
 
-        <button pButton type="button" label="Add session" icon="pi pi-plus" class="add-session-button"></button>
+        <button
+          pButton
+          type="button"
+          [label]="'SESSION.LIST.ADD' | translate"
+          icon="pi pi-plus"
+          class="add-session-button"
+          (click)="onAddSession()"
+        ></button>
       </div>
     </div>
   </ng-template>

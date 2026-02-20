@@ -252,6 +252,14 @@ export class SessionList implements OnInit {
     void this.router.navigate(['/conference', conferenceId, 'sessions', sessionId, 'edit']);
   }
 
+  onAddSession(): void {
+    const conferenceId = this.route.snapshot.paramMap.get('conferenceId');
+    if (!conferenceId) {
+      return;
+    }
+    void this.router.navigate(['/conference', conferenceId, 'sessions', 'create']);
+  }
+
   private computeTextColorForBackground(backgroundColor: string): string {
     const normalized = backgroundColor.trim();
     const shortHexMatch = normalized.match(/^#([0-9a-fA-F]{3})$/);

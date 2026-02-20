@@ -18,7 +18,6 @@ import { ConferenceSpeakerService } from '../../../services/conference-speaker.s
 import { PersonService } from '../../../services/person.service';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
 import { SessionService } from '../../../services/session.service';
-
 /**
  * Option affichée dans les auto-complétions de speakers.
  */
@@ -28,6 +27,8 @@ interface SpeakerOption {
   /** Personne associée à l'option sélectionnée. */
   value: Person;
 }
+
+type SpeakerControlValue = SpeakerOption | Person | string | null | undefined;
 
 /**
  * Transition de statut autorisée depuis un état donné.
@@ -52,15 +53,27 @@ const SESSION_STATUS_TRANSITIONS: Record<SessionStatus, SessionStatusTransition[
   WAITLISTED: [
     { to: 'REJECTED', actionKey: 'REJECT' },
     { to: 'ACCEPTED', actionKey: 'ACCEPT' },
+    { to: 'DECLINED_BY_SPEAKER', actionKey: 'DECLINE_SPEAKER' }
   ],
-  ACCEPTED: [{ to: 'SPEAKER_CONFIRMED', actionKey: 'CONFIRM_SPEAKER' }], // 'SCHEDULED' excluded: done by planning workflow.
-  SPEAKER_CONFIRMED: [], // 'PROGRAMMED' excluded: done by planning workflow.
+  ACCEPTED: [
+    { to: 'SPEAKER_CONFIRMED', actionKey: 'CONFIRM_SPEAKER' },
+    { to: 'DECLINED_BY_SPEAKER', actionKey: 'DECLINE_SPEAKER' }
+    // 'SCHEDULED' excluded: done by planning workflow.
+  ], 
+  SPEAKER_CONFIRMED: [
+    { to: 'DECLINED_BY_SPEAKER', actionKey: 'DECLINE_SPEAKER' },
+    // 'PROGRAMMED' excluded: done by planning workflow.
+  ], 
   SCHEDULED: [
     { to: 'DECLINED_BY_SPEAKER', actionKey: 'DECLINE_SPEAKER' },
     { to: 'PROGRAMMED', actionKey: 'CONFIRM_AFTER_SCHEDULE' },
   ],
-  DECLINED_BY_SPEAKER: [],
-  PROGRAMMED: [{ to: 'CANCELLED', actionKey: 'CANCEL' }],
+  DECLINED_BY_SPEAKER: [
+    { to: 'SPEAKER_CONFIRMED', actionKey: 'CONFIRM_SPEAKER' },
+  ],
+  PROGRAMMED: [
+    { to: 'CANCELLED', actionKey: 'CANCEL' }
+  ],
   CANCELLED: [],
 };
 
@@ -92,6 +105,7 @@ export class SessionEdit implements OnInit {
 
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly createMode = signal(false);
   readonly errorMessage = signal('');
   readonly conference = signal<Conference | undefined>(undefined);
   readonly initialSession = signal<Session | undefined>(undefined);
@@ -132,6 +146,16 @@ export class SessionEdit implements OnInit {
     { label: 'ADVANCED', value: 'ADVANCED' },
   ];
 
+  readonly pageTitleParams = computed(() => ({
+    conference: (
+      (this.conference()?.name || '')
+      + (this.conference()?.edition ? ` ${this.conference()?.edition}` : '')
+    ).trim(),
+  }));
+  readonly pageTitleKey = computed(() =>
+    this.createMode() ? 'SESSION.EDIT.PAGE_TITLE_CREATE' : 'SESSION.EDIT.PAGE_TITLE'
+  );
+
   readonly availableStatusTransitions = computed<SessionStatusTransition[]>(() => {
     const current = this.selectedStatus();
     if (!current) {
@@ -169,13 +193,44 @@ export class SessionEdit implements OnInit {
 
   ngOnInit(): void {
     const conferenceId = this.route.snapshot.paramMap.get('conferenceId');
-    const sessionId = this.route.snapshot.paramMap.get('sessionId');
-    if (!conferenceId || !sessionId) {
+    const mode = String(this.route.snapshot.data['mode'] ?? '').trim();
+    if (!conferenceId) {
       this.errorMessage.set('SESSION.EDIT.ERROR_NOT_FOUND');
       this.loading.set(false);
       return;
     }
 
+    if (mode === 'create') {
+      this.createMode.set(true);
+      this.conferenceService.byId(conferenceId).pipe(take(1)).subscribe({
+        next: (conference) => {
+          if (!conference) {
+            this.errorMessage.set('SESSION.EDIT.ERROR_NOT_FOUND');
+            this.loading.set(false);
+            return;
+          }
+          this.conference.set(conference);
+          const session = this.createDraftSession(conferenceId);
+          this.initialSession.set(session);
+          this.sessionAllocations.set([]);
+          this.populateForm(session);
+        },
+        error: () => {
+          this.errorMessage.set('SESSION.EDIT.ERROR_LOAD');
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
+
+    const sessionId = this.route.snapshot.paramMap.get('sessionId');
+    if (!sessionId) {
+      this.errorMessage.set('SESSION.EDIT.ERROR_NOT_FOUND');
+      this.loading.set(false);
+      return;
+    }
+
+    this.createMode.set(false);
     forkJoin({
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
       session: this.sessionService.byId(sessionId).pipe(take(1)),
@@ -212,6 +267,14 @@ export class SessionEdit implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const title = raw.title?.trim() ?? '';
+    const abstract = raw.abstract ?? '';
+    const speaker1Id = this.extractSpeakerId(raw.speaker1);
+    const speaker2Id = this.extractSpeakerId(raw.speaker2);
+    const speaker3Id = this.extractSpeakerId(raw.speaker3);
+    const speaker1Label = this.extractSpeakerLabel(raw.speaker1);
+    const speaker2Label = this.extractSpeakerLabel(raw.speaker2);
+    const speaker3Label = this.extractSpeakerLabel(raw.speaker3);
     const updatedConference = {
       ...initial.conference,
       sessionTypeId: raw.sessionTypeId ?? '',
@@ -222,21 +285,25 @@ export class SessionEdit implements OnInit {
 
     const updated: Session = {
       ...initial,
-      title: raw.title?.trim() ?? '',
-      abstract: raw.abstract ?? '',
-      speaker1Id: raw.speaker1?.value?.id ?? '',
-      speaker2Id: raw.speaker2?.value?.id || undefined,
-      speaker3Id: raw.speaker3?.value?.id || undefined,
+      title,
+      abstract,
+      speaker1Id,
+      speaker2Id,
+      speaker3Id,
+      search: this.buildSessionSearch(title, abstract, speaker1Label, speaker2Label, speaker3Label),
       conference: updatedConference,
     };
 
     const existingOverrides = initial.conference.overriddenFields ?? [];
-    updatedConference.overriddenFields = this.computeOverriddenFields(initial, updated, existingOverrides);
+    updatedConference.overriddenFields = this.createMode()
+      ? []
+      : this.computeOverriddenFields(initial, updated, existingOverrides);
 
     this.saving.set(true);
+    const previousSession = this.createMode() ? undefined : initial;
     this.sessionService.save(updated).pipe(
       take(1),
-      switchMap((savedSession) => this.conferenceSpeakerService.syncFromSession(savedSession, initial))
+      switchMap((savedSession) => this.conferenceSpeakerService.syncFromSession(savedSession, previousSession))
     ).subscribe({
       next: () => {
         this.saving.set(false);
@@ -388,4 +455,108 @@ export class SessionEdit implements OnInit {
 
     return overridden;
   }
+
+  private createDraftSession(conferenceId: string): Session {
+    const now = new Date().toISOString();
+    return {
+      id: '',
+      lastUpdated: '',
+      title: '',
+      abstract: '',
+      references: '',
+      sessionType: '',
+      speaker1Id: '',
+      speaker2Id: '',
+      speaker3Id: '',
+      lastChangeDate: now,
+      search: '',
+      conference: {
+        conferenceId,
+        status: 'DRAFT',
+        sourceSessionUuid: '',
+        sessionTypeId: '',
+        trackId: '',
+        overriddenFields: [],
+        submitDate: now,
+        level: 'BEGINNER',
+        langs: [],
+        conferenceHallId: '',
+        review: {
+          average: 0,
+          votes: 0,
+        },
+      },
+    };
+  }
+
+  private buildSessionSearch(
+    title: string,
+    abstract: string,
+    speaker1Label?: string,
+    speaker2Label?: string,
+    speaker3Label?: string
+  ): string {
+    return [title, abstract, speaker1Label, speaker2Label, speaker3Label]
+      .map((value) => String(value ?? '').trim())
+      .filter((value) => value.length > 0)
+      .join(' ')
+      .toLowerCase();
+  }
+
+  private extractSpeakerId(value: SpeakerControlValue): string {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return this.findSpeakerIdByLabel(value);
+    }
+    const candidate = value as Partial<SpeakerOption> & Partial<Person>;
+    const nestedPersonId = String(candidate.value?.id ?? '').trim();
+    if (nestedPersonId.length > 0) {
+      return nestedPersonId;
+    }
+    const directPersonId = String(candidate.id ?? '').trim();
+    if (directPersonId.length > 0) {
+      return directPersonId;
+    }
+    const label = String(candidate.label ?? '').trim();
+    if (label.length > 0) {
+      return this.findSpeakerIdByLabel(label);
+    }
+    return '';
+  }
+
+  private extractSpeakerLabel(value: SpeakerControlValue): string {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+    const candidate = value as Partial<SpeakerOption> & Partial<Person>;
+    const optionLabel = String(candidate.label ?? '').trim();
+    if (optionLabel.length > 0) {
+      return optionLabel;
+    }
+    const firstName = String(candidate.firstName ?? '').trim();
+    const lastName = String(candidate.lastName ?? '').trim();
+    return [firstName, lastName].filter((entry) => entry.length > 0).join(' ').trim();
+  }
+
+  private findSpeakerIdByLabel(label: string): string {
+    const normalized = String(label ?? '').trim().toLowerCase();
+    if (normalized.length === 0) {
+      return '';
+    }
+    const allSuggestions = [
+      ...this.speaker1Suggestions(),
+      ...this.speaker2Suggestions(),
+      ...this.speaker3Suggestions(),
+    ];
+    const match = allSuggestions.find(
+      (item) => String(item.label ?? '').trim().toLowerCase() === normalized
+    );
+    return String(match?.value?.id ?? '').trim();
+  }
 }
+

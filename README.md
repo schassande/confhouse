@@ -126,8 +126,6 @@ stateDiagram-v2
 
 ```
 TODO list :
-- Ajout session
-- Afficher dans l'édition d'une session le slot ou il est alloué
 - Cancel session
 - Cancel speaker
 - Prendre en compte les contraintes d'indispo des speakers dans l'allocation

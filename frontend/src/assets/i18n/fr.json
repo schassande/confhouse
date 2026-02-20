@@ -346,6 +346,7 @@
     "LIST": {
       "TITLE": "Sessions",
       "PAGE_TITLE": "{{conference}}: Liste des sessions",
+      "ADD": "Ajouter une session",
       "SEARCH_PLACEHOLDER": "Rechercher dans les mots de la session",
       "SORT_BY": "Trier par",
       "SORT_NAME": "Titre",
@@ -361,6 +362,8 @@
     },
     "EDIT": {
       "TITLE": "Edition de session",
+      "PAGE_TITLE": "Edition session de {{conference}}",
+      "PAGE_TITLE_CREATE": "Creation session de {{conference}}",
       "LOADING": "Chargement de la session...",
       "STATUS": "Statut",
       "TRANSITIONS": "Transitions possibles",

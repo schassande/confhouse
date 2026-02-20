@@ -1,5 +1,5 @@
 <div class="session-edit-page">
-  <h2>{{ 'SESSION.EDIT.TITLE' | translate }}</h2>
+  <h2>{{ pageTitleKey() | translate : pageTitleParams() }}</h2>
 
   @if (loading()) {
     <div class="state">{{ 'SESSION.EDIT.LOADING' | translate }}</div>
@@ -7,15 +7,17 @@
     <div class="state error">{{ errorMessage() | translate }}</div>
   } @else {
     <form [formGroup]="form" class="session-form" (ngSubmit)="save()">
-      <div class="form-field">
+      <div class="form-field inline-field">
         <label>{{ 'SESSION.EDIT.STATUS' | translate }}</label>
-        <app-session-status-badge [status]="selectedStatus() || 'UNKNOWN'"></app-session-status-badge>
+        <div class="inline-value">
+          <app-session-status-badge [status]="selectedStatus() || 'UNKNOWN'"></app-session-status-badge>
+        </div>
       </div>
 
       @if (availableStatusTransitions().length > 0) {
-      <div class="form-field">
+      <div class="form-field inline-field">
         <label>{{ 'SESSION.EDIT.TRANSITIONS' | translate }}</label>
-        <div class="form-actions">
+        <div class="transition-actions">
           @for (transition of availableStatusTransitions(); track transition.to + '-' + transition.actionKey) {
           <p-button
             type="button"
@@ -55,6 +57,7 @@
             [showClear]="true"
             [forceSelection]="true"
             optionLabel="label"
+            optionValue="value"
             (completeMethod)="searchSpeaker1($event)"
             (onClear)="onSpeakerClear('speaker1')"
           />
@@ -71,6 +74,7 @@
             [showClear]="true"
             [forceSelection]="true"
             optionLabel="label"
+            optionValue="value"
             (completeMethod)="searchSpeaker2($event)"
             (onClear)="onSpeakerClear('speaker2')"
           />
@@ -87,6 +91,7 @@
             [showClear]="true"
             [forceSelection]="true"
             optionLabel="label"
+            optionValue="value"
             (completeMethod)="searchSpeaker3($event)"
             (onClear)="onSpeakerClear('speaker3')"
           />
@@ -131,6 +136,7 @@
         </div>
       </div>
 
+      @if (!createMode()) {
       <div class="form-field allocation-field">
         <label>{{ 'SESSION.EDIT.ALLOCATED_SLOT' | translate }}</label>
         <div class="allocation-value">
@@ -141,6 +147,7 @@
           }
         </div>
       </div>
+      }
 
       <div class="form-actions">
         <p-button

@@ -348,6 +348,7 @@
     "LIST": {
       "TITLE": "Sessions",
       "PAGE_TITLE": "{{conference}}: List of sessions",
+      "ADD": "Add session",
       "SEARCH_PLACEHOLDER": "Search in session words",
       "SORT_BY": "Sort by",
       "SORT_NAME": "Title",
@@ -363,6 +364,8 @@
     },
     "EDIT": {
       "TITLE": "Edit Session",
+      "PAGE_TITLE": "Session edition of {{conference}}",
+      "PAGE_TITLE_CREATE": "Session creation of {{conference}}",
       "LOADING": "Loading session...",
       "STATUS": "Status",
       "TRANSITIONS": "Available transitions",
