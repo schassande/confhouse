@@ -16,7 +16,8 @@
     "PROFILE": "Préférences",
     "LANGUAGE": "Changer la langue",
     "ADMIN": "Administration",
-    "ADMIN_PERSONS": "Gérer les personnes"
+    "ADMIN_PERSONS": "Gérer les personnes",
+    "ADMIN_PLATFORM_CONFIG": "Parametres plateforme"
   },
   "LANGUAGE": {
     "EN": "English",
@@ -535,6 +536,16 @@
       "DECLINE_SPEAKER": "Refus de participation",
       "CONFIRM_AFTER_SCHEDULE": "Confirmation de participation",
       "CANCEL": "Annuler la session"
+    }
+  },
+  "ADMIN": {
+    "PLATFORM_CONFIG": {
+      "TITLE": "Configuration plateforme",
+      "DESCRIPTION": "Gerez les parametres globaux de la plateforme.",
+      "LOADING": "Chargement de la configuration plateforme...",
+      "ONLY_PLATFORM_ADMIN_CAN_CREATE_CONFERENCE": "Seuls les admins plateforme peuvent creer des conferences",
+      "SAVE_SUCCESS": "Configuration plateforme enregistree.",
+      "SAVE_ERROR": "Impossible d'enregistrer la configuration plateforme."
     }
   }
 }

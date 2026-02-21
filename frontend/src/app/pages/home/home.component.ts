@@ -7,6 +7,9 @@ import { Router } from '@angular/router';
 import { UserSignService } from '../../services/usersign.service';
 import { DataViewModule } from 'primeng/dataview';
 import { ButtonModule } from 'primeng/button';
+import { PlatformConfigService } from '../../services/platform-config.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { buildDefaultPlatformConfig, PlatformConfig } from '../../model/platform-config.model';
 
 @Component({
   selector: 'app-home',
@@ -19,15 +22,27 @@ import { ButtonModule } from 'primeng/button';
 export class HomeComponent {
   private readonly conferenceService = inject(ConferenceService);
   private readonly usersignService = inject(UserSignService);
+  private readonly platformConfigService = inject(PlatformConfigService);
   private readonly router = inject(Router);
   private readonly _conferences = signal<Conference[] | undefined>(undefined);
+  private readonly _platformConfig = signal<PlatformConfig>(buildDefaultPlatformConfig());
 
   conferences = computed(() => this._conferences());
   person = computed(() => this.usersignService.person());
+  canCreateConference = computed(() => {
+    if (!this._platformConfig().onlyPlatformAdminCanCreateConference) {
+      return true;
+    }
+    return !!this.person()?.isPlatformAdmin;
+  });
 
 
   constructor() {
     this.conferenceService.all().subscribe((confs: Conference[]) => this._conferences.set(confs));
+    this.platformConfigService
+      .getPlatformConfig()
+      .pipe(takeUntilDestroyed())
+      .subscribe((platformConfig) => this._platformConfig.set(platformConfig));
   }
 
   conferenceDateRange(conf: Conference): { start?: string; end?: string } {

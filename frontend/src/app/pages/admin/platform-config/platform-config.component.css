@@ -1,0 +1,27 @@
+.platform-config {
+  max-width: 720px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.description {
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.setting-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.success {
+  color: #15803d;
+  margin-top: 0.75rem;
+}
+
+.error {
+  color: #b91c1c;
+  margin-top: 0.75rem;
+}

@@ -81,11 +81,13 @@ export class MainMenuComponent {
     if (p && p.isPlatformAdmin) {
       const adminGroupLabel = await firstValueFrom(this.translate.get('MENU.ADMIN'));
       const personsLabel = await firstValueFrom(this.translate.get('MENU.ADMIN_PERSONS'));
+      const platformConfigLabel = await firstValueFrom(this.translate.get('MENU.ADMIN_PLATFORM_CONFIG'));
       items.push({
         label: adminGroupLabel,
         icon: 'pi pi-shield',
         items: [
-          { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) }
+          { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) },
+          { label: platformConfigLabel, icon: 'pi pi-cog', command: () => this.router.navigate(['/admin/platform-config']) }
         ]
       });
     }
@@ -138,9 +140,13 @@ export class MainMenuComponent {
   private async setAdminMenuItems() {
     const p = this.person();
     if (p && p.isPlatformAdmin) {
-      const personsLabel = await firstValueFrom(this.translate.get('MENU.ADMIN_PERSONS'));
+      const [personsLabel, platformConfigLabel] = await Promise.all([
+        firstValueFrom(this.translate.get('MENU.ADMIN_PERSONS')),
+        firstValueFrom(this.translate.get('MENU.ADMIN_PLATFORM_CONFIG')),
+      ]);
       this._adminMenuItems.set([
-        { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) }
+        { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) },
+        { label: platformConfigLabel, icon: 'pi pi-cog', command: () => this.router.navigate(['/admin/platform-config']) },
       ]);
     } else {
       this._adminMenuItems.set([]);

@@ -21,10 +21,12 @@ import { SessionPublishComponent } from './pages/session/session-publish/session
 import { VoxxrinConfigComponent } from './pages/session/session-publish/voxxrin-config/voxxrin-config.component';
 import { ConferenceOrganizerGuard } from './guards/conference-organizer.guard';
 import { ConferenceManageContextGuard } from './guards/conference-manage-context.guard';
+import { PlatformConfigComponent } from './pages/admin/platform-config/platform-config.component';
+import { ConferenceCreateGuard } from './guards/conference-create.guard';
 
 export const routes: Routes = [
 	{ path: '', component: HomeComponent, pathMatch: 'full' },
-	{ path: 'conference/create', component: ConferenceConfigComponent, canActivate: [AuthGuard] },
+	{ path: 'conference/create', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceCreateGuard] },
 	{ path: 'conference/:conferenceId/edit', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard] },
 	{ path: 'conference/:conferenceId/manage', component: ConferenceManage, canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard] },
 	{ path: 'conference/:conferenceId/speakers', component: ConferenceSpeakers, canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard] },
@@ -40,6 +42,7 @@ export const routes: Routes = [
 	{ path: 'conference/:conferenceId', component: ConferenceViewComponent },
 	{ path: 'preference', component: PreferenceComponent },
 	{ path: 'admin/persons', component: PersonListComponent, canActivate: [AdminGuard] },
+	{ path: 'admin/platform-config', component: PlatformConfigComponent, canActivate: [AdminGuard] },
 	{ path: 'signup', component: SignupComponent },
 	{ path: 'login', component: LoginComponent }
 ];

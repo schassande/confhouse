@@ -1,0 +1,33 @@
+<section class="platform-config">
+  <h2>{{ 'ADMIN.PLATFORM_CONFIG.TITLE' | translate }}</h2>
+  <p class="description">{{ 'ADMIN.PLATFORM_CONFIG.DESCRIPTION' | translate }}</p>
+
+  @if (isLoading()) {
+    <p>{{ 'ADMIN.PLATFORM_CONFIG.LOADING' | translate }}</p>
+  } @else {
+    <div class="setting-row">
+      <p-checkbox
+        inputId="onlyPlatformAdminCanCreateConference"
+        [binary]="true"
+        [(ngModel)]="onlyPlatformAdminCanCreateConference"
+      ></p-checkbox>
+      <label for="onlyPlatformAdminCanCreateConference">
+        {{ 'ADMIN.PLATFORM_CONFIG.ONLY_PLATFORM_ADMIN_CAN_CREATE_CONFERENCE' | translate }}
+      </label>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      [disabled]="isSaving()"
+      [label]="'COMMON.SAVE' | translate"
+      (click)="save()"
+    ></button>
+
+    @if (saveStatus() === 'success') {
+      <p class="success">{{ 'ADMIN.PLATFORM_CONFIG.SAVE_SUCCESS' | translate }}</p>
+    } @else if (saveStatus() === 'error') {
+      <p class="error">{{ 'ADMIN.PLATFORM_CONFIG.SAVE_ERROR' | translate }}</p>
+    }
+  }
+</section>

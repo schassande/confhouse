@@ -126,21 +126,21 @@ stateDiagram-v2
 
 ```
 TODO list :
+- feature: Admin only create conference
 - Activités 
+- Impression planning
+  - jour
+  - salle par jour
+- Allocation automatique des sessions
+  - choisir des critères stratégies 
+    - variété des tracks
 - Cancel speaker
 - Speaker Edit: lors de la modification de l'indispo d'un speaker il faut désallouer les sessions sur les slots ou le speaker est indispo
 - Duplication conference
 - Publication voxxrin : fichier config produit. 
   - Attente d'info Voxxrin pour intégrer 
   - Produire les infos sur les sessions, speakers, sponsors et le schedule
-- Allocation automatique des sessions
-  - choisir des critères stratégies 
-    - variété des tracks
 - Intendance
-- Impression planning
-  - jour
-  - salle par jour
-- Admin only create conference
 - Export excel: Speaker, session
 
 Bonus

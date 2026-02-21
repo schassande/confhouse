@@ -16,7 +16,18 @@
     "PROFILE": "Profile",
     "LANGUAGE": "Change language",
     "ADMIN": "Admin",
-    "ADMIN_PERSONS": "Manage persons"
+    "ADMIN_PERSONS": "Manage persons",
+    "ADMIN_PLATFORM_CONFIG": "Platform settings"
+  },
+  "ADMIN": {
+    "PLATFORM_CONFIG": {
+      "TITLE": "Platform configuration",
+      "DESCRIPTION": "Manage global settings for the whole platform.",
+      "LOADING": "Loading platform configuration...",
+      "ONLY_PLATFORM_ADMIN_CAN_CREATE_CONFERENCE": "Only platform admins can create conferences",
+      "SAVE_SUCCESS": "Platform configuration saved.",
+      "SAVE_ERROR": "Unable to save platform configuration."
+    }
   },
   "PERSON": {
     "LIST": {

@@ -16,6 +16,19 @@ service cloud.firestore {
         && request.auth.token.email == get(personPath).data.email;
     }
 
+    function isPlatformAdmin() {
+      let personPath = /databases/$(database)/documents/person/$(request.auth.uid);
+      return request.auth != null
+        && exists(personPath)
+        && get(personPath).data.isPlatformAdmin == true;
+    }
+
+    function onlyPlatformAdminCanCreateConferenceEnabled() {
+      let configPath = /databases/$(database)/documents/platform-config/PlatformConfig;
+      return exists(configPath)
+        && get(configPath).data.onlyPlatformAdminCanCreateConference == true;
+    }
+
     // Firestore Rules does not support iterating a dynamic list with loops.
     // We check the first submitted conference ids explicitly (pragmatic bounded check).
     function isOrganizerOfAnySubmittedConferenceIds(submittedConferenceIds) {
@@ -63,7 +76,12 @@ service cloud.firestore {
       allow update, delete: if request.auth != null 
       	&& request.auth.token.email in resource.data.organizerEmails;
       allow create:         if request.auth != null 
-      	&& request.auth.token.email in request.resource.data.organizerEmails;
+      	&& request.auth.token.email in request.resource.data.organizerEmails
+        && (!onlyPlatformAdminCanCreateConferenceEnabled() || isPlatformAdmin());
+    }
+    match /platform-config/{documentId} {
+      allow read;
+      allow create, update, delete: if documentId == 'PlatformConfig' && isPlatformAdmin();
     }
     match /conferenceSecret/{document=**} {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
