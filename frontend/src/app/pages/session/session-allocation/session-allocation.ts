@@ -144,13 +144,11 @@ export class SessionAllocation implements OnInit {
   );
 
   readonly speakerOptions = computed<SelectOption[]>(() => {
-    const speakerIds = new Set<string>();
-    this.sessions().forEach((session) => {
-      this.sessionSpeakerIds(session).forEach((speakerId) => speakerIds.add(speakerId));
-    });
-
     const namesById = this.speakerDisplayById();
-    return Array.from(speakerIds)
+    return this.conferenceSpeakers()
+      .map((conferenceSpeaker) => String(conferenceSpeaker.personId ?? '').trim())
+      .filter((speakerId) => speakerId.length > 0)
+      .filter((speakerId, idx, all) => all.indexOf(speakerId) === idx)
       .map((speakerId) => ({
         label: namesById.get(speakerId) ?? speakerId,
         value: speakerId,
