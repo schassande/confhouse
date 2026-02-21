@@ -1,0 +1,143 @@
+<section class="activity-participation-page">
+  <p-toast></p-toast>
+
+  @if (loading()) {
+  <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
+  } @else if (!activityId()) {
+  <h1>{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.TITLE_LIST' | translate }}</h1>
+  <div class="activities-list">
+  <p-dataview [value]="isOrganizer() ? activities() : visibleActivitiesForCurrentUser()" layout="list">
+    <ng-template #list let-items>
+      <div class="activities-grid">
+        @for (item of items; track item.id) {
+        <article
+          class="activity-card clickable"
+          role="button"
+          tabindex="0"
+          (click)="openActivity(item.id)"
+          (keydown.enter)="openActivity(item.id)"
+          (keydown.space)="openActivity(item.id); $event.preventDefault()"
+        >
+          <div class="activity-line">
+            <div class="activity-main">
+              <h3>{{ item.name }}</h3>
+              <p>{{ item.start | date:'short' }} - {{ item.end | date:'short' }}</p>
+            </div>
+            <p-tag
+              [value]="isRegistered(item.id) ? ('CONFERENCE.ACTIVITY_PARTICIPATION.REGISTERED' | translate) : ('CONFERENCE.ACTIVITY_PARTICIPATION.NOT_REGISTERED' | translate)"
+              [severity]="isRegistered(item.id) ? 'success' : 'secondary'"
+            ></p-tag>
+          </div>
+        </article>
+        }
+      </div>
+    </ng-template>
+    <ng-template #emptymessage>
+      <p>{{ 'CONFERENCE.ACTIVITIES.NO_ACTIVITIES' | translate }}</p>
+    </ng-template>
+  </p-dataview>
+  </div>
+  } @else if (activity(); as currentActivity) {
+  <div class="header">
+    <h1>{{ currentActivity.name }}</h1>
+    <a [routerLink]="['/conference', conferenceId()]">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.BACK_CONFERENCE' | translate }}</a>
+  </div>
+
+  <p-card>
+    <ng-template pTemplate="title">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.TITLE' | translate }}</ng-template>
+    <ng-template pTemplate="subtitle">
+      {{ currentActivity.start | date:'short' }} - {{ currentActivity.end | date:'short' }}
+    </ng-template>
+
+    @if (isOrganizer()) {
+    <div class="organizer-panel">
+      <p-checkbox
+        inputId="otherPerson"
+        [binary]="true"
+        [ngModel]="selectingOtherPerson()"
+        (onChange)="onToggleOtherPerson(!!$event.checked)"
+      ></p-checkbox>
+      <label for="otherPerson">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.FOR_OTHER_PERSON' | translate }}</label>
+    </div>
+
+    @if (selectingOtherPerson()) {
+    <div class="person-search">
+      <input
+        pInputText
+        type="email"
+        [ngModel]="searchEmail()"
+        (ngModelChange)="onSearchEmailChange($event)"
+        [placeholder]="'CONFERENCE.ACTIVITY_PARTICIPATION.EMAIL_PLACEHOLDER' | translate"
+      />
+      <button pButton type="button" (click)="searchPersonByEmail()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SEARCH' | translate"></button>
+    </div>
+    }
+    }
+
+    @if (targetPerson(); as person) {
+    <p class="target-person">
+      {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.TARGET_PERSON' | translate }}:
+      <strong>{{ person.firstName }} {{ person.lastName }}</strong> ({{ person.email }})
+    </p>
+    }
+
+    @if (!canCurrentUserParticipate() && !isOrganizer()) {
+    <p class="warning">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.NOT_AUTHORIZED' | translate }}</p>
+    } @else if (form(); as participationForm) {
+    <form [formGroup]="participationForm" class="participation-form">
+      @for (attribute of currentActivity.specificAttributes; track attribute.attributeName; let idx = $index) {
+      <div class="form-section">
+        <label>{{ attribute.attributeName }} @if (attribute.attributeRequired) {<span>*</span>}</label>
+
+        @if (isText(attribute)) {
+        <input pInputText type="text" [formControlName]="controlName(idx)" class="w-full" />
+        }
+        @if (isInteger(attribute)) {
+        <p-inputNumber [formControlName]="controlName(idx)" [min]="attribute.attributeMinValue ?? null" [max]="attribute.attributeMaxValue ?? null"></p-inputNumber>
+        }
+        @if (isList(attribute)) {
+        <p-select [formControlName]="controlName(idx)" [options]="listOptions(attribute)" optionLabel="label" optionValue="value" class="w-full"></p-select>
+        }
+        @if (isBoolean(attribute)) {
+        <p-checkbox [formControlName]="controlName(idx)" [binary]="true"></p-checkbox>
+        }
+        @if (isDate(attribute)) {
+        <p-datepicker [formControlName]="controlName(idx)" [showIcon]="true" appendTo="body"></p-datepicker>
+        }
+      </div>
+      }
+
+      <div class="actions">
+        @if (targetParticipation()) {
+        <button pButton type="button" class="p-button-danger" (click)="deleteParticipation()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.DELETE' | translate"></button>
+        }
+        <button pButton type="button" class="p-button-success" (click)="saveParticipation()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SAVE' | translate"></button>
+      </div>
+    </form>
+    }
+  </p-card>
+  }
+
+  <p-dialog
+    [visible]="creationDialogVisible()"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [header]="'CONFERENCE.ACTIVITY_PARTICIPATION.CREATE_PERSON' | translate"
+    [style]="{ width: 'min(520px, 92vw)' }"
+    (onHide)="onCancelPersonDialog()"
+  >
+    <form [formGroup]="createPersonForm" class="create-person-form">
+      <label>{{ 'PERSON.EDIT.FIRSTNAME' | translate }}</label>
+      <input pInputText type="text" formControlName="firstName" />
+      <label>{{ 'PERSON.EDIT.LASTNAME' | translate }}</label>
+      <input pInputText type="text" formControlName="lastName" />
+      <label>{{ 'PERSON.EDIT.EMAIL' | translate }}</label>
+      <input pInputText type="email" formControlName="email" />
+      <div class="actions">
+        <button pButton type="button" class="p-button-secondary" (click)="onCancelPersonDialog()" [label]="'COMMON.CANCEL' | translate"></button>
+        <button pButton type="button" class="p-button-success" (click)="createPersonWithoutAccount()" [label]="'COMMON.SAVE' | translate"></button>
+      </div>
+    </form>
+  </p-dialog>
+</section>

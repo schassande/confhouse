@@ -144,8 +144,32 @@
         "SESSIONS": "Manage sessions",
         "SPEAKERS": "Manage speakers",
         "CONFIG_ACTIVITIES": "Configure activities",
+        "ACTIVITY_PARTICIPATION": "Activity participation",
         "PUBLISH": "Publish program"
       }
+    },
+    "ACTIVITY_PARTICIPATION": {
+      "TITLE_LIST": "Activity participation",
+      "OPEN": "Open registration",
+      "BACK_CONFERENCE": "Back to conference",
+      "TITLE": "Registration form",
+      "FOR_OTHER_PERSON": "Register for another person (organizer)",
+      "EMAIL_PLACEHOLDER": "person@email.com",
+      "SEARCH": "Search",
+      "TARGET_PERSON": "Participant",
+      "NOT_AUTHORIZED": "You are not allowed to register for this activity.",
+      "DELETE": "Delete registration",
+      "SAVE": "Save registration",
+      "CREATE_PERSON": "Create person",
+      "PERSON_CREATED": "Person created",
+      "PERSON_CREATE_ERROR": "Unable to create person",
+      "SAVE_SUCCESS": "Registration saved",
+      "SAVE_ERROR": "Unable to save registration",
+      "DELETE_SUCCESS": "Registration deleted",
+      "DELETE_ERROR": "Unable to delete registration",
+      "AVAILABLE_ACTIVITIES": "Available activities",
+      "REGISTERED": "Registered",
+      "NOT_REGISTERED": "Not registered"
     },
     "ACTIVITIES": {
       "TITLE": "Activities configuration",

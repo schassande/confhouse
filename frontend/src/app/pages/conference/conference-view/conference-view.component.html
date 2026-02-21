@@ -21,6 +21,18 @@
       <div style="margin-top: 0.5rem;">
         <a [routerLink]="['/conference', conf.id, 'manage']">Gerer la conference</a>
       </div>
+      @if (currentPerson() && visibleActivities().length > 0) {
+      <div style="margin-top: 1rem;">
+        <strong>{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.AVAILABLE_ACTIVITIES' | translate }}</strong>
+        <ul style="margin: 0.5rem 0 0 1.1rem;">
+          @for (activity of visibleActivities(); track activity.id) {
+          <li>
+            <a [routerLink]="['/conference', conf.id, 'activities', activity.id, 'participation']">{{ activity.name }}</a>
+          </li>
+          }
+        </ul>
+      </div>
+      }
       <!-- Add more fields as needed -->
     </p-card>
   </ng-container>

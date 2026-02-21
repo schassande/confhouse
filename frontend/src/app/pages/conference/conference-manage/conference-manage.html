@@ -47,6 +47,10 @@
           <i class="pi pi-calendar-plus"></i>
           <span>{{ 'CONFERENCE.MANAGE.ACTIONS.CONFIG_ACTIVITIES' | translate }}</span>
         </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'activity-participation']">
+          <i class="pi pi-users"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.ACTIVITY_PARTICIPATION' | translate }}</span>
+        </a>
       </div>
     </div>
   </div>

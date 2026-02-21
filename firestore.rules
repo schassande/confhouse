@@ -132,6 +132,12 @@ service cloud.firestore {
       allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId)
         || isSamePerson(resource.data.personId);
     }
+    match /activityParticipation/{document=**} {
+		  allow create: if isConferenceOrganizer(request.resource.data.conferenceId)
+        || isSamePerson(request.resource.data.personId);
+      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId)
+        || isSamePerson(resource.data.personId);
+    }
     match /slot-type/{document=**} {
       allow read;
       allow write: if false;
