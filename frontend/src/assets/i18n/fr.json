@@ -277,7 +277,7 @@
         "LOGO": "Logo",
         "LANGUAGES": "Langues",
         "VISIBLE": "Visible",
-        "ORGANIZER_EMAILS": "E-mails des organisateurs"
+        "ORGANIZER_EMAILS": "Organisateurs"
       },
       "SESSION_TYPES": {
         "TAB": "Types de sessions",
@@ -287,7 +287,7 @@
         "FIELD_DESCRIPTION_FR": "Description (Français)",
         "NO_DESCRIPTION": "Aucune",
         "DURATION": "Durée",
-        "MINUTES": "minutes",
+        "MINUTES": "min",
         "MAX_SPEAKERS": "Nombre max d'orateurs",
         "COLOR": "Couleur",
         "ICON": "Icône",
@@ -298,10 +298,10 @@
         "VISIBLE": "Visible",
         "HIDDEN": "Caché",
         "EDIT": "Modifier",
-        "SAVE": "Enregistrer le type de session",
-        "CANCEL": "Annuler les modifications",
+        "SAVE": "Enregistrer",
+        "CANCEL": "Annuler",
         "DELETE": "Supprimer",
-        "NO_SESSION_TYPES": "Aucun type de session défini"
+        "NO_SESSION_TYPES": "Aucun"
       },
       "TRACKS": {
         "TAB": "Catégories",
@@ -360,8 +360,8 @@
         "CONFIRM_RESET_SLOTS": "Confirmez-vous la suppression de tous les créneaux de cette journée ?",
         "ADD_SLOT": "Ajouter un créneau",
         "NO_SLOT": "Aucune créneau défini pour ce jour",
-        "COPY_ROOM_TO_ROOM": "Copier tous les créneaux d'une salle vers une autre salle",
-        "COPY_DAY_TO_DAY": "Copier tous les créneaux d'une journée vers une autre journée",
+        "COPY_ROOM_TO_ROOM": "Copier salle",
+        "COPY_DAY_TO_DAY": "Copier journée",
         "SOURCE_ROOM": "Salle source",
         "TARGET_ROOM": "Salle destination",
         "SOURCE_DAY": "Journée source",

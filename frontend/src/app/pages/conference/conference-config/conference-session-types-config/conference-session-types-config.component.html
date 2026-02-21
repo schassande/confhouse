@@ -1,7 +1,6 @@
 <div class="session-types-config">
   <div class="config-header">
-    <p>{{ 'CONFERENCE.CONFIG.SESSION_TYPES.DESCRIPTION' | translate }}</p>
-    <button pButton type="button" icon="pi pi-plus" (click)="onAddNew()" class="p-button-success" [label]="'CONFERENCE.CONFIG.SESSION_TYPES.ADD_SESSION_TYPE' | translate"></button>
+    <button pButton type="button" icon="pi pi-plus" (click)="onAddNew()" class="p-button-success add-button"></button>
   </div>
 
   <div class="session-types-list">
@@ -25,9 +24,6 @@
                   <i class="session-type-icon" [class]="sessionType.icon"></i>
                 }
                 <h3>{{ sessionType.name }}</h3>
-                <span class="max-speakers">
-                  {{ 'CONFERENCE.CONFIG.SESSION_TYPES.MAX_SPEAKERS' | translate }}: {{ sessionType.maxSpeakers }}
-                </span>
                 @if (!sessionType.visible) {
                   <span class="visibility-badge">{{ 'CONFERENCE.CONFIG.SESSION_TYPES.HIDDEN' | translate }}</span>
                 }

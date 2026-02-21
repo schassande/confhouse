@@ -64,41 +64,42 @@
       }
     }
 
-    .emails-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
+  }
+}
+.emails-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 
-      .email-tag {
-        background-color: #f0e8f8;
-        border: 1px solid #d9b3e3;
-        border-radius: 4px;
-        padding: 0.4rem 0.6rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
+  .email-tag {
+    background-color: #f0e8f8;
+    border: 1px solid #d9b3e3;
+    border-radius: 4px;
+    padding: 0.2rem 0 0.2rem 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    margin-left: 20px;
 
-        span {
-          font-weight: 500;
-          word-break: break-all;
-        }
-      }
+    span {
+      font-weight: 500;
+      word-break: break-all;
     }
   }
 }
-    .logo-preview {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
+.logo-preview {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
 
-      img {
-        max-width: 100px;
-        max-height: 100px;
-        border-radius: 4px;
-        object-fit: cover;
-      }
-    }
+  img {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+}
 
 .w-full {
   width: 100%;

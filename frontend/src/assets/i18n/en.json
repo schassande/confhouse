@@ -287,7 +287,7 @@
         "LOGO": "Logo",
         "LANGUAGES": "Languages",
         "VISIBLE": "Visible",
-        "ORGANIZER_EMAILS": "Organizer Emails"
+        "ORGANIZER_EMAILS": "Organizers"
       },
       "SESSION_TYPES": {
         "TAB": "Session Types",
@@ -298,7 +298,7 @@
         "FIELD_DESCRIPTION_FR": "Description (French)",
         "NO_DESCRIPTION": "None",
         "DURATION": "Duration",
-        "MINUTES": "minutes",
+        "MINUTES": "min",
         "MAX_SPEAKERS": "Max Speakers",
         "COLOR": "Color",
         "ICON": "Icon",
@@ -372,15 +372,15 @@
         "CONFIRM_RESET_SLOTS": "Are you sure you want to remove all slots for this day?",
         "ADD_SLOT": "Add slot",
         "NO_SLOT": "No slot defined for this day",
-        "COPY_ROOM_TO_ROOM": "Copy all slots from a room to another room",
-        "COPY_DAY_TO_DAY": "Copy all slots from a day to another day",
+        "COPY_ROOM_TO_ROOM": "Copy room",
+        "COPY_DAY_TO_DAY": "Copy day",
         "SOURCE_ROOM": "Source room",
         "TARGET_ROOM": "Target room",
         "SOURCE_DAY": "Source day",
         "TARGET_DAY": "Target day",
         "COPY_ROOM": "Copy",
         "COPY_DAY": "Copy",
-        "ROOM_SELECTOR": "Rooms (de)activation",
+        "ROOM_SELECTOR": "Rooms activation",
         "X_SLOTS": "{{nb}} slots",
         "ROOM_DISABLING_WARNING": "Warning, if you disable a room, all slots allocated on this room for that day will be definitevely deleted."
       },

@@ -145,21 +145,21 @@
             [disabled]="!emailInput.checkValidity()"
           ></button>
         </div>
-        <div class="emails-list">
-          @for (email of organizerEmails(); track email) {
-          <div class="email-tag">
-            <span>{{ email }}</span>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-times"
-              class="p-button-sm p-button-text p-button-danger"
-              (click)="removeOrganizerEmail(email)"
-            ></button>
-          </div>
-          }
-        </div>
       </div>
+    </div>
+    <div class="emails-list">
+      @for (email of organizerEmails(); track email) {
+      <div class="email-tag">
+        <span>{{ email }}</span>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-times"
+          class="p-button-sm p-button-text p-button-danger"
+          (click)="removeOrganizerEmail(email)"
+        ></button>
+      </div>
+      }
     </div>
   </form>
   }

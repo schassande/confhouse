@@ -120,9 +120,9 @@ export class DayStructure implements OnInit {
   private lastEditedSlotId: string|undefined;
 
   menuItems: MenuItem[] = [
-    { label: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.NEW_SLOT'), 
+    { label: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.ADD_SLOT'), 
       icon: 'pi pi-plus', command: () => this.onSlotAdd() },
-    { label: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.SELECT_ROOMS'), 
+    { label: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.ROOM_SELECTOR'), 
       icon: 'pi pi-clone', command: () => this.roomSelectorVisible.set(true) },
     { label: this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.COPY_ROOM_TO_ROOM'), 
       icon: 'pi pi-clone', command: () => this.copyRoomVisible.set(true) },

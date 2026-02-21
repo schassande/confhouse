@@ -4,12 +4,32 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  align-items: center;
+
+  > * {
+    width: 100%;
+  }
 
   .config-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     gap: 1rem;
+    width: min(100%, 520px);
+    margin: 0 auto;
+
+    .add-button {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
     p {
       margin: 0;
@@ -73,20 +93,18 @@
   }
 
   .rooms-list {
-    max-width: 800px;
-    width: 100%;
+    width: min(100%, 520px);
     margin: 0 auto;
 
     .rooms-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.5rem;
+      justify-items: center;
     }
 
     .room-card {
       width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
       border-radius: 10px;
       padding: 0.75rem 0.9rem;
       border: 1px solid #d1d5db;
