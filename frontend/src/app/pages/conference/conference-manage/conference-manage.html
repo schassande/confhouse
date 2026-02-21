@@ -51,6 +51,12 @@
           <i class="pi pi-users"></i>
           <span>{{ 'CONFERENCE.MANAGE.ACTIONS.ACTIVITY_PARTICIPATION' | translate }}</span>
         </a>
+        @for (activity of managedActivities(); track activity.id) {
+        <a class="action-link" [routerLink]="['/conference', id, 'activities', activity.id, 'admin']">
+          <i class="pi pi-chart-bar"></i>
+          <span>{{ activity.name }}</span>
+        </a>
+        }
       </div>
     </div>
   </div>

@@ -1,0 +1,128 @@
+.activity-admin-page {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activity-admin-page > h1 {
+  text-align: center;
+}
+
+.list-wrap,
+.participants-list {
+  max-width: 600px;
+  width: 100%;
+}
+
+.participants-title {
+  margin: 0 0 0.6rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.participants-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.participants-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+
+.participants-count {
+  margin: 0;
+  flex-shrink: 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.participants-count .count-number {
+  padding-right: 0.2rem;
+}
+
+.participants-count .count-separator {
+  padding: 0 0.2rem;
+}
+
+.activity-grid,
+.participant-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.activity-card,
+.participant-card,
+.stat-card {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 0.75rem;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  max-width: 600px;
+  width: 100%;
+}
+
+.stat-card h3,
+.participant-card h3,
+.activity-card h3 {
+  margin: 0 0 0.35rem 0;
+}
+
+.stat-card p,
+.participant-card p,
+.activity-card p {
+  margin: 0;
+}
+
+.registered-count-value {
+  text-align: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 0.5rem;
+}
+
+.stat-card ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.participant-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.attributes {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.attribute-row {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.75rem;
+}
+
+.w-full {
+  width: 100%;
+}

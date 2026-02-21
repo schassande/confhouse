@@ -9,6 +9,8 @@ import { ConferenceAdminService } from '../../../services/conference-admin.servi
 import { ConferenceService } from '../../../services/conference.service';
 import { Conference } from '../../../model/conference.model';
 import { ConferenceManageDashboard } from './conference-manage-dashboard/conference-manage-dashboard';
+import { Activity } from '../../../model/activity.model';
+import { ActivityService } from '../../../services/activity.service';
 
 @Component({
   selector: 'app-conference-manage',
@@ -25,7 +27,12 @@ export class ConferenceManage {
   private readonly translateService = inject(TranslateService);
   private readonly conferenceAdminService = inject(ConferenceAdminService);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly activityService = inject(ActivityService);
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly activities = signal<Activity[]>([]);
+  readonly managedActivities = computed(() =>
+    [...this.activities()].sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')))
+  );
 
   conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   conferenceTitle = computed(() => {
@@ -45,6 +52,7 @@ export class ConferenceManage {
       return;
     }
     this.conferenceService.byId(conferenceId).subscribe((conference) => this.conference.set(conference));
+    this.activityService.byConferenceId(conferenceId).subscribe((activities) => this.activities.set(activities ?? []));
   }
 
   confirmDeleteConference(): void {

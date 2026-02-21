@@ -145,6 +145,7 @@
         "SPEAKERS": "Manage speakers",
         "CONFIG_ACTIVITIES": "Configure activities",
         "ACTIVITY_PARTICIPATION": "Activity participation",
+        "ACTIVITY_ADMIN": "Activity management",
         "PUBLISH": "Publish program"
       }
     },
@@ -158,6 +159,7 @@
       "SEARCH": "Search",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "You are not allowed to register for this activity.",
+      "PARTICIPANT_TYPE": "Participant type",
       "DELETE": "Delete registration",
       "SAVE": "Save registration",
       "CREATE_PERSON": "Create person",
@@ -170,6 +172,17 @@
       "AVAILABLE_ACTIVITIES": "Available activities",
       "REGISTERED": "Registered",
       "NOT_REGISTERED": "Not registered"
+    },
+    "ACTIVITY_ADMIN": {
+      "SELECT_TITLE": "Select an activity to manage",
+      "TITLE": "Activity management {{name}}",
+      "REGISTERED_COUNT": "Registered participants",
+      "PARTICIPANTS_TITLE": "Participants list",
+      "ADD_PARTICIPATION": "Add participation",
+      "SEARCH_PLACEHOLDER": "Search name, email, attribute values",
+      "FILTERED_COUNT": "{{filtered}} / {{total}} participants",
+      "NO_PARTICIPANTS": "No participants",
+      "UNKNOWN_TYPE": "Unknown type"
     },
     "ACTIVITIES": {
       "TITLE": "Activities configuration",

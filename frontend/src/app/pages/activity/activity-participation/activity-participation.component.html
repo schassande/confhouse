@@ -85,6 +85,16 @@
     <p class="warning">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.NOT_AUTHORIZED' | translate }}</p>
     } @else if (form(); as participationForm) {
     <form [formGroup]="participationForm" class="participation-form">
+      <div class="form-section">
+        <label>{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.PARTICIPANT_TYPE' | translate }} <span>*</span></label>
+        <p-select
+          formControlName="participantType"
+          [options]="participantTypeOptions()"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+        ></p-select>
+      </div>
       @for (attribute of currentActivity.specificAttributes; track attribute.attributeName; let idx = $index) {
       <div class="form-section">
         <label>{{ attribute.attributeName }} @if (attribute.attributeRequired) {<span>*</span>}</label>

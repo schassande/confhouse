@@ -143,6 +143,15 @@ export class ActivityParticipationComponent {
   readonly activityTypeLabel = (type: ParticipantType) =>
     this.translateService.instant(`CONFERENCE.ACTIVITIES.PARTICIPANT_TYPE.${type}`);
 
+  readonly participantTypeOptions = computed<SelectOption[]>(() => {
+    const activity = this.activity();
+    const allowed = (activity?.participantTypes?.length ? activity.participantTypes : ['SPEAKER', 'ATTENDEE', 'SPONSOR', 'ORGANIZER']) as ParticipantType[];
+    return allowed.map((value) => ({
+      label: this.translateService.instant(`CONFERENCE.ACTIVITIES.PARTICIPANT_TYPE.${value}`),
+      value,
+    }));
+  });
+
   isRegistered(activityId: string): boolean {
     return this.registeredActivityIds().has(activityId);
   }
@@ -186,9 +195,7 @@ export class ActivityParticipationComponent {
           return;
         }
         this.activity.set(selected);
-        this.targetPerson.set(currentPerson);
-        this.buildParticipationForm(selected);
-        void this.loadParticipationForTarget();
+        void this.initializeTargetPerson(selected, currentPerson);
       },
       error: (error) => {
         console.error('Error loading activities:', error);
@@ -196,6 +203,35 @@ export class ActivityParticipationComponent {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  private async initializeTargetPerson(activity: Activity, currentPerson: Person): Promise<void> {
+    const requestedPersonId = String(this.route.snapshot.queryParamMap.get('personId') ?? '').trim();
+    if (!requestedPersonId || requestedPersonId === currentPerson.id) {
+      this.selectingOtherPerson.set(false);
+      this.targetPerson.set(currentPerson);
+      this.buildParticipationForm(activity);
+      await this.loadParticipationForTarget();
+      return;
+    }
+
+    this.selectingOtherPerson.set(true);
+    try {
+      const person = await firstValueFrom(this.personService.byId(requestedPersonId).pipe(take(1)));
+      if (person) {
+        this.targetPerson.set(person);
+        this.searchEmail.set(String(person.email ?? '').trim());
+      } else {
+        this.targetPerson.set(currentPerson);
+        this.selectingOtherPerson.set(false);
+      }
+    } catch {
+      this.targetPerson.set(currentPerson);
+      this.selectingOtherPerson.set(false);
+    }
+
+    this.buildParticipationForm(activity);
+    await this.loadParticipationForTarget();
   }
 
   onSearchEmailChange(value: string): void {
@@ -313,12 +349,19 @@ export class ActivityParticipationComponent {
     });
 
     const previous = this.targetParticipation();
+    const participantTypeControl = form.get('participantType');
+    const selectedParticipantType = String(participantTypeControl?.value ?? '').trim() as ParticipantType;
+    if (!selectedParticipantType) {
+      participantTypeControl?.markAsTouched();
+      return;
+    }
     const payload: ActivityParticipation = {
       id: previous?.id ?? '',
       lastUpdated: previous?.lastUpdated ?? '',
       conferenceId: this.conferenceId() || activity.conferenceId,
       activityId: activity.id,
       personId: targetPerson.id,
+      participantType: selectedParticipantType,
       attributes,
     };
     console.log('Saving participation with payload:', payload);
@@ -416,7 +459,7 @@ export class ActivityParticipationComponent {
       this.cdr.markForCheck();
       return;
     }
-    this.activityParticipationService.byActivityAndPersonId(activity.id, targetPerson.id).pipe(take(1)).subscribe({
+    this.activityParticipationService.byActivityAndPersonId(this.conferenceId(), activity.id, targetPerson.id).pipe(take(1)).subscribe({
       next: (participation) => {
         this.targetParticipation.set(participation ?? null);
         this.patchFormFromParticipation(participation ?? null);
@@ -457,7 +500,9 @@ export class ActivityParticipationComponent {
   }
 
   private buildParticipationForm(activity: Activity): void {
-    const controls: Record<string, FormControl> = {};
+    const controls: Record<string, FormControl> = {
+      participantType: new FormControl<ParticipantType | null>(null, [Validators.required]),
+    };
     (activity.specificAttributes ?? []).forEach((attribute, index) => {
       const validators = attribute.attributeRequired && attribute.attributeType !== 'BOOLEAN'
         ? [Validators.required]
@@ -466,6 +511,11 @@ export class ActivityParticipationComponent {
       controls[this.controlName(index)] = control;
     });
     this.form.set(this.fb.group(controls));
+    const targetPerson = this.targetPerson();
+    if (targetPerson) {
+      const inferred = this.inferParticipantTypeForPerson(targetPerson, activity);
+      this.form()?.get('participantType')?.setValue(inferred);
+    }
   }
 
   private patchFormFromParticipation(participation: ActivityParticipation | null): void {
@@ -478,6 +528,7 @@ export class ActivityParticipationComponent {
       this.buildParticipationForm(activity);
       return;
     }
+    form.get('participantType')?.setValue(participation.participantType ?? null);
     const byName = new Map(
       (participation.attributes ?? []).map((entry) => [String(entry.name ?? '').trim(), String(entry.value ?? '')])
     );
@@ -530,5 +581,23 @@ export class ActivityParticipationComponent {
       default:
         return rawValue;
     }
+  }
+
+  private inferParticipantTypeForPerson(person: Person, activity: Activity): ParticipantType {
+    const conference = this.conference();
+    const candidates: ParticipantType[] = [];
+    if (conference && conference.organizerEmails?.includes(person.email)) {
+      candidates.push('ORGANIZER');
+    }
+    if (person.isSpeaker) {
+      candidates.push('SPEAKER');
+    }
+    candidates.push('ATTENDEE');
+    const allowed = activity.participantTypes ?? [];
+    if (allowed.length === 0) {
+      return candidates[0];
+    }
+    const selected = candidates.find((candidate) => allowed.includes(candidate));
+    return selected ?? allowed[0];
   }
 }

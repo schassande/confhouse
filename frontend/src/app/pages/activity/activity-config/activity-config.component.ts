@@ -26,7 +26,7 @@ interface SelectOption {
 }
 
 @Component({
-  selector: 'app-conference-activities-config',
+  selector: 'app-activity-config',
   imports: [
     CommonModule,
     RouterModule,
@@ -44,11 +44,11 @@ interface SelectOption {
     ToastModule,
   ],
   providers: [MessageService],
-  templateUrl: './conference-activities-config.component.html',
-  styleUrl: './conference-activities-config.component.scss',
+  templateUrl: './activity-config.component.html',
+  styleUrl: './activity-config.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConferenceActivitiesConfigComponent {
+export class ActivityConfigComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);

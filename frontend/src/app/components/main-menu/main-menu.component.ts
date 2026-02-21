@@ -175,7 +175,15 @@ export class MainMenuComponent {
     }
 
     const section = segments[2];
-    if (section === 'manage' || section === 'edit' || section === 'speakers' || section === 'allocation' || section === 'publish') {
+    if (
+      section === 'manage'
+      || section === 'edit'
+      || section === 'speakers'
+      || section === 'allocation'
+      || section === 'publish'
+      || section === 'activities'
+      || section === 'activity-participation'
+    ) {
       return true;
     }
 

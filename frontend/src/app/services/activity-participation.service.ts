@@ -13,11 +13,12 @@ export class ActivityParticipationService extends FirestoreGenericService<Activi
     return 'activityParticipation';
   }
 
-  byActivityId(activityId: string): Observable<ActivityParticipation[]> {
+  byActivityId(conferenceId: string, activityId: string): Observable<ActivityParticipation[]> {
     return from(
       getDocs(
         query(
           collection(this.firestore, this.getCollectionName()),
+          where('conferenceId', '==', conferenceId),
           where('activityId', '==', activityId)
         )
       )
@@ -32,11 +33,12 @@ export class ActivityParticipationService extends FirestoreGenericService<Activi
     );
   }
 
-  byActivityAndPersonId(activityId: string, personId: string): Observable<ActivityParticipation | undefined> {
+  byActivityAndPersonId(conferenceId: string, activityId: string, personId: string): Observable<ActivityParticipation | undefined> {
     return from(
       getDocs(
         query(
           collection(this.firestore, this.getCollectionName()),
+          where('conferenceId', '==', conferenceId),
           where('activityId', '==', activityId),
           where('personId', '==', personId)
         )

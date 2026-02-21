@@ -126,7 +126,6 @@ stateDiagram-v2
 
 ```
 TODO list :
-- Activités 
 - Impression planning
   - jour
   - salle par jour

@@ -1,0 +1,94 @@
+<section class="activity-admin-page">
+  @if (loading()) {
+  <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
+  } @else if (activity(); as currentActivity) {
+  <h1>{{ pageTitle() }}</h1>
+
+  <section class="stats">
+    <article class="stat-card">
+      <h3>{{ 'CONFERENCE.ACTIVITY_ADMIN.REGISTERED_COUNT' | translate }}</h3>
+      <p class="registered-count-value">{{ participantCount() }}</p>
+    </article>
+    @for (attributeStat of attributeStats(); track attributeStat.attributeName) {
+    <article class="stat-card">
+      <h3>{{ attributeStat.attributeName }}</h3>
+      @if (attributeStat.attributeType === 'BOOLEAN') {
+      <p class="registered-count-value">{{ attributeStat.trueCount }}</p>
+      } @else {
+      <ul>
+        @for (valueStat of attributeStat.values; track valueStat.value) {
+        <li>{{ valueStat.value }}: {{ valueStat.count }}</li>
+        }
+      </ul>
+      }
+    </article>
+    }
+  </section>
+
+  <div class="participants-list">
+    <div class="participants-title-line">
+      <h2 class="participants-title">{{ 'CONFERENCE.ACTIVITY_ADMIN.PARTICIPANTS_TITLE' | translate }}</h2>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        class="p-button-sm"
+        [label]="'CONFERENCE.ACTIVITY_ADMIN.ADD_PARTICIPATION' | translate"
+        (click)="addParticipation()"
+      ></button>
+    </div>
+    <div class="participants-filter">
+      <input
+        pInputText
+        type="text"
+        [ngModel]="searchKeyword()"
+        (ngModelChange)="onSearchKeywordChange($event)"
+        [placeholder]="'CONFERENCE.ACTIVITY_ADMIN.SEARCH_PLACEHOLDER' | translate"
+        class="w-full"
+      />
+      <span class="participants-count">
+        <span class="count-number">{{ filteredParticipantRows().length }}</span>
+        <span class="count-separator">/</span>
+        <span class="count-number">{{ participantRows().length }}</span>
+      </span>
+    </div>
+    <p-dataview [value]="filteredParticipantRows()" layout="list">
+      <ng-template #list let-items>
+        <div class="participant-grid">
+          @for (row of items; track row.participation.id) {
+          <article
+            class="participant-card clickable"
+            role="button"
+            tabindex="0"
+            (click)="editParticipation(row)"
+            (keydown.enter)="editParticipation(row)"
+            (keydown.space)="editParticipation(row); $event.preventDefault()"
+          >
+            <div class="participant-header">
+              <div>
+                <h3>{{ row.displayName }}</h3>
+                <p>{{ row.email }}</p>
+              </div>
+              <p-tag [value]="participantTypeLabel(row.participation.participantType)" severity="contrast"></p-tag>
+            </div>
+            <div class="attributes">
+              @for (attr of row.attributes; track attr.name) {
+              <div class="attribute-row">
+                <span>{{ attr.name }}:</span>
+                <strong>{{ attr.value }}</strong>
+              </div>
+              }
+            </div>
+          </article>
+          }
+        </div>
+      </ng-template>
+      <ng-template #emptymessage>
+        <p>{{ 'CONFERENCE.ACTIVITY_ADMIN.NO_PARTICIPANTS' | translate }}</p>
+      </ng-template>
+    </p-dataview>
+  </div>
+  } @else {
+  <p>{{ 'CONFERENCE.NOT_FOUND' | translate }}</p>
+  }
+</section>

@@ -135,6 +135,7 @@
         "SPEAKERS": "Gérer les speakers",
         "CONFIG_ACTIVITIES": "Configurer les activites",
         "ACTIVITY_PARTICIPATION": "Inscriptions aux activites",
+        "ACTIVITY_ADMIN": "Gestion des activites",
         "PUBLISH": "Publier le programme"
       }
     },
@@ -148,6 +149,7 @@
       "SEARCH": "Rechercher",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "Vous n etes pas autorise a vous inscrire a cette activite.",
+      "PARTICIPANT_TYPE": "Type participant",
       "DELETE": "Supprimer l inscription",
       "SAVE": "Enregistrer l inscription",
       "CREATE_PERSON": "Creer une personne",
@@ -160,6 +162,17 @@
       "AVAILABLE_ACTIVITIES": "Activites disponibles",
       "REGISTERED": "Inscrit",
       "NOT_REGISTERED": "Non inscrit"
+    },
+    "ACTIVITY_ADMIN": {
+      "SELECT_TITLE": "Selectionnez une activite a gerer",
+      "TITLE": "Gestion de l activite {{name}}",
+      "REGISTERED_COUNT": "Nombre d inscrits",
+      "PARTICIPANTS_TITLE": "Liste des participants",
+      "ADD_PARTICIPATION": "Ajouter une participation",
+      "SEARCH_PLACEHOLDER": "Rechercher nom, email, valeurs d attributs",
+      "FILTERED_COUNT": "{{filtered}} / {{total}} participants",
+      "NO_PARTICIPANTS": "Aucun participant",
+      "UNKNOWN_TYPE": "Type inconnu"
     },
     "ACTIVITIES": {
       "TITLE": "Configuration des activites",
