@@ -26,8 +26,8 @@
     </div>
   </div>  
   <div class="planning-parent">
-    <div class="planning">
-      <div class="room-grid" [style.--nb-rooms]="enabledRooms().length">
+    <div class="planning" [style.--nb-rooms]="enabledRooms().length" [style.--nb-ticks]="ticks().length">
+      <div class="room-grid">
         <!-- Header ligne -->
         <div class="header-cell action-header-cell" (click)="menu.toggle($event)">
           <div>

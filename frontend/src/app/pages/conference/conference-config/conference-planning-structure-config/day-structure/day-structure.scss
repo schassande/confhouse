@@ -55,7 +55,16 @@ $header-height: 50px;
   z-index: 100;
 }
 .planning {
-  position: relative; 
+  --room-width: #{$room-width};
+  position: relative;
+  width: calc(#{$tick-width} + var(--nb-rooms, 1) * var(--room-width));
+  height: calc(#{$header-height} + var(--nb-ticks, 1) * #{$tick-height});
+}
+.planning-parent {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .room-grid, .slots {
   position: absolute;
@@ -71,7 +80,7 @@ $header-height: 50px;
   gap: 0;
   font-family: system-ui, Arial, sans-serif;
   border: 1px solid #cccccc;
-  grid-template-columns: $tick-width repeat(var(--nb-rooms, 1), $room-width);
+  grid-template-columns: $tick-width repeat(var(--nb-rooms, 1), var(--room-width));
 }
 
 /* timeline */
@@ -139,11 +148,11 @@ $header-height: 50px;
   box-sizing: border-box;
   overflow: hidden;
   cursor: pointer;
-  width: 150px;
+  width: var(--room-width);
   text-align: center;
   top:    calc($tick-height * var(--start-tick, 0)); 
   height: calc($tick-height * var(--duration, 0));
-  left:   calc($room-width  * var(--room-col-idx, 0));
+  left:   calc(var(--room-width) * var(--room-col-idx, 0));
 }
 .slot:focus { outline: 2px solid #1976d2; }
 .slot-title { font-weight: 600; font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -191,5 +200,32 @@ $header-height: 50px;
     justify-content: center;
     margin-top: 0.15rem;
     margin-bottom: 0.5rem;
+  }
+
+  .planning {
+    --room-width: 120px;
+    min-width: 100%;
+  }
+
+  .room-header-cell {
+    font-size: 0.85rem;
+    padding: 8px 4px;
+  }
+
+  .slots,
+  .slot {
+    z-index: 2;
+  }
+
+  .action-header-cell,
+  .tick {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background-color: #fafafa;
+  }
+
+  .action-header-cell {
+    z-index: 21;
   }
 }
