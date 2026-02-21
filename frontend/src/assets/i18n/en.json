@@ -532,7 +532,15 @@
         "PUBLISH_SUCCESS": "Conference published successfully",
         "PUBLISH_ERROR": "Error publishing conference",
         "DOWNLOAD_VOXXRIN_JSON": "Download Voxxrin JSON",
-        "DOWNLOAD_VOXXRIN_JSON_ERROR": "Error while downloading Voxxrin JSON"
+        "DOWNLOAD_VOXXRIN_JSON_ERROR": "Error while downloading Voxxrin JSON",
+        "DOWNLOAD_GENERIC_ERROR": "Download error",
+        "PDF_EXPORTS_TITLE": "PDF schedule exports",
+        "PDF_DAY_LINK": "Day",
+        "PDF_GENERATING": "Generating PDF...",
+        "PDF_GENERATION_ERROR": "PDF generation error",
+        "PDF_DAY_ZIP_LINK": "All",
+        "PDF_ALL_DAYS_ZIP_LINK": "All schedules",
+        "PDF_ZIP_ERROR": "PDF ZIP generation error"
       },
       "FORM_ERRORS": "Please correct the form errors",
       "SAVED": "Configuration saved successfully",

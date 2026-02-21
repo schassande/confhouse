@@ -520,7 +520,15 @@
         "PUBLISH_SUCCESS": "Conférence publiée avec succès",
         "PUBLISH_ERROR": "Erreur lors de la publication de la conférence",
         "DOWNLOAD_VOXXRIN_JSON": "Télécharger le JSON Voxxrin",
-        "DOWNLOAD_VOXXRIN_JSON_ERROR": "Erreur lors du téléchargement du JSON Voxxrin"
+        "DOWNLOAD_VOXXRIN_JSON_ERROR": "Erreur lors du téléchargement du JSON Voxxrin",
+        "DOWNLOAD_GENERIC_ERROR": "Erreur de telechargement",
+        "PDF_EXPORTS_TITLE": "Exports PDF des plannings",
+        "PDF_DAY_LINK": "Journée",
+        "PDF_GENERATING": "Génération du PDF...",
+        "PDF_GENERATION_ERROR": "Erreur de génération PDF",
+        "PDF_DAY_ZIP_LINK": "Tous",
+        "PDF_ALL_DAYS_ZIP_LINK": "Tous les plannings",
+        "PDF_ZIP_ERROR": "Erreur de generation du ZIP PDF"
       },
       "SAVED": "Configuration de la conférence enregistrée avec succès",
       "FORM_ERRORS": "Veuillez corriger les erreurs du formulaire",

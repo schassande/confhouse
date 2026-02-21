@@ -32,9 +32,37 @@
     @if (downloadError()) {
       <p class="error-text">{{ 'CONFERENCE.CONFIG.PUBLISH.DOWNLOAD_VOXXRIN_JSON_ERROR' | translate }}</p>
     }
+
+    <section class="pdf-section">
+      <h2 class="pdf-title">{{ 'CONFERENCE.CONFIG.PUBLISH.PDF_EXPORTS_TITLE' | translate }}</h2>
+      <p class="pdf-global-actions">
+        <a href="" class="pdf-link" (click)="downloadConferencePlanningZip($event)">
+          {{ 'CONFERENCE.CONFIG.PUBLISH.PDF_ALL_DAYS_ZIP_LINK' | translate }}
+        </a>
+      </p>
+      <ul class="pdf-list">
+        @for (day of conf.days; track day.id) {
+          <li class="pdf-item">
+            <span class="pdf-day">{{ dayLabel(day.date) }}</span>
+            <a href="" class="pdf-link" (click)="downloadDayPlanningZip(day, $event)">{{ 'CONFERENCE.CONFIG.PUBLISH.PDF_DAY_ZIP_LINK' | translate }}</a>
+            <a href="" class="pdf-link" (click)="downloadDayPlanning(day, $event)">{{ 'CONFERENCE.CONFIG.PUBLISH.PDF_DAY_LINK' | translate }}</a>
+            @for (room of enabledRooms(day); track room.id) {
+              <a href="" class="pdf-link" (click)="downloadRoomPlanning(day, room, $event)">{{ room.name }}</a>
+            }
+          </li>
+        }
+      </ul>
+      @if (pdfDownloading()) {
+        <p>{{ 'CONFERENCE.CONFIG.PUBLISH.PDF_GENERATING' | translate }}</p>
+      }
+      @if (pdfDownloadError()) {
+        <p class="error-text">{{ pdfDownloadError() }}</p>
+      }
+    </section>
   } @else if (loading()) {
     <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
   } @else {
     <p>{{ 'CONFERENCE.NOT_FOUND' | translate }}</p>
   }
 </section>
+

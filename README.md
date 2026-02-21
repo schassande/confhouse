@@ -126,9 +126,6 @@ stateDiagram-v2
 
 ```
 TODO list :
-- Impression planning
-  - jour
-  - salle par jour
 - Allocation automatique des sessions
   - choisir des critères stratégies 
     - variété des tracks
