@@ -107,7 +107,7 @@ export interface Sponsor extends WithId {
   type: SponsorType;
   logo: string;
   website: string;
-  booth: string;
+  boothName: string;
   emails: string[];
 }
 
@@ -115,12 +115,14 @@ export interface SponsorType extends WithId {
   name: string;
   description: { [lang: string]: string };
   maxNumber: number;
-  boothValues: string[];
+  color: string;
+  fontColor: string;
+  boothNames: string[];
 }
 
 export interface SponsorBoothChoice extends PersistentData {
   conferenceId: string;
   sponsorId: string;
-  booth: string;
+  boothName: string;
   choiceDate: string; // ISO 8601
 }
