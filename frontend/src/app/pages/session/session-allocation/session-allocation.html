@@ -70,7 +70,7 @@
       <div class="planning-panel">
         <div class="planning-filters">
           <label class="speaker-select-label" for="speaker-filter-select">
-            {{ 'SESSION.ALLOCATION.FILTER_SPEAKER' | translate }}
+            {{ 'SESSION.ALLOCATION.HIGHLIGHT_SPEAKER' | translate }}
           </label>
           <p-select
             inputId="speaker-filter-select"
@@ -80,10 +80,18 @@
             optionLabel="label"
             optionValue="value"
             [showClear]="true"
-            [placeholder]="'SESSION.ALLOCATION.FILTER_SPEAKER' | translate"
             [disabled]="speakerOptions().length === 0"
             styleClass="speaker-select"
           ></p-select>
+          <div class="planning-filter-checkbox">
+            <p-checkbox
+              inputId="show-lang-colors"
+              [binary]="true"
+              [ngModel]="showLangColors()"
+              (ngModelChange)="showLangColors.set(!!$event)"
+            ></p-checkbox>
+            <label for="show-lang-colors">{{ 'SESSION.ALLOCATION.SHOW_LANG' | translate }}</label>
+          </div>
         </div>
 
         @for (dayPlanning of dayPlanningViews(); track dayPlanning.day.id) {

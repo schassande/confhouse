@@ -126,7 +126,7 @@ stateDiagram-v2
 
 ```
 TODO list :
-- Allocation : mode d'affichage spéciale pour voir les langs
+- Activités 
 - Cancel speaker
 - Speaker Edit: lors de la modification de l'indispo d'un speaker il faut désallouer les sessions sur les slots ou le speaker est indispo
 - Duplication conference
@@ -136,7 +136,6 @@ TODO list :
 - Allocation automatique des sessions
   - choisir des critères stratégies 
     - variété des tracks
-- Activités 
 - Intendance
 - Impression planning
   - jour

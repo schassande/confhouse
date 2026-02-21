@@ -116,6 +116,7 @@ export class SessionAllocation implements OnInit {
   readonly selectedSessionTypeIds = signal<string[]>([]);
   readonly selectedTrackIds = signal<string[]>([]);
   readonly selectedSpeakerId = signal('');
+  readonly showLangColors = signal(false);
   readonly hasUnavailabilityFilter = signal(false);
   readonly unallocatedSearchText = signal('');
   readonly draggingPayload = signal<DragPayload | null>(null);
@@ -369,7 +370,7 @@ export class SessionAllocation implements OnInit {
     const selectedSpeakerId = this.selectedSpeakerId().trim();
     const shouldGrayOut = !!selectedSpeakerId && !!session && !this.sessionHasSpeaker(session, selectedSpeakerId);
     const backgroundColor = session
-      ? (shouldGrayOut ? '#CBD5E1' : this.sessionTrackColor(session))
+      ? (shouldGrayOut ? '#CBD5E1' : this.sessionDisplayColor(session))
       : '#FFFFFF';
     const textColor = session ? this.computeTextColorForBackground(backgroundColor) : '#0F172A';
 
@@ -409,6 +410,13 @@ export class SessionAllocation implements OnInit {
 
   sessionTrackTextColor(session: Session): string {
     return this.computeTextColorForBackground(this.sessionTrackColor(session));
+  }
+
+  sessionDisplayColor(session: Session): string {
+    if (!this.showLangColors()) {
+      return this.sessionTrackColor(session);
+    }
+    return this.sessionLanguageColor(session);
   }
 
   selectedSessionId(slotView: SlotView): string | null {
@@ -1010,6 +1018,30 @@ export class SessionAllocation implements OnInit {
   private sessionSpeakerIds(session: Session): string[] {
     return [session.speaker1Id, session.speaker2Id, session.speaker3Id]
       .filter((speakerId): speakerId is string => !!speakerId);
+  }
+
+  private sessionLanguageColor(session: Session): string {
+    const lang = String(session.conference?.langs?.[0] ?? '').trim().toUpperCase();
+    if (!lang) {
+      return '#E2E8F0';
+    }
+
+    const langColors: Record<string, string> = {
+      EN: '#2563EB',
+      FR: '#059669',
+      ES: '#EA580C',
+      DE: '#7C3AED',
+      IT: '#DC2626',
+      NL: '#0D9488',
+    };
+
+    if (langColors[lang]) {
+      return langColors[lang];
+    }
+
+    const palette = ['#0284C7', '#0F766E', '#9333EA', '#C2410C', '#BE185D', '#4F46E5'];
+    const hash = Array.from(lang).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return palette[hash % palette.length];
   }
 
   private setDragPayload(event: DragEvent, payload: DragPayload): void {

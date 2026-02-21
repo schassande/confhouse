@@ -34,13 +34,23 @@ $header-height: 40px;
 }
 
 .speaker-select-label {
-  font-weight: 600;
   white-space: nowrap;
 }
 
 .speaker-select {
   width: 18rem;
   max-width: 100%;
+}
+
+.planning-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.planning-filter-checkbox label {
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .available-panel {
