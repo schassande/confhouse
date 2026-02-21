@@ -44,12 +44,19 @@
 
 @media (max-width: 768px) {
   .conference-config-container {
+    padding: 1rem;
+
     .config-header {
       flex-wrap: wrap;
       gap: 1rem;
 
       .header-content {
         width: 100%;
+        justify-content: center;
+
+        h1 {
+          text-align: center;
+        }
       }
 
       .header-actions {
