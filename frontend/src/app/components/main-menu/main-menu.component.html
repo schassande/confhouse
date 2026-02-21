@@ -16,11 +16,18 @@
   </div>
   <div class="menu-right">
     @if (person()) {
-      @if (person()?.isPlatformAdmin) {
-        <p-menu #adminMenu [popup]="true" [model]="adminMenuItems()"></p-menu>
-        <button pButton type="button" class="admin-btn" label="{{ 'MENU.ADMIN' | translate }}" (click)="adminMenu.toggle($event)"></button>
-      }
-      <p-menu #avatarMenu [popup]="true" [model]="avatarMenuItems()"></p-menu>
+      <p-menu #avatarMenu [popup]="true" [model]="avatarMenuItems()" styleClass="avatar-menu-panel">
+        <ng-template pTemplate="item" let-item>
+          <a class="p-menu-item-link">
+            @if (item.icon?.startsWith('assets/flags/')) {
+              <img ngOptimizedImage class="flag menu-flag" [src]="item.icon" width="18" height="12" alt="" />
+            } @else if (item.icon) {
+              <span [class]="item.icon"></span>
+            }
+            <span class="p-menu-item-text">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </p-menu>
       <button pButton type="button" class="avatar-btn" [label]="''" pTooltip="{{ 'MENU.PROFILE' | translate }}" (click)="avatarMenu.toggle($event)">
         <p-avatar icon="pi pi-user" shape="circle"></p-avatar>
       </button>
@@ -28,16 +35,5 @@
       <a routerLink="/signup" class="menu-link">{{ 'MENU.SIGNUP' | translate }}</a>
       <a routerLink="/login" class="menu-link">{{ 'MENU.LOGIN' | translate }}</a>
     }
-    <button type="button" class="lang-btn" (click)="languageMenu.toggle($event)" [attr.aria-label]="('MENU.LANGUAGE' | translate)">
-      <img ngOptimizedImage class="flag" [src]="currentFlagPath()" width="24" height="16" alt="" />
-    </button>
-    <p-menu #languageMenu [popup]="true" [model]="languageMenuItems()" styleClass="language-menu-panel">
-      <ng-template pTemplate="item" let-item>
-        <div class="lang-item">
-          <img ngOptimizedImage class="flag" [src]="item.icon" width="18" height="12" alt="" />
-          <span>{{ item.label }}</span>
-        </div>
-      </ng-template>
-    </p-menu>
   </div>
 </header>

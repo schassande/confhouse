@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
-  padding: 0 2rem;
+  padding: 0 2rem 0 0.5rem;
 }
 .menu-left .logo {
   height: 36px;
@@ -46,30 +46,15 @@
   align-items: center;
   gap: 1.5rem;
 }
-.lang-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 1.25rem;
-  line-height: 1;
-  padding: 4px;
-}
-.lang-btn:focus-visible {
-  outline: 2px solid #1976d2;
-  border-radius: 4px;
-}
 .flag {
   display: inline-block;
   transform: translateY(1px);
 }
-.lang-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+:host ::ng-deep .avatar-menu-panel {
+  min-width: 190px;
 }
-
-:host ::ng-deep .language-menu-panel {
-  width: 100px;
+.menu-flag {
+  margin-right: 0.5rem;
 }
 .menu-link {
   color: #1976d2;

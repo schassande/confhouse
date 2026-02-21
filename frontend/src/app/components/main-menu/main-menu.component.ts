@@ -32,14 +32,7 @@ export class MainMenuComponent {
   managedConferenceManageRoute = computed(() => this.conferenceManageContextService.manageRoute());
   private readonly _avatarMenuItems = signal<MenuItem[]>([]);
   avatarMenuItems = computed(() => this._avatarMenuItems());
-
-  private readonly _adminMenuItems = signal<MenuItem[]>([]);
-  adminMenuItems = computed(() => this._adminMenuItems());
-
-  private readonly _languageMenuItems = signal<MenuItem[]>([]);
-  languageMenuItems = computed(() => this._languageMenuItems());
   private readonly _currentLang = signal(this.translate.currentLang || this.translate.getDefaultLang() || 'en');
-  currentFlagPath = computed(() => (this._currentLang() === 'fr' ? 'assets/flags/fr.svg' : 'assets/flags/en.svg'));
 
   constructor() {
     void this.refreshMenuLabels();
@@ -51,7 +44,6 @@ export class MainMenuComponent {
     effect(() => {
       this.person();
       void this.setMenuItems();
-      void this.setAdminMenuItems();
     });
 
     this.router.events
@@ -67,36 +59,50 @@ export class MainMenuComponent {
   }
 
   private async setMenuItems() {
-    const labels = await firstValueFrom(this.translate.get(['MENU.PROFILE', 'MENU.LOGOUT']));
+    const labels = await firstValueFrom(this.translate.get([
+      'MENU.PROFILE',
+      'MENU.LOGOUT',
+      'LANGUAGE.EN',
+      'LANGUAGE.FR',
+      'MENU.ADMIN_PERSONS',
+      'MENU.ADMIN_PLATFORM_CONFIG'
+    ]));
+
     const items: MenuItem[] = [
       {
         label: labels['MENU.PROFILE'],
         icon: 'pi pi-cog',
         command: () => this.router.navigate(['/preference'])
+      },
+      {
+        label: labels['MENU.LOGOUT'],
+        icon: 'pi pi-sign-out',
+        command: () => this.logout()
       }
     ];
 
-    // If current user is platform admin, add an Admin submenu with Persons entry
+    items.push({ separator: true });
+    items.push(
+      {
+        label: labels['LANGUAGE.EN'],
+        icon: 'assets/flags/en.svg',
+        command: () => this.setLanguage('en')
+      },
+      {
+        label: labels['LANGUAGE.FR'],
+        icon: 'assets/flags/fr.svg',
+        command: () => this.setLanguage('fr')
+      }
+    );
+
     const p = this.person();
     if (p && p.isPlatformAdmin) {
-      const adminGroupLabel = await firstValueFrom(this.translate.get('MENU.ADMIN'));
-      const personsLabel = await firstValueFrom(this.translate.get('MENU.ADMIN_PERSONS'));
-      const platformConfigLabel = await firstValueFrom(this.translate.get('MENU.ADMIN_PLATFORM_CONFIG'));
-      items.push({
-        label: adminGroupLabel,
-        icon: 'pi pi-shield',
-        items: [
-          { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) },
-          { label: platformConfigLabel, icon: 'pi pi-cog', command: () => this.router.navigate(['/admin/platform-config']) }
-        ]
-      });
+      items.push({ separator: true });
+      items.push(
+        { label: labels['MENU.ADMIN_PERSONS'], icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) },
+        { label: labels['MENU.ADMIN_PLATFORM_CONFIG'], icon: 'pi pi-cog', command: () => this.router.navigate(['/admin/platform-config']) }
+      );
     }
-
-    items.push({
-      label: labels['MENU.LOGOUT'],
-      icon: 'pi pi-sign-out',
-      command: () => this.logout()
-    });
 
     this._avatarMenuItems.set(items);
   }
@@ -121,40 +127,8 @@ export class MainMenuComponent {
     return this.router.navigate(['/']);
   }
 
-  private async setLanguageMenuItems() {
-    const labels = await firstValueFrom(this.translate.get(['LANGUAGE.EN', 'LANGUAGE.FR']));
-    this._languageMenuItems.set([
-      {
-        label: labels['LANGUAGE.EN'],
-        icon: 'assets/flags/en.svg',
-        command: () => this.setLanguage('en')
-      },
-      {
-        label: labels['LANGUAGE.FR'],
-        icon: 'assets/flags/fr.svg',
-        command: () => this.setLanguage('fr')
-      }
-    ]);
-  }
-
-  private async setAdminMenuItems() {
-    const p = this.person();
-    if (p && p.isPlatformAdmin) {
-      const [personsLabel, platformConfigLabel] = await Promise.all([
-        firstValueFrom(this.translate.get('MENU.ADMIN_PERSONS')),
-        firstValueFrom(this.translate.get('MENU.ADMIN_PLATFORM_CONFIG')),
-      ]);
-      this._adminMenuItems.set([
-        { label: personsLabel, icon: 'pi pi-users', command: () => this.router.navigate(['/admin/persons']) },
-        { label: platformConfigLabel, icon: 'pi pi-cog', command: () => this.router.navigate(['/admin/platform-config']) },
-      ]);
-    } else {
-      this._adminMenuItems.set([]);
-    }
-  }
-
   private async refreshMenuLabels() {
-    await Promise.all([this.setMenuItems(), this.setLanguageMenuItems()]);
+    await this.setMenuItems();
   }
 
   private setLanguage(lang: 'en' | 'fr') {
