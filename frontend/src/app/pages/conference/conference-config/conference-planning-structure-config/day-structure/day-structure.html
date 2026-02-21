@@ -5,16 +5,16 @@
     <div class="form-section">
       <label for="beginTime" class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.BEGIN_DAY_TIME' | translate }}</label>
       <p-datepicker class="time-picker-small" 
-        [(ngModel)]="beginTime" stepMinute="5"
+        [ngModel]="beginTimeDate()" stepMinute="5"
         [showTime]="true" [timeOnly]="true" hourFormat="24" size="small"
-        (onSelect)="changeBeginTime($event)"></p-datepicker>
+        (ngModelChange)="changeBeginTime($event)"></p-datepicker>
     </div>
     <div class="form-section" style="padding-left:10px;">
       <label for="endTime" class="form-label">{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.END_DAY_TIME' | translate }}</label>
       <p-datepicker class="time-picker-small"
-        [(ngModel)]="endTime" stepMinute="5"
+        [ngModel]="endTimeDate()" stepMinute="5"
         [showTime]="true" [timeOnly]="true" hourFormat="24" size="small"
-        (onSelect)="changeEndTime($event)"></p-datepicker>
+        (ngModelChange)="changeEndTime($event)"></p-datepicker>
     </div>
     <div class="form-section" style="padding-left:10px;">
       <button

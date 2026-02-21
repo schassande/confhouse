@@ -112,8 +112,8 @@ export class DayStructure implements OnInit {
     }
     return map;
   });
-  beginTime: string = '09:00';
-  endTime: string = '18:00';
+  beginTimeDate = computed(() => this.conferenceService.timeStringToDate(this.dayStartIso()));
+  endTimeDate = computed(() => this.conferenceService.timeStringToDate(this.dayEndIso()));
 
   editedSlot = signal<Slot | undefined>(undefined);
   slotEditorVisible = signal<boolean>(false);
@@ -152,8 +152,8 @@ export class DayStructure implements OnInit {
   }
   // Convertit un slot => top% & height% sur la base dayStart/dayEnd
   getSlotPosition(s: Slot) {
-    const dayStart = this.conferenceService.timeStringToDate(this.beginTime).getTime();
-    const slotStart = this.conferenceService.timeStringToDate(s.startTime).getTime();
+    const dayStart = this.dayStartMs();
+    const slotStart = this.computeTimeOfDay(s.startTime);
     const delta = (slotStart - dayStart) / 60000;
     // console.log('dayStart',dayStart, 'slotStart', slotStart, 'delta', delta, "min");
     const startTick = delta / this.tickStep;
@@ -231,8 +231,8 @@ export class DayStructure implements OnInit {
     } else {
       slot = {
         id: '',
-        startTime: this.beginTime, // beginning of the day
-        endTime: this.conferenceService.computeSlotEndtime(this.beginTime, duration),
+        startTime: this.dayStartIso(), // beginning of the selected day
+        endTime: this.conferenceService.computeSlotEndtime(this.dayStartIso(), duration),
         roomId: this.rooms().length ? this.rooms()[0].id : '',
         duration,
         slotTypeId: slotType ? slotType.id : '',
@@ -251,9 +251,8 @@ export class DayStructure implements OnInit {
       if (validBeginTime.getTime() >= this.dayEndMs()) {
         validBeginTime = new Date(this.dayEndMs() - 5 * 60000); // end of day minus 5 minutes
       }
-      day.beginTime = this.conferenceService.formatHour(validBeginTime);
       // TODO check the day slots with the new beginning of the day
-      return { ...day};
+      return { ...day, beginTime: this.conferenceService.formatHour(validBeginTime) };
     });
     this.dayChanged.emit(this.day());
   }
@@ -265,9 +264,8 @@ export class DayStructure implements OnInit {
       if (validEndTime.getTime() <= this.dayStartMs()) {
         validEndTime = new Date(this.dayStartMs() + 5 * 60000); // beginning of day plus 5 minutes
       }
-      day.endTime = this.conferenceService.formatHour(validEndTime);
       //TODO check the day slots with new end of day
-      return { ...day};
+      return { ...day, endTime: this.conferenceService.formatHour(validEndTime) };
     });
     this.dayChanged.emit(this.day());
   }

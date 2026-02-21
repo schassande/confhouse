@@ -60,7 +60,11 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
   ngOnInit(): void {
     this.slotTypeService.all().subscribe(slotTypes => this.slotTypes.set(slotTypes));
     // Initialize current day based on conference planning
-    this.days.set(this.conference().days || []);
+    this.days.set((this.conference().days || []).map(day => ({
+      ...day,
+      slots: [...(day.slots || [])],
+      disabledRoomIds: [...(day.disabledRoomIds || [])]
+    })));
     if (this.days().length > 0) {
       this.currentDayIdx.set(0); // set to first day index
     }
@@ -154,13 +158,19 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     } 
   }
   dayChanged(day: Day) {
-    this.days.update( days => {
+    this.days.update(days => {
       const idx = days.findIndex(d => d.id === day.id);
-      if (idx >= 0) {
-        days[idx] = day;
+      if (idx < 0) {
+        return days;
       }
-      this.conference().days = days;
-      return days;
+      const newDays = [...days];
+      newDays[idx] = {
+        ...day,
+        slots: [...(day.slots || [])],
+        disabledRoomIds: [...(day.disabledRoomIds || [])]
+      };
+      this.conference().days = newDays;
+      return newDays;
     });
   }
   copyDayToDay(request: DayToDayCopyRequest) {
