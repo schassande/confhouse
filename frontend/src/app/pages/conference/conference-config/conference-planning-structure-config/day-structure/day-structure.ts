@@ -82,7 +82,7 @@ export class DayStructure implements OnInit {
 
   private readonly tickStep = 30;
   private readonly tickMainRatio = 2;
-  private readonly compactSlotHeightPx = 50;
+  private readonly compactSlotHeightPx = 40;
 
   // ticks (every 60 minutes by default)
   ticks = computed(() => {
