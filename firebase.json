@@ -12,7 +12,7 @@
     }
   ],
   "hosting": {
-    "public": "frontend/dist/conference-manager",
+    "public": "frontend/dist/conference-manager/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
