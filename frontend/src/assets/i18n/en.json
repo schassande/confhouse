@@ -135,16 +135,16 @@
       "DELETE_CONFIRM": "Do you confirm permanent deletion of this conference and all related data (sessions, speakers, activities)?",
       "DELETE_ERROR": "Conference deletion failed.",
       "ACTIONS": {
-        "CATEGORY_GENERAL": "General",
+        "CATEGORY_GENERAL": "Configuration",
         "CATEGORY_SESSIONS": "Sessions",
         "CATEGORY_ACTIVITIES": "Activities",
         "CONFIG": "General configuration",
-        "IMPORT": "Import sessions",
-        "ALLOCATION": "Allocate sessions",
+        "IMPORT": "Import",
+        "ALLOCATION": "Allocate",
         "SESSIONS": "Manage sessions",
         "SPEAKERS": "Manage speakers",
-        "CONFIG_ACTIVITIES": "Configure activities",
-        "ACTIVITY_PARTICIPATION": "Activity participation",
+        "CONFIG_ACTIVITIES": "Configure",
+        "ACTIVITY_PARTICIPATION": "Participation",
         "ACTIVITY_ADMIN": "Activity management",
         "PUBLISH": "Publish program"
       }

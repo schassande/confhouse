@@ -140,8 +140,11 @@ $header-height: 50px;
 
 /* slot */
 .slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 1px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   color: #111;
@@ -155,8 +158,18 @@ $header-height: 50px;
   left:   calc(var(--room-width) * var(--room-col-idx, 0));
 }
 .slot:focus { outline: 2px solid #1976d2; }
-.slot-title { font-weight: 600; font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.slot-time { font-size: 11px; opacity: 0.9; margin-top: 4px; }
+.slot-title { 
+  font-weight: 600; 
+  font-size: 1rem; 
+  white-space:nowrap; 
+  overflow:hidden; 
+  text-overflow:ellipsis; 
+}
+.slot-time { 
+  font-size: 0.8rem; 
+  opacity: 0.9; 
+  margin-top: 4px; 
+}
 
 /////////////////////////////////////////////////////////
 .room-form {

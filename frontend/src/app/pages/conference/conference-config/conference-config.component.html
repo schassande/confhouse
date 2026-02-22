@@ -4,54 +4,48 @@
   @if (conference(); as conf) {
   <div class="config-header">
     <div class="header-content">
-      <h1>{{ 'CONFERENCE.CONFIG.TITLE' | translate }}</h1>
-    </div>
-    <div class="header-actions">
-      <button
-        pButton
-        type="button"
-        label="{{ 'COMMON.CANCEL' | translate }}"
-        icon="pi pi-times"
-        class="p-button-secondary"
-        [routerLink]="['/']"
-      ></button>
-      <button
-        pButton
-        type="button"
-        label="{{ 'COMMON.SAVE' | translate }}"
-        icon="pi pi-check"
-        class="p-button-success"
-        (click)="onSave()"
-      ></button>
+      <h1>{{ sectionTitle() }}</h1>
     </div>
   </div>
 
-  <p-tabs [value]="activeTab()" (valueChange)="onActiveTabChange($event)">
-    <p-tablist>
-      <p-tab [value]="0">{{'CONFERENCE.CONFIG.GENERAL.TAB' | translate}}</p-tab>
-      <p-tab [value]="1">{{'CONFERENCE.CONFIG.SESSION_TYPES.TAB' | translate}}</p-tab>
-      <p-tab [value]="2">{{'CONFERENCE.CONFIG.TRACKS.TAB' | translate}}</p-tab>
-      <p-tab [value]="3">{{'CONFERENCE.CONFIG.ROOMS.TAB' | translate}}</p-tab>
-      <p-tab [value]="4">{{'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate}}</p-tab>
-    </p-tablist>
-    <p-tabpanels>
-      <p-tabpanel [value]="0">
+  <div class="config-content">
+    @switch (section()) {
+      @case ('general') {
         <app-conference-general-config [conference]="conf"></app-conference-general-config>
-      </p-tabpanel>      
-      <p-tabpanel [value]="1">
+      }
+      @case ('session-types') {
         <app-conference-session-types-config [conference]="conf"></app-conference-session-types-config>
-      </p-tabpanel>      
-      <p-tabpanel [value]="2">
-      <app-conference-tracks-config [conference]="conf"></app-conference-tracks-config>
-      </p-tabpanel>      
-      <p-tabpanel [value]="3">
-      <app-conference-rooms-config [conference]="conf"></app-conference-rooms-config>
-      </p-tabpanel>      
-      <p-tabpanel [value]="4">
+      }
+      @case ('tracks') {
+        <app-conference-tracks-config [conference]="conf"></app-conference-tracks-config>
+      }
+      @case ('rooms') {
+        <app-conference-rooms-config [conference]="conf"></app-conference-rooms-config>
+      }
+      @case ('planning-structure') {
         <app-conference-planning-structure-config [conference]="conf"></app-conference-planning-structure-config>
-      </p-tabpanel>      
-    </p-tabpanels>
-  </p-tabs>
+      }
+    }
+  </div>
+
+  <div class="page-actions">
+    <button
+      pButton
+      type="button"
+      label="{{ 'COMMON.CANCEL' | translate }}"
+      icon="pi pi-times"
+      class="p-button-secondary"
+      [routerLink]="cancelLink()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="{{ 'COMMON.SAVE' | translate }}"
+      icon="pi pi-check"
+      class="p-button-success"
+      (click)="onSave()"
+    ></button>
+  </div>
   } @else {
   <div class="loading-container">
     @if (loading()) {

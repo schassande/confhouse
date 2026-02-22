@@ -1,10 +1,16 @@
 .planning-structure-config {
   min-height: 300px;
+
+  @media (min-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+  }
   .config-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
   }
   .nav-bar,  .nav-bar-section {
     display: flex;
@@ -12,8 +18,11 @@
     vertical-align: bottom;
   }
   .nav-bar {
+    display: flex;
+    align-items: center;
     padding-bottom: 10px;
-    justify-content: left;
+    justify-content: center;
+    margin: 0 auto;
   }
   .nav-bar-center {
     margin: 0 20px;

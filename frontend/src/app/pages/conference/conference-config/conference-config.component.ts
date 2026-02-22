@@ -5,7 +5,6 @@ import { ConferenceService } from '../../../services/conference.service';
 import { Conference } from '../../../model/conference.model';
 import { TranslateService } from '@ngx-translate/core';
 import { UserSignService } from '../../../services/usersign.service';
-import { TabsModule } from 'primeng/tabs';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TranslateModule } from '@ngx-translate/core';
@@ -17,12 +16,13 @@ import { ConferencePlanningStructureConfigComponent } from './conference-plannin
 import { ConferenceRoomsConfigComponent } from './conference-rooms-config/conference-rooms-config.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+type ConfigSection = 'general' | 'session-types' | 'tracks' | 'rooms' | 'planning-structure';
+
 @Component({
   selector: 'app-conference-config',
   imports: [
     CommonModule,
     RouterModule,
-    TabsModule,
     ButtonModule,
     ToastModule,
     TranslateModule,
@@ -49,91 +49,60 @@ export class ConferenceConfigComponent implements OnInit {
   
   private readonly _conference = signal<Conference | undefined>(undefined);
   private readonly _loading = signal(true);
-  protected readonly activeTab = signal<number>(0);
-  private readonly tabKeys: readonly string[] = ['general', 'session-types', 'tracks', 'rooms', 'planning-structure'];
+  private readonly _creatingConference = signal(false);
+  readonly section = signal<ConfigSection>('general');
   
   readonly conference = computed(() => this._conference());
   readonly loading = computed(() => this._loading());
   readonly lang = computed(() => this.translateService.getCurrentLang());
+  readonly sectionTitle = computed(() => {
+    switch (this.section()) {
+      case 'general':
+        return this.translateService.instant('CONFERENCE.CONFIG.GENERAL.TAB');
+      case 'session-types':
+        return this.translateService.instant('CONFERENCE.CONFIG.SESSION_TYPES.TAB');
+      case 'tracks':
+        return this.translateService.instant('CONFERENCE.CONFIG.TRACKS.TAB');
+      case 'rooms':
+        return this.translateService.instant('CONFERENCE.CONFIG.ROOMS.TAB');
+      case 'planning-structure':
+        return this.translateService.instant('CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB');
+      default:
+        return this.translateService.instant('CONFERENCE.CONFIG.GENERAL.TAB');
+    }
+  });
+  readonly cancelLink = computed(() => {
+    const conferenceId = this.conference()?.id;
+    return conferenceId ? ['/conference', conferenceId, 'manage'] : ['/'];
+  });
 
   constructor() {
   }
 
   ngOnInit() {
-    this.route.queryParamMap
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        this.section.set(this.parseSection(data['section']));
+      });
+
+    this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
-        const rawTab = params.get('tab');
-        const tabIndex = this.parseTabQueryParam(rawTab);
-        this.activeTab.set(tabIndex);
-        if (!rawTab) {
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { tab: this.toTabKey(tabIndex) },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-          });
+        const id = params.get('conferenceId');
+        if (id) {
+          this.loadConference(id);
+          return;
         }
+        this.createConferenceIfNeeded();
       });
-
-    const id = this.route.snapshot.paramMap.get('conferenceId');
-    // console.log('ConferenceConfigComponent initialized with id:', id);
-    if (id) {
-      this.conferenceService.byId(id).subscribe({
-        next: (conf: Conference | undefined) => {
-          this._conference.set(conf);
-          this._loading.set(false);
-        },
-        error: () => {
-          this._loading.set(false);
-        }
-      });
-    } else {
-      // No id provided: create a default conference and persist it
-      const lang = this.translateService.getCurrentLang() || 'EN';
-      const rand4 = Math.floor(1000 + Math.random() * 9000);
-      const currentPerson = this.userSignService.getCurrentPerson();
-      const defaultConf: Conference = {
-        id: '',
-        lastUpdated: new Date().getTime().toString(),
-        name: `New Conference ${rand4}`,
-        edition: new Date().getFullYear(),
-        days: [],
-        location: '',
-        logo: '',
-        languages: [lang.toUpperCase()],
-        description: { [lang]: 'New conference description' },
-        visible: false,
-        organizerEmails: currentPerson && currentPerson.email ? [currentPerson.email] : [],
-        tracks: [],
-        rooms: [],
-        sessionTypes: [],
-        cfp: { startDate: '', endDate: '', status: 'closed' },
-      };
-
-      this.conferenceService.save(defaultConf).subscribe({
-        next: (created: Conference) => {
-          this._conference.set(created);
-          this._loading.set(false);
-          // update URL to include new id
-          try {
-            this.router.navigate(['/conference', created.id, 'edit'], {
-              replaceUrl: true,
-              queryParams: { tab: this.toTabKey(this.activeTab()) },
-            });
-          } catch (e) {
-            // ignore navigation errors
-          }
-        },
-        error: () => {
-          this._loading.set(false);
-        }
-      });
-    }
   }
 
   onSave() {
-    const conference = this.conference()!;
+    const conference = this.conference();
+    if (!conference) {
+      return;
+    }
     const sanitizedConference: Conference = {
       ...conference,
     };
@@ -157,49 +126,69 @@ export class ConferenceConfigComponent implements OnInit {
     });
   }
 
-  onActiveTabChange(event: any) {
-    const tabIndex = this.extractTabIndex(event);
-    this.activeTab.set(tabIndex);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: this.toTabKey(tabIndex) },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
+  private parseSection(value: unknown): ConfigSection {
+    if (value === 'session-types' || value === 'tracks' || value === 'rooms' || value === 'planning-structure') {
+      return value;
+    }
+    return 'general';
+  }
+
+  private loadConference(conferenceId: string): void {
+    this._loading.set(true);
+    this.conferenceService.byId(conferenceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (conf: Conference | undefined) => {
+          this._conference.set(conf);
+          this._loading.set(false);
+        },
+        error: () => {
+          this._loading.set(false);
+        }
+      });
+  }
+
+  private createConferenceIfNeeded(): void {
+    if (this._creatingConference() || this._conference()) {
+      return;
+    }
+
+    this._creatingConference.set(true);
+    this._loading.set(true);
+    const lang = this.translateService.getCurrentLang() || 'EN';
+    const rand4 = Math.floor(1000 + Math.random() * 9000);
+    const currentPerson = this.userSignService.getCurrentPerson();
+    const defaultConf: Conference = {
+      id: '',
+      lastUpdated: new Date().getTime().toString(),
+      name: `New Conference ${rand4}`,
+      edition: new Date().getFullYear(),
+      days: [],
+      location: '',
+      logo: '',
+      languages: [lang.toUpperCase()],
+      description: { [lang]: 'New conference description' },
+      visible: false,
+      organizerEmails: currentPerson && currentPerson.email ? [currentPerson.email] : [],
+      tracks: [],
+      rooms: [],
+      sessionTypes: [],
+      cfp: { startDate: '', endDate: '', status: 'closed' },
+    };
+
+    this.conferenceService.save(defaultConf).subscribe({
+      next: (created: Conference) => {
+        this._conference.set(created);
+        this._loading.set(false);
+        this._creatingConference.set(false);
+        void this.router.navigate(['/conference', created.id, 'config', 'general'], {
+          replaceUrl: true,
+        });
+      },
+      error: () => {
+        this._loading.set(false);
+        this._creatingConference.set(false);
+      }
     });
-  }
-
-  private extractTabIndex(event: any): number {
-    if (typeof event === 'number') {
-      return this.clampTabIndex(event);
-    }
-    if (typeof event?.index === 'number') {
-      return this.clampTabIndex(event.index);
-    }
-    if (typeof event?.value === 'number') {
-      return this.clampTabIndex(event.value);
-    }
-    return 0;
-  }
-
-  private parseTabQueryParam(rawValue: string | null): number {
-    if (!rawValue) {
-      return 0;
-    }
-
-    const asNumber = Number(rawValue);
-    if (Number.isInteger(asNumber)) {
-      return this.clampTabIndex(asNumber);
-    }
-
-    const byKey = this.tabKeys.indexOf(rawValue.toLowerCase());
-    return byKey >= 0 ? byKey : 0;
-  }
-
-  private toTabKey(index: number): string {
-    return this.tabKeys[this.clampTabIndex(index)] ?? this.tabKeys[0];
-  }
-
-  private clampTabIndex(index: number): number {
-    return Math.max(0, Math.min(index, this.tabKeys.length - 1));
   }
 }

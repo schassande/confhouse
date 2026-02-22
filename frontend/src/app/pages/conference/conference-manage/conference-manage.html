@@ -5,9 +5,25 @@
     <div class="action-category">
       <div class="action-category-title">{{ 'CONFERENCE.MANAGE.ACTIONS.CATEGORY_GENERAL' | translate }}</div>
       <div class="action-category-list">
-        <a class="action-link" [routerLink]="['/conference', id, 'edit']">
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'general']">
           <i class="pi pi-cog"></i>
-          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.CONFIG' | translate }}</span>
+          <span>{{ 'CONFERENCE.CONFIG.GENERAL.TAB' | translate }}</span>
+        </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'session-types']">
+          <i class="pi pi-tag"></i>
+          <span>{{ 'CONFERENCE.CONFIG.SESSION_TYPES.TAB' | translate }}</span>
+        </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'tracks']">
+          <i class="pi pi-sitemap"></i>
+          <span>{{ 'CONFERENCE.CONFIG.TRACKS.TAB' | translate }}</span>
+        </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'rooms']">
+          <i class="pi pi-building"></i>
+          <span>{{ 'CONFERENCE.CONFIG.ROOMS.TAB' | translate }}</span>
+        </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'planning-structure']">
+          <i class="pi pi-calendar"></i>
+          <span>{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate }}</span>
         </a>
         <a class="action-link" (click)="confirmDeleteConference()" style="background-color: #ffebee; border-color: #ffcdd2;">
           <i class="pi pi-trash"></i>

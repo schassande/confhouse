@@ -29,8 +29,13 @@ import { ActivityAdminComponent } from './pages/activity/activity-admin/activity
 
 export const routes: Routes = [
 	{ path: '', component: HomeComponent, pathMatch: 'full' },
-	{ path: 'conference/create', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceCreateGuard] },
-	{ path: 'conference/:conferenceId/edit', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard] },
+	{ path: 'conference/create', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceCreateGuard], data: { section: 'general' } },
+	{ path: 'conference/:conferenceId/edit', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'general' } },
+	{ path: 'conference/:conferenceId/config/general', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'general' } },
+	{ path: 'conference/:conferenceId/config/session-types', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'session-types' } },
+	{ path: 'conference/:conferenceId/config/tracks', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'tracks' } },
+	{ path: 'conference/:conferenceId/config/rooms', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'rooms' } },
+	{ path: 'conference/:conferenceId/config/planning-structure', component: ConferenceConfigComponent, canActivate: [AuthGuard, ConferenceManageContextGuard], data: { section: 'planning-structure' } },
 	{ path: 'conference/:conferenceId/manage', component: ConferenceManage, canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard] },
 	{ path: 'conference/:conferenceId/speakers', component: ConferenceSpeakers, canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard] },
 	{ path: 'conference/:conferenceId/speakers/create', component: ConferenceSpeakerEdit, canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard], data: { mode: 'create' } },

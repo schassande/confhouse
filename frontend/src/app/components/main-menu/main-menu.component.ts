@@ -151,6 +151,7 @@ export class MainMenuComponent {
     const section = segments[2];
     if (
       section === 'manage'
+      || section === 'config'
       || section === 'edit'
       || section === 'speakers'
       || section === 'allocation'
