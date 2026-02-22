@@ -1,0 +1,251 @@
+.sponsor-manage-container {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 600px;
+  margin: 20px auto;
+  align-items: center;
+
+  > :not(.mobile-add) {
+    width: 100%;
+  }
+}
+
+.page-title {
+  text-align: center;
+  margin: 0;
+}
+
+.toolbar {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex: 1;
+}
+
+.count {
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.add-button {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-add {
+  display: none;
+}
+
+.sponsors-list {
+  width: min(100%, 520px);
+  margin: 0 auto;
+}
+
+.sponsors-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.sponsor-card {
+  width: 100%;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #111827;
+    outline-offset: 2px;
+  }
+}
+
+.sponsor-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.sponsor-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sponsor-text {
+  min-width: 0;
+}
+
+.sponsor-main h3 {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sponsor-booth {
+  margin-top: 0.15rem;
+  color: #6b7280;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sponsor-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.sponsor-logo.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: #f9f9f9;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  color: #999;
+  text-align: center;
+  min-height: 200px;
+}
+
+.loading-state {
+  text-align: center;
+  color: #6b7280;
+}
+
+.sponsor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-label {
+  font-weight: 600;
+}
+
+.required {
+  color: #e74c3c;
+  margin-left: 0.2rem;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 0.85rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.w-full {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .sponsor-manage-container {
+    padding: 0 12px 84px;
+  }
+
+  .toolbar {
+    justify-content: center;
+  }
+
+  .desktop-add {
+    display: none;
+  }
+
+  .mobile-add {
+    display: inline-flex;
+    position: fixed;
+    right: 16px;
+    bottom: 20px;
+    z-index: 1000;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filters {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

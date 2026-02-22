@@ -157,6 +157,7 @@ export class MainMenuComponent {
       || section === 'allocation'
       || section === 'publish'
       || section === 'activities'
+      || section === 'sponsors'
       || section === 'activity-participation'
     ) {
       return true;

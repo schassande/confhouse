@@ -1,0 +1,180 @@
+<section class="sponsor-manage-container">
+  <p-toast></p-toast>
+
+  <h1 class="page-title">
+    {{ 'CONFERENCE.SPONSOR_MANAGE.TITLE' | translate }}
+  </h1>
+
+  @if (loading()) {
+  <div class="loading-state">{{ 'CONFERENCE.LOADING' | translate }}</div>
+  } @else {
+  <div class="toolbar">
+    <div class="filters">
+      <p-select
+        [options]="typeFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedTypeId()"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="'CONFERENCE.SPONSOR_MANAGE.FILTER_LABEL' | translate"
+        (onChange)="onFilterTypeChange($event.value)"
+      ></p-select>
+      <span class="count">{{ filteredCountLabel() }}</span>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" class="p-button-success add-button desktop-add" (click)="onAddNew()"></button>
+  </div>
+
+  <div class="sponsors-list">
+    <p-dataview [value]="filteredSponsors()" layout="list">
+      <ng-template #list let-items>
+        <div class="sponsors-grid">
+          @for (sponsor of items; track sponsor.id) {
+          <article
+            class="sponsor-card"
+            role="button"
+            tabindex="0"
+            (click)="onSponsorClick(sponsor)"
+            (keydown.enter)="onSponsorClick(sponsor)"
+            (keydown.space)="onSponsorClick(sponsor); $event.preventDefault()"
+          >
+            <div class="sponsor-line">
+              <div class="sponsor-main">
+                @if (sponsor.logo) {
+                <img [src]="sponsor.logo" alt="logo" class="sponsor-logo" />
+                } @else {
+                <div class="sponsor-logo placeholder">
+                  <i class="pi pi-image"></i>
+                </div>
+                }
+                <div class="sponsor-text">
+                  <h3>{{ sponsor.name }}</h3>
+                  @if (sponsor.boothName) {
+                  <div class="sponsor-booth">{{ sponsor.boothName }}</div>
+                  }
+                </div>
+              </div>
+              <span class="type-badge" [ngStyle]="typeBadgeStyle(sponsor.type)">
+                {{ sponsor.type?.name || ('CONFERENCE.SPONSOR_MANAGE.UNKNOWN_TYPE' | translate) }}
+              </span>
+            </div>
+          </article>
+          }
+        </div>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <div class="empty-state">
+          <p>{{ 'CONFERENCE.SPONSOR_MANAGE.NO_SPONSORS' | translate }}</p>
+        </div>
+      </ng-template>
+    </p-dataview>
+  </div>
+
+  <button pButton type="button" icon="pi pi-plus" class="p-button-success add-button mobile-add" (click)="onAddNew()"></button>
+
+  <p-dialog
+    [modal]="true"
+    [visible]="dialogVisible()"
+    [header]="(isEditing() ? 'CONFERENCE.SPONSOR_MANAGE.EDIT' : 'CONFERENCE.SPONSOR_MANAGE.ADD') | translate"
+    [style]="{ width: 'min(920px, 95vw)' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="onDialogHide()"
+  >
+    @if (form(); as formGroup) {
+    <form [formGroup]="formGroup" class="sponsor-form">
+      <div class="form-row">
+        <div class="form-section">
+          <label for="name" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.NAME' | translate }} <span class="required">*</span>
+          </label>
+          <input id="name" pInputText formControlName="name" type="text" class="w-full" />
+          @if (formGroup.get('name')?.invalid && formGroup.get('name')?.touched) {
+          <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+          }
+        </div>
+        <div class="form-section">
+          <label for="typeId" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.TYPE' | translate }} <span class="required">*</span>
+          </label>
+          <p-select
+            inputId="typeId"
+            [options]="sponsorTypeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [placeholder]="'CONFERENCE.SPONSOR_MANAGE.TYPE_PLACEHOLDER' | translate"
+            formControlName="typeId"
+            class="w-full"
+          ></p-select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="logo" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.LOGO' | translate }}</label>
+          <input id="logo" pInputText formControlName="logo" type="text" class="w-full" />
+        </div>
+        <div class="form-section">
+          <label for="website" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.WEBSITE' | translate }}</label>
+          <input id="website" pInputText formControlName="website" type="text" class="w-full" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="boothName" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_NAME' | translate }}</label>
+          <input id="boothName" pInputText formControlName="boothName" type="text" class="w-full" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="descriptionEn" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.DESCRIPTION_EN' | translate }}</label>
+          <textarea id="descriptionEn" pTextarea formControlName="descriptionEn" rows="3" class="w-full"></textarea>
+        </div>
+        <div class="form-section">
+          <label for="descriptionFr" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.DESCRIPTION_FR' | translate }}</label>
+          <textarea id="descriptionFr" pTextarea formControlName="descriptionFr" rows="3" class="w-full"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="emailsText" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.EMAILS' | translate }}</label>
+          <textarea id="emailsText" pTextarea formControlName="emailsText" rows="4" class="w-full"></textarea>
+          <small>{{ 'CONFERENCE.SPONSOR_MANAGE.EMAILS_HELP' | translate }}</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        @if (currentEditingSponsor(); as editingSponsor) {
+        <button
+          pButton
+          type="button"
+          icon="pi pi-trash"
+          class="p-button-danger"
+          [label]="'CONFERENCE.SPONSOR_MANAGE.DELETE' | translate"
+          (click)="onDelete(editingSponsor)"
+        ></button>
+        }
+        <button
+          pButton
+          type="button"
+          class="p-button-secondary"
+          [label]="'COMMON.CANCEL' | translate"
+          (click)="onCancel()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          class="p-button-success"
+          [label]="'COMMON.SAVE' | translate"
+          [disabled]="formGroup.invalid"
+          (click)="onSave()"
+        ></button>
+      </div>
+    </form>
+    }
+  </p-dialog>
+  }
+</section>

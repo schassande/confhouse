@@ -1,0 +1,139 @@
+<section class="sponsor-config-container">
+  <p-toast></p-toast>
+
+  <div class="header-row">
+    <h1>
+      {{ conference()?.name }} {{ conference()?.edition }} - {{ 'CONFERENCE.SPONSOR_CONFIG.TITLE' | translate }}
+    </h1>
+    <div class="header-actions">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrow-left"
+        class="p-button-secondary"
+        [label]="'CONFERENCE.SPONSOR_CONFIG.BACK_TO_MANAGE' | translate"
+        [routerLink]="['/conference', conferenceId(), 'manage']"
+      ></button>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-save"
+        class="p-button-success"
+        [label]="'COMMON.SAVE' | translate"
+        (click)="onSave()"
+      ></button>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">{{ 'CONFERENCE.LOADING' | translate }}</div>
+  } @else {
+  <form [formGroup]="form" class="config-form">
+    <section class="config-section">
+      <div class="section-header">
+        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPES' | translate }}</h2>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          class="p-button-secondary p-button-sm"
+          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_SPONSOR_TYPE' | translate"
+          (click)="addSponsorType()"
+        ></button>
+      </div>
+
+      @if (sponsorTypesArray.controls.length === 0) {
+      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_SPONSOR_TYPES' | translate }}</p>
+      }
+
+      <div formArrayName="sponsorTypes" class="sponsor-types-list">
+        @for (group of sponsorTypesArray.controls; track $index) {
+        <article class="sponsor-type-card" [formGroupName]="$index">
+          <div class="card-header">
+            <h3>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPE' | translate }} #{{ $index + 1 }}</h3>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-danger p-button-sm"
+              [label]="'COMMON.REMOVE' | translate"
+              (click)="removeSponsorType($index)"
+            ></button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.NAME' | translate }}</label>
+              <input pInputText formControlName="name" type="text" />
+            </div>
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.MAX_NUMBER' | translate }}</label>
+              <p-inputNumber formControlName="maxNumber" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+            </div>
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.COLOR' | translate }}</label>
+              <input pInputText formControlName="color" type="text" placeholder="#1f77b4" />
+            </div>
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.FONT_COLOR' | translate }}</label>
+              <input pInputText formControlName="fontColor" type="text" placeholder="#ffffff" />
+            </div>
+          </div>
+
+          <div class="form-grid two-columns">
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_EN' | translate }}</label>
+              <textarea pTextarea formControlName="descriptionEn" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_FR' | translate }}</label>
+              <textarea pTextarea formControlName="descriptionFr" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES' | translate }}</label>
+            <textarea pTextarea formControlName="boothNamesText" rows="3"></textarea>
+            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>
+          </div>
+        </article>
+        }
+      </div>
+    </section>
+
+    <section class="config-section">
+      <div class="section-header">
+        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate }}</h2>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          class="p-button-secondary p-button-sm"
+          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_BOOTH_MAP' | translate"
+          (click)="addBoothMap()"
+        ></button>
+      </div>
+
+      @if (sponsorBoothMapsArray.controls.length === 0) {
+      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BOOTH_MAPS' | translate }}</p>
+      }
+
+      <div formArrayName="sponsorBoothMaps" class="booth-map-list">
+        @for (control of sponsorBoothMapsArray.controls; track $index) {
+        <div class="booth-map-row">
+          <input pInputText [formControlName]="$index" type="text" placeholder="https://..." />
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-danger p-button-sm"
+            [label]="'COMMON.REMOVE' | translate"
+            (click)="removeBoothMap($index)"
+          ></button>
+        </div>
+        }
+      </div>
+    </section>
+  </form>
+  }
+</section>

@@ -93,6 +93,16 @@ export const routes: Routes = [
     canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard],
   },
   {
+    path: 'conference/:conferenceId/sponsors/config',
+    loadComponent: () => import('./pages/sponsor/sponsor-config/sponsor-config.component').then((m) => m.SponsorConfigComponent),
+    canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard],
+  },
+  {
+    path: 'conference/:conferenceId/sponsors/manage',
+    loadComponent: () => import('./pages/sponsor/sponsor-manage/sponsor-manage.component').then((m) => m.SponsorManageComponent),
+    canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard],
+  },
+  {
     path: 'conference/:conferenceId/activity-participation',
     loadComponent: () => import('./pages/activity/activity-participation/activity-participation.component').then((m) => m.ActivityParticipationComponent),
     canActivate: [AuthGuard, ConferenceManageContextGuard],

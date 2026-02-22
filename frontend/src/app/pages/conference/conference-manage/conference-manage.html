@@ -75,6 +75,19 @@
         }
       </div>
     </div>
+    <div class="action-category">
+      <div class="action-category-title">{{ 'CONFERENCE.MANAGE.ACTIONS.CATEGORY_SPONSOR' | translate }}</div>
+      <div class="action-category-list">
+        <a class="action-link" [routerLink]="['/conference', id, 'sponsors', 'config']">
+          <i class="pi pi-briefcase"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.CONFIG_SPONSOR' | translate }}</span>
+        </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'sponsors', 'manage']">
+          <i class="pi pi-building-columns"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.MANAGE_SPONSOR' | translate }}</span>
+        </a>
+      </div>
+    </div>
   </div>
   <div style="text-align: center;">
     <a class="" href="" (click)="downloadExcel($event)">

@@ -139,7 +139,10 @@
         "ACTIVITY_PARTICIPATION": "Inscription",
         "ACTIVITY_ADMIN": "Gestion des activites",
         "PUBLISH": "Publier",
-        "EXPORT_EXCEL": "Export Excel"
+        "EXPORT_EXCEL": "Export Excel",
+        "CATEGORY_SPONSOR": "Sponsor",
+        "CONFIG_SPONSOR": "Configurer",
+        "MANAGE_SPONSOR": "Gérer"
       }
     },
     "ACTIVITY_PARTICIPATION": {
@@ -546,6 +549,49 @@
       "SAVED": "Configuration de la conférence enregistrée avec succès",
       "FORM_ERRORS": "Veuillez corriger les erreurs du formulaire",
       "UPDATE_ERROR": "Erreur lors de la mise à jour de la configuration"
+    },
+    "SPONSOR_CONFIG": {
+      "TITLE": "Configuration des sponsors",
+      "BACK_TO_MANAGE": "Retour a la gestion",
+      "SPONSOR_TYPES": "Types de sponsor",
+      "SPONSOR_TYPE": "Type de sponsor",
+      "ADD_SPONSOR_TYPE": "Ajouter un type de sponsor",
+      "NO_SPONSOR_TYPES": "Aucun type de sponsor configure",
+      "NAME": "Nom",
+      "MAX_NUMBER": "Nombre maximum",
+      "COLOR": "Couleur",
+      "FONT_COLOR": "Couleur du texte",
+      "DESCRIPTION_EN": "Description (Anglais)",
+      "DESCRIPTION_FR": "Description (Francais)",
+      "BOOTH_NAMES": "Noms de stands",
+      "BOOTH_NAMES_HELP": "Un nom par ligne (ou separe par des virgules).",
+      "BOOTH_MAPS": "URLs des plans des stands",
+      "ADD_BOOTH_MAP": "Ajouter une URL de plan",
+      "NO_BOOTH_MAPS": "Aucune URL de plan configuree"
+    },
+    "SPONSOR_MANAGE": {
+      "TITLE": "Gestion des sponsors",
+      "ADD": "Ajouter un sponsor",
+      "EDIT": "Modifier le sponsor",
+      "DELETE": "Supprimer le sponsor",
+      "DELETED": "Sponsor supprime",
+      "NO_SPONSORS": "Aucun sponsor defini",
+      "NAME": "Nom",
+      "TYPE": "Type",
+      "TYPE_PLACEHOLDER": "Selectionner un type de sponsor",
+      "LOGO": "URL du logo",
+      "WEBSITE": "Site web",
+      "BOOTH_NAME": "Nom du stand",
+      "DESCRIPTION_EN": "Description (Anglais)",
+      "DESCRIPTION_FR": "Description (Francais)",
+      "EMAILS": "Emails",
+      "EMAILS_HELP": "Un email par ligne (ou separe par virgule ou point-virgule).",
+      "FILTER_LABEL": "Filtrer par type de sponsor",
+      "FILTER_ALL": "Tous les types",
+      "COUNT": "{{filtered}} / {{total}} sponsors",
+      "CONFIRM_DELETE": "Confirmez-vous la suppression du sponsor ?",
+      "MISSING_TYPE": "Le type de sponsor est obligatoire.",
+      "UNKNOWN_TYPE": "Type inconnu"
     }
   },
   "VALIDATION": {
