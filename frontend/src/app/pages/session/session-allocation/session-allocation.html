@@ -69,6 +69,14 @@
 
       <div class="planning-panel">
         <div class="planning-filters">
+          <button
+            pButton
+            type="button"
+            size="small"
+            [label]="'SESSION.ALLOCATION.AUTO_ALLOCATE' | translate"
+            (click)="autoAllocate()"
+            [disabled]="!canAutoAllocate()"
+          ></button>
           <label class="speaker-select-label" for="speaker-filter-select">
             {{ 'SESSION.ALLOCATION.HIGHLIGHT_SPEAKER' | translate }}
           </label>

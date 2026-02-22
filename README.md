@@ -126,10 +126,7 @@ stateDiagram-v2
 
 ```
 TODO list :
-- Ajout de l'activité dans le planning
-- Allocation automatique des sessions
-  - choisir des critères stratégies 
-    - variété des tracks
+- afficher note de review
 - Cancel speaker
 - Speaker Edit: lors de la modification de l'indispo d'un speaker il faut désallouer les sessions sur les slots ou le speaker est indispo
 - Duplication conference

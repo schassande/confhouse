@@ -234,6 +234,23 @@ export class SessionAllocation implements OnInit {
     });
   });
 
+  readonly slotViewByKey = computed(() => {
+    const map = new Map<string, SlotView>();
+    this.dayPlanningViews().forEach((dayPlanning) => {
+      dayPlanning.slotViews.forEach((slotView) => map.set(slotView.key, slotView));
+    });
+    return map;
+  });
+
+  readonly canAutoAllocate = computed(() => {
+    if (this.saving() || !this.conference()) {
+      return false;
+    }
+    const hasFreeSessionSlot = this.dayPlanningViews()
+      .some((dayPlanning) => dayPlanning.slotViews.some((slotView) => !this.selectedSessionId(slotView)));
+    return hasFreeSessionSlot && this.unallocatedSessions().length > 0;
+  });
+
   readonly unallocatedSessions = computed<Session[]>(() => {
     const allocatedSessionIds = new Set(this.allocations().map((allocation) => allocation.sessionId));
     const filteredSessionTypeIds = this.selectedSessionTypeIds();
@@ -576,6 +593,63 @@ export class SessionAllocation implements OnInit {
         this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
       }
       await this.reloadAllocationContext();
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async autoAllocate(): Promise<void> {
+    const conference = this.conference();
+    const conferenceId = this.conferenceId();
+    if (!conference || !conferenceId || this.saving()) {
+      return;
+    }
+
+    const suggestions = this.sessionService.computeAutoAllocationSuggestions({
+      conferenceId,
+      conference,
+      sessions: this.sessions(),
+      currentAllocations: this.allocations(),
+      conferenceSpeakers: this.conferenceSpeakers(),
+      slotTypes: this.slotTypes(),
+    });
+    if (suggestions.length === 0) {
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      for (const suggestion of suggestions) {
+        const slotKey = this.toSlotKey(suggestion.dayId, suggestion.slotId, suggestion.roomId);
+        const slotView = this.slotViewByKey().get(slotKey);
+        if (!slotView) {
+          continue;
+        }
+        if (this.allocationBySlotKey().has(slotKey) || this.allocationBySessionId().has(suggestion.sessionId)) {
+          continue;
+        }
+        if (!this.isSessionTypeCompatibleById(suggestion.sessionId, slotView)) {
+          continue;
+        }
+        const conflicts = this.findSpeakerAvailabilityConflicts(suggestion.sessionId, slotView);
+        if (conflicts.length > 0) {
+          continue;
+        }
+
+        await this.updateSessionStatusForAllocation(suggestion.sessionId);
+
+        const allocationToSave: SessionAllocationModel = {
+          id: '',
+          lastUpdated: '',
+          conferenceId,
+          dayId: suggestion.dayId,
+          slotId: suggestion.slotId,
+          roomId: suggestion.roomId,
+          sessionId: suggestion.sessionId,
+        };
+        const saved = await firstValueFrom(this.sessionAllocationService.save(allocationToSave));
+        this.updateLocalAllocationsAfterSave(saved, slotKey);
+      }
     } finally {
       this.saving.set(false);
     }

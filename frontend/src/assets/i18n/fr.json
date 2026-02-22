@@ -595,6 +595,7 @@
       "FILTER_TRACK": "Tracks",
       "HIGHLIGHT_SPEAKER": "Mise en évidence",
       "SHOW_LANG": "Afficher langue",
+      "AUTO_ALLOCATE": "Auto Allocate",
       "FILTER_HAS_UNAVAILABILITY": "a des indisponibilités",
       "FILTER_KEYWORD": "Mot-cle (min 3 caracteres)",
       "COUNT": "{{count}} session(s) disponible(s)",

@@ -607,6 +607,7 @@
       "FILTER_TRACK": "Tracks",
       "HIGHLIGHT_SPEAKER": "Highlight",
       "SHOW_LANG": "Show lang",
+      "AUTO_ALLOCATE": "Auto Allocate",
       "FILTER_HAS_UNAVAILABILITY": "Has unavailability",
       "FILTER_KEYWORD": "Keyword (min 3 chars)",
       "COUNT": "{{count}} session(s) available",
