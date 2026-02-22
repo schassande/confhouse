@@ -281,7 +281,14 @@ export class SessionAllocation implements OnInit {
       });
 
     return this.filterSessionsByKeyword(statusAndTypeFiltered, this.unallocatedSearchText())
-      .sort((a, b) => a.title.localeCompare(b.title));
+      .sort((a, b) => {
+        const reviewA = this.sessionReviewAverage(a) ?? Number.NEGATIVE_INFINITY;
+        const reviewB = this.sessionReviewAverage(b) ?? Number.NEGATIVE_INFINITY;
+        if (reviewA !== reviewB) {
+          return reviewB - reviewA;
+        }
+        return a.title.localeCompare(b.title);
+      });
   });
 
   readonly unallocatedSessionItems = computed<UnallocatedSessionListItem[]>(() =>
@@ -290,6 +297,7 @@ export class SessionAllocation implements OnInit {
       title: session.title,
       speakersLabel: this.sessionSpeakersLabel(session),
       sessionTypeLabel: this.sessionTypeLabel(session),
+      reviewAverage: this.sessionReviewAverage(session),
       backgroundColor: this.sessionTrackColor(session),
       textColor: this.sessionTrackTextColor(session),
     }))
@@ -310,6 +318,7 @@ export class SessionAllocation implements OnInit {
       title: session.title,
       speakersLabel: this.sessionSpeakersLabel(session),
       sessionTypeLabel: this.sessionTypeLabel(session),
+      reviewAverage: this.sessionReviewAverage(session),
       backgroundColor: this.sessionTrackColor(session),
       textColor: this.sessionTrackTextColor(session),
     }));
@@ -418,6 +427,11 @@ export class SessionAllocation implements OnInit {
   sessionTypeLabel(session: Session): string {
     const sessionTypeId = session.conference?.sessionTypeId ?? '';
     return this.sessionTypeById().get(sessionTypeId)?.name ?? sessionTypeId;
+  }
+
+  sessionReviewAverage(session: Session): number | null {
+    const value = Number(session.conference?.review?.average);
+    return Number.isFinite(value) ? value : null;
   }
 
   sessionTrackColor(session: Session): string {

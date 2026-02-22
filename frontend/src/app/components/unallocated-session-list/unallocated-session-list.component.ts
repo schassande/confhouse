@@ -8,6 +8,7 @@ export interface UnallocatedSessionListItem {
   title: string;
   speakersLabel: string;
   sessionTypeLabel: string;
+  reviewAverage: number | null;
   backgroundColor: string;
   textColor: string;
 }
@@ -25,6 +26,7 @@ export class UnallocatedSessionListComponent {
   readonly emptyKey = input('SESSION.ALLOCATION.NO_UNALLOCATED');
   readonly draggable = input(false);
   readonly dropEnabled = input(false);
+  readonly enableListScroll = input(true);
 
   readonly sessionSelected = output<string>();
   readonly sessionDragStarted = output<{ event: DragEvent; sessionId: string }>();

@@ -20,7 +20,7 @@
   @if (!items().length) {
     <p class="empty-message">{{ emptyKey() | translate }}</p>
   } @else {
-    <div class="session-list-wrapper">
+    <div class="session-list-wrapper" [class.scroll-enabled]="enableListScroll()">
       <p-dataview [value]="items()" layout="list" class="session-dataview">
         <ng-template #list let-items>
           <div class="session-list">
@@ -42,7 +42,16 @@
               >
                 <div class="session-title">{{ item.title }}</div>
                 <div class="session-meta">{{ item.speakersLabel }}</div>
-                <div class="session-meta">{{ item.sessionTypeLabel }}</div>
+                <div class="session-meta session-last-row">
+                  <span>{{ item.sessionTypeLabel }}</span>
+                  <span class="review-score">
+                    @if (item.reviewAverage !== null) {
+                      {{ item.reviewAverage | number: '1.1-2' }}
+                    } @else {
+                      -
+                    }
+                  </span>
+                </div>
               </div>
             }
           </div>

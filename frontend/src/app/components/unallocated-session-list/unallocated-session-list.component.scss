@@ -18,6 +18,10 @@
 }
 
 .session-list-wrapper {
+  overflow: visible;
+}
+
+.session-list-wrapper.scroll-enabled {
   max-height: 800px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -45,6 +49,18 @@
 
 .session-meta {
   font-size: 0.82rem;
+}
+
+.session-last-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.review-score {
+  font-weight: 700;
+  margin-left: auto;
 }
 
 .empty-message {

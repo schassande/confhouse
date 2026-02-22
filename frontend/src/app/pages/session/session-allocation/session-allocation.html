@@ -61,6 +61,7 @@
           [items]="unallocatedSessionItems()"
           [draggable]="true"
           [dropEnabled]="true"
+          [enableListScroll]="false"
           (sessionDragStarted)="onUnallocatedDragStart($event.event, $event.sessionId)"
           (sessionDragEnded)="onDragEnd()"
           (listDropRequested)="onUnallocatedDrop($event)"
