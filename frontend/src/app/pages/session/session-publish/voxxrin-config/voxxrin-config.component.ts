@@ -115,7 +115,7 @@ export class VoxxrinConfigComponent implements OnInit {
     const secretToken = String(values.connectionSecretToken ?? '').trim();
 
     const location = this.compactObject({
-      country: this.clean(values.locationCountry),
+      country: String(values.locationCountry ?? '').trim(),
       city: this.clean(values.locationCity),
       address: this.clean(values.locationAddress),
       latitude: this.toOptionalNumber(values.locationLatitude),
@@ -288,7 +288,7 @@ export class VoxxrinConfigComponent implements OnInit {
       headingBackground: [config?.headingBackground ?? ''],
       keywords: [this.arrayToCsv(config?.keywords)],
 
-      locationCountry: [config?.location?.country ?? ''],
+      locationCountry: [config?.location?.country ?? '', [Validators.required]],
       locationCity: [config?.location?.city ?? ''],
       locationAddress: [config?.location?.address ?? ''],
       locationLatitude: [this.toOptionalNumber(config?.location?.latitude), [Validators.min(-90), Validators.max(90)]],
@@ -300,7 +300,7 @@ export class VoxxrinConfigComponent implements OnInit {
       infosFloorPlanLabel: [''],
       infosFloorPlanUrl: [''],
 
-      backgroundUrl: [config?.backgroundUrl ?? ''],
+      backgroundUrl: [config?.backgroundUrl ?? '', [Validators.required]],
       primaryHex: [this.normalizeHexForControl(config?.theming?.colors?.primaryHex)],
       primaryContrastHex: [this.normalizeHexForControl(config?.theming?.colors?.primaryContrastHex)],
       secondaryHex: [this.normalizeHexForControl(config?.theming?.colors?.secondaryHex)],

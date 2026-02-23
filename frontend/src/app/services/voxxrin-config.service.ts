@@ -40,6 +40,7 @@ export class VoxxrinConfigService extends FirestoreGenericService<VoxxrinConfig>
           lastUpdated: existing?.lastUpdated ?? '',
           timezone: existing?.timezone ?? 'UTC',
           keywords: existing?.keywords ?? [],
+          backgroundUrl: existing?.backgroundUrl ?? '',
           ...existing,
           ...data,
           conferenceId,

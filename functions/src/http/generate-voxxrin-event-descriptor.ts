@@ -11,6 +11,46 @@ import {
   ensureRequesterIsOrganizer,
 } from './conference-http-common';
 
+type TimelineSlot = {
+  dayId: string;
+  localDate: string;
+  slotId: string;
+  slotTypeId: string;
+  roomId: string;
+  overflowRoomIds: string[];
+  sessionTypeId: string;
+  startTime: string;
+  endTime: string;
+};
+
+const PASTEL_PALETTE = [
+  '#A8DADC',
+  '#BDE0FE',
+  '#FFC8DD',
+  '#CDEAC0',
+  '#F9E2AE',
+  '#D8B4E2',
+  '#B8F2E6',
+  '#FFD6A5',
+  '#C7CEEA',
+  '#F1C0E8',
+] as const;
+
+const ALLOWED_SOCIAL_TYPES = new Set([
+  'website',
+  'twitter',
+  'x',
+  'linkedin',
+  'mastodon',
+  'instagram',
+  'youtube',
+  'twitch',
+  'github',
+  'facebook',
+  'flickr',
+  'bluesky',
+]);
+
 export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSeconds: 60 }, async (req, res) => {
   try {
     applyCorsHeaders(req, res);
@@ -42,7 +82,8 @@ export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSec
       );
     }
 
-    const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig);
+    const programData = await loadProgramData(db, conferenceId);
+    const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData);
     const payload = JSON.stringify(descriptor, null, 2);
 
     logger.info('generateVoxxrinEventDescriptor completed', {
@@ -99,54 +140,107 @@ async function loadVoxxrinConfig(db: admin.firestore.Firestore, conferenceId: st
   return null;
 }
 
-function buildEventDescriptor(conference: any, config: any): any {
-  const title = buildConferenceTitle(conference);
-  const description = pickLocalizedText(conference?.description, conference?.languages);
-  const days = mapDays(conference?.days ?? []);
-  const start = days.length ? days[0].localDate : undefined;
-  const end = days.length ? days[days.length - 1].localDate : undefined;
+async function loadProgramData(db: admin.firestore.Firestore, conferenceId: string): Promise<{
+  slotTypeById: Map<string, any>;
+  sessionById: Map<string, any>;
+  personById: Map<string, any>;
+  allocations: any[];
+}> {
+  const [slotTypesSnap, sessionsSnap, allocationsSnap] = await Promise.all([
+    db.collection(FIRESTORE_COLLECTIONS.SLOT_TYPE).get(),
+    db.collection(FIRESTORE_COLLECTIONS.SESSION).where('conference.conferenceId', '==', conferenceId).get(),
+    db.collection(FIRESTORE_COLLECTIONS.SESSION_ALLOCATION).where('conferenceId', '==', conferenceId).get(),
+  ]);
 
-  return compactObject({
-    eventFamily: cleanString(config?.eventFamily),
+  const slotTypeById = new Map<string, any>();
+  for (const doc of slotTypesSnap.docs) {
+    const data = doc.data() as any;
+    const id = cleanString(data?.id) ?? cleanString(doc.id);
+    if (id) {
+      slotTypeById.set(id, data);
+    }
+  }
+
+  const sessionById = new Map<string, any>();
+  const speakerIds = new Set<string>();
+  for (const doc of sessionsSnap.docs) {
+    const data = doc.data() as any;
+    const id = cleanString(data?.id) ?? cleanString(doc.id);
+    if (!id) {
+      continue;
+    }
+    data.id = id;
+    sessionById.set(id, data);
+    for (const speakerId of extractSpeakerIds(data)) {
+      speakerIds.add(speakerId);
+    }
+  }
+
+  const personById = await loadPersonsByIds(db, Array.from(speakerIds));
+  const allocations = allocationsSnap.docs.map((doc) => doc.data() as any);
+  return { slotTypeById, sessionById, personById, allocations };
+}
+
+async function loadPersonsByIds(db: admin.firestore.Firestore, ids: string[]): Promise<Map<string, any>> {
+  const result = new Map<string, any>();
+  const normalized = Array.from(new Set(ids.map((id) => String(id ?? '').trim()).filter((id) => id.length > 0)));
+  if (!normalized.length) {
+    return result;
+  }
+
+  const refs = normalized.map((id) => db.collection(FIRESTORE_COLLECTIONS.PERSON).doc(id));
+  const docs = await db.getAll(...refs);
+  for (const doc of docs) {
+    if (doc.exists) {
+      result.set(doc.id, doc.data() as any);
+    }
+  }
+
+  return result;
+}
+
+function buildEventDescriptor(conference: any, config: any, programData: {
+  slotTypeById: Map<string, any>;
+  sessionById: Map<string, any>;
+  personById: Map<string, any>;
+  allocations: any[];
+}): any {
+  const title = buildConferenceTitle(conference);
+  const description = pickLocalizedText(conference?.description, conference?.languages) ?? null;
+  const days = mapDays(conference?.days ?? []);
+  const timezone = cleanString(config?.timezone) ?? 'UTC';
+  const timelineSlots = buildTimelineSlots(conference?.days ?? []);
+  const talks = mapTalks(programData.allocations, programData.sessionById, programData.personById, timelineSlots, timezone, conference);
+  const breaks = mapBreaks(timelineSlots, programData.slotTypeById, timezone, conference?.languages);
+
+  return {
     title,
     headingTitle: title,
-    headingSubTitle: cleanString(config?.headingSubTitle),
-    headingBackground: cleanString(config?.headingBackground),
+    headingSubTitle: cleanString(config?.headingSubTitle) ?? null,
+    headingBackground: cleanString(config?.headingBackground) ?? null,
     description,
-    timezone: cleanString(config?.timezone) ?? 'UTC',
-    peopleDescription: cleanString(config?.peopleDescription),
-    websiteUrl: cleanString(config?.websiteUrl),
-    ticketsUrl: cleanString(config?.ticketsUrl),
-    location: compactObject({
-      country: cleanString(config?.location?.country),
-      city: cleanString(config?.location?.city),
-      address: cleanString(config?.location?.address),
-      latitude: toOptionalNumber(config?.location?.latitude),
-      longitude: toOptionalNumber(config?.location?.longitude),
-    }),
-    keywords: normalizeStringArray(config?.keywords),
-    start,
-    end,
+    timezone,
+    peopleDescription: cleanString(config?.peopleDescription) ?? null,
+    location: mapLocation(config?.location),
+    keywords: normalizeStringArray(config?.keywords) ?? [],
     days,
-    infos: compactObject({
-      eventDescription: cleanString(config?.infos?.eventDescription),
-      venuePicture: cleanString(config?.infos?.venuePicture),
-      address: cleanString(config?.infos?.address),
-      floorPlans: mapFloorPlans(config?.infos?.floorPlans),
-      socialMedias: mapSocialMedias(config?.infos?.socialMedias),
-    }),
-    socialMedias: mapSocialMedias(config?.socialMedias),
-    sponsors: mapSponsors(conference?.sponsoring),
+    infos: {
+      floorPlans: mapFloorPlans(config?.infos?.floorPlans) ?? [],
+      socialMedias: mapSocialMedias(config?.infos?.socialMedias) ?? [],
+      sponsors: mapSponsors(conference?.sponsoring) ?? [],
+    },
     features: mapFeatures(config?.features),
     formattings: mapFormattings(config?.formattings),
-    logoUrl: cleanString(conference?.logo),
-    backgroundUrl: cleanString(config?.backgroundUrl),
+    logoUrl: cleanString(conference?.logo) ?? '',
+    backgroundUrl: cleanString(config?.backgroundUrl) ?? '',
     theming: mapTheming(config?.theming),
     supportedTalkLanguages: mapSupportedTalkLanguages(conference?.languages ?? []),
     rooms: mapRooms(conference?.rooms ?? []),
     talkTracks: mapTracks(conference?.tracks ?? []),
     talkFormats: mapTalkFormats(conference?.sessionTypes ?? []),
-  });
+    talks,
+    breaks,
+  };
 }
 
 function buildConferenceTitle(conference: any): string {
@@ -198,7 +292,7 @@ function mapDays(days: any[]): Array<{ id: string; localDate: string }> {
       }
 
       return {
-        id: dayIdFromDate(localDate),
+        id: cleanString(day?.id) ?? dayIdFromDate(localDate),
         localDate,
       };
     })
@@ -229,6 +323,87 @@ function toLocalDate(value: any): string | undefined {
   return date.toISOString().slice(0, 10);
 }
 
+function mapLocation(locationConfig: any): any {
+  const country = cleanString(locationConfig?.country) ?? '';
+  const city = cleanString(locationConfig?.city) ?? '';
+  const address = cleanString(locationConfig?.address);
+  const latitude = toOptionalNumber(locationConfig?.latitude);
+  const longitude = toOptionalNumber(locationConfig?.longitude);
+
+  const mapped: any = { country, city };
+  if (address) {
+    mapped.address = address;
+  }
+  if (latitude !== undefined && longitude !== undefined) {
+    mapped.coords = { latitude, longitude };
+  }
+  return mapped;
+}
+
+function buildTimelineSlots(days: any[]): Map<string, TimelineSlot> {
+  const map = new Map<string, TimelineSlot>();
+  if (!Array.isArray(days)) {
+    return map;
+  }
+
+  for (const day of days) {
+    const dayId = cleanString(day?.id);
+    const localDate = toLocalDate(day?.date);
+    if (!dayId || !localDate) {
+      continue;
+    }
+
+    const slots = Array.isArray(day?.slots) ? day.slots : [];
+    for (const slot of slots) {
+      const slotId = cleanString(slot?.id);
+      const roomId = cleanString(slot?.roomId);
+      const startTime = normalizeIsoTime(slot?.startTime);
+      const endTime = normalizeIsoTime(slot?.endTime);
+      if (!slotId || !roomId || !startTime || !endTime) {
+        continue;
+      }
+
+      map.set(toTimelineKey(dayId, slotId, roomId), {
+        dayId,
+        localDate,
+        slotId,
+        slotTypeId: cleanString(slot?.slotTypeId) ?? '',
+        roomId,
+        overflowRoomIds: normalizeStringArray(slot?.overflowRoomIds) ?? [],
+        sessionTypeId: cleanString(slot?.sessionTypeId) ?? '',
+        startTime,
+        endTime,
+      });
+    }
+  }
+
+  return map;
+}
+
+function toTimelineKey(dayId: string, slotId: string, roomId: string): string {
+  return `${dayId}::${slotId}::${roomId}`;
+}
+
+function normalizeIsoTime(value: any): string | undefined {
+  const raw = cleanString(value);
+  if (!raw) {
+    return undefined;
+  }
+
+  const match = raw.match(/^(\d{2}):(\d{2})/);
+  if (!match) {
+    return undefined;
+  }
+
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+    return undefined;
+  }
+
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
 function mapSocialMedias(values: any): Array<{ type: string; href: string }> | undefined {
   if (!Array.isArray(values)) {
     return undefined;
@@ -236,7 +411,7 @@ function mapSocialMedias(values: any): Array<{ type: string; href: string }> | u
 
   const socials = values
     .map((entry) => {
-      const type = cleanString(entry?.type);
+      const type = normalizeSocialType(entry?.type);
       const href = cleanString(entry?.href);
       if (!type || !href) {
         return null;
@@ -246,6 +421,14 @@ function mapSocialMedias(values: any): Array<{ type: string; href: string }> | u
     .filter((entry): entry is { type: string; href: string } => !!entry);
 
   return socials.length ? socials : undefined;
+}
+
+function normalizeSocialType(value: any): string | undefined {
+  const normalized = cleanString(value)?.toLowerCase();
+  if (!normalized) {
+    return undefined;
+  }
+  return ALLOWED_SOCIAL_TYPES.has(normalized) ? normalized : undefined;
 }
 
 function mapFloorPlans(values: any): Array<{ label: string; pictureUrl: string }> | undefined {
@@ -267,134 +450,336 @@ function mapFloorPlans(values: any): Array<{ label: string; pictureUrl: string }
   return floorPlans.length ? floorPlans : undefined;
 }
 
+function mapTalks(
+  allocations: any[],
+  sessionById: Map<string, any>,
+  personById: Map<string, any>,
+  timelineSlots: Map<string, TimelineSlot>,
+  timezone: string,
+  conference: any
+): any[] {
+  if (!Array.isArray(allocations)) {
+    return [];
+  }
+
+  const talks = allocations
+    .map((allocation) => {
+      const dayId = cleanString(allocation?.dayId);
+      const slotId = cleanString(allocation?.slotId);
+      const roomId = cleanString(allocation?.roomId);
+      const sessionId = cleanString(allocation?.sessionId);
+      if (!dayId || !slotId || !roomId || !sessionId) {
+        return null;
+      }
+
+      const slot = timelineSlots.get(toTimelineKey(dayId, slotId, roomId));
+      const session = sessionById.get(sessionId);
+      if (!slot || !session) {
+        return null;
+      }
+
+      return {
+        speakers: mapTalkSpeakers(session, personById),
+        id: sessionId,
+        title: cleanString(session?.title) ?? '',
+        isOverflow: slot.overflowRoomIds.includes(roomId),
+        start: buildZonedDateTime(slot.localDate, slot.startTime, timezone),
+        end: buildZonedDateTime(slot.localDate, slot.endTime, timezone),
+        summary: cleanString(session?.abstract) ?? '',
+        tags: [],
+        assets: [],
+        trackId: cleanString(session?.conference?.trackId) ?? '',
+        roomId,
+        formatId: cleanString(session?.conference?.sessionTypeId) ?? cleanString(slot.sessionTypeId) ?? '',
+        langId: normalizeTalkLanguageId(session, conference),
+      };
+    })
+    .filter((talk): talk is any => !!talk)
+    .sort((a, b) => {
+      const byStart = a.start.localeCompare(b.start);
+      if (byStart !== 0) {
+        return byStart;
+      }
+      return a.id.localeCompare(b.id);
+    });
+
+  return talks;
+}
+
+function mapBreaks(
+  timelineSlots: Map<string, TimelineSlot>,
+  slotTypeById: Map<string, any>,
+  timezone: string,
+  conferenceLanguages: any
+): any[] {
+  const breaks: any[] = [];
+  for (const slot of timelineSlots.values()) {
+    const slotType = slotTypeById.get(slot.slotTypeId);
+    const isSession = toOptionalBoolean(slotType?.isSession) ?? !!cleanString(slot.sessionTypeId);
+    if (isSession) {
+      continue;
+    }
+
+    breaks.push({
+      icon: mapBreakIcon(slotType),
+      title: pickLocalizedText(slotType?.name, conferenceLanguages) ?? cleanString(slot.slotTypeId) ?? 'Break',
+      roomId: slot.roomId,
+      start: buildZonedDateTime(slot.localDate, slot.startTime, timezone),
+      end: buildZonedDateTime(slot.localDate, slot.endTime, timezone),
+    });
+  }
+
+  breaks.sort((a, b) => {
+    const byStart = a.start.localeCompare(b.start);
+    if (byStart !== 0) {
+      return byStart;
+    }
+    return a.roomId.localeCompare(b.roomId);
+  });
+
+  return breaks;
+}
+
+function mapBreakIcon(slotType: any): 'ticket' | 'restaurant' | 'cafe' | 'beer' | 'movie' | 'wallet' {
+  const raw = [
+    cleanString(slotType?.id)?.toLowerCase(),
+    cleanString(slotType?.icon)?.toLowerCase(),
+    cleanString(slotType?.name?.EN)?.toLowerCase(),
+    cleanString(slotType?.name?.FR)?.toLowerCase(),
+  ].filter((entry): entry is string => !!entry).join(' ');
+
+  if (raw.includes('lunch') || raw.includes('dejeuner') || raw.includes('restaurant') || raw.includes('utensils')) {
+    return 'restaurant';
+  }
+  if (raw.includes('beer') || raw.includes('drink')) {
+    return 'beer';
+  }
+  if (raw.includes('movie') || raw.includes('video')) {
+    return 'movie';
+  }
+  if (raw.includes('wallet') || raw.includes('sponsor')) {
+    return 'wallet';
+  }
+  if (raw.includes('ticket') || raw.includes('welcome') || raw.includes('home')) {
+    return 'ticket';
+  }
+  return 'cafe';
+}
+
 function mapSponsors(sponsoring: any): any[] | undefined {
   const sponsors = Array.isArray(sponsoring?.sponsors) ? sponsoring.sponsors : [];
   if (!sponsors.length) {
     return undefined;
   }
 
-  const grouped = new Map<string, any[]>();
+  const grouped = new Map<string, {
+    type: string;
+    typeColor: string;
+    typeFontColor?: string;
+    sponsorships: Array<{ name: string; logoUrl: string; href: string }>;
+  }>();
 
   for (const sponsor of sponsors) {
     const typeName = cleanString(sponsor?.type?.name) ?? 'Sponsors';
-    const sponsorship = compactObject({
-      name: cleanString(sponsor?.name),
-      logoUrl: cleanString(sponsor?.logo),
-      href: cleanString(sponsor?.website),
-    });
-
-    if (!sponsorship) {
-      continue;
-    }
+    const typeColor = normalizeHexColor(sponsor?.type?.color) ?? '#D1D5DB';
+    const typeFontColor = normalizeHexColor(sponsor?.type?.fontColor);
+    const sponsorship = {
+      name: cleanString(sponsor?.name) ?? '',
+      logoUrl: cleanString(sponsor?.logo) ?? '',
+      href: cleanString(sponsor?.website) ?? '',
+    };
 
     if (!grouped.has(typeName)) {
-      grouped.set(typeName, []);
+      grouped.set(typeName, {
+        type: typeName,
+        typeColor,
+        typeFontColor,
+        sponsorships: [],
+      });
     }
-    grouped.get(typeName)?.push(sponsorship);
+    grouped.get(typeName)?.sponsorships.push(sponsorship);
   }
 
-  const result = Array.from(grouped.entries())
-    .map(([type, sponsorships]) => compactObject({ type, sponsorships }))
-    .filter((entry): entry is any => !!entry);
+  const result = Array.from(grouped.values()).map((group) => {
+    const mapped: any = {
+      type: group.type,
+      typeColor: group.typeColor,
+      sponsorships: group.sponsorships,
+    };
+    if (group.typeFontColor) {
+      mapped.typeFontColor = group.typeFontColor;
+    }
+    return mapped;
+  });
 
   return result.length ? result : undefined;
 }
 
-function mapFeatures(features: any): any {
-  if (!features || typeof features !== 'object') {
-    return undefined;
+function mapTalkSpeakers(session: any, personById: Map<string, any>): any[] {
+  return extractSpeakerIds(session).map((speakerId) => {
+    const person = personById.get(speakerId);
+    const firstName = cleanString(person?.firstName);
+    const lastName = cleanString(person?.lastName);
+    const fullName = [firstName, lastName].filter((entry): entry is string => !!entry).join(' ').trim() || speakerId;
+
+    return {
+      photoUrl: cleanString(person?.speaker?.photoUrl) ?? null,
+      companyName: cleanString(person?.speaker?.company) ?? null,
+      fullName,
+      id: speakerId,
+      bio: cleanString(person?.speaker?.bio) ?? null,
+      social: mapSpeakerSocial(person?.speaker?.socialLinks),
+    };
+  });
+}
+
+function mapSpeakerSocial(values: any): Array<{ type: string; url: string }> {
+  if (!Array.isArray(values)) {
+    return [];
   }
 
-  return compactObject({
-    favoritesEnabled: toOptionalBoolean(features?.favoritesEnabled),
-    roomsDisplayed: toOptionalBoolean(features?.roomsDisplayed),
-    remindMeOnceVideosAreAvailableEnabled: toOptionalBoolean(features?.remindMeOnceVideosAreAvailableEnabled),
-    showInfosTab: toOptionalBoolean(features?.showInfosTab),
-    hideLanguages: normalizeStringArray(features?.hideLanguages),
-    showRoomCapacityIndicator: toOptionalBoolean(features?.showRoomCapacityIndicator),
-    ratings: compactObject({
-      scale: compactObject({
-        enabled: toOptionalBoolean(features?.ratings?.scale?.enabled),
-        icon: cleanString(features?.ratings?.scale?.icon),
-        labels: normalizeStringArray(features?.ratings?.scale?.labels),
-      }),
-      bingo: compactObject({
-        enabled: toOptionalBoolean(features?.ratings?.bingo?.enabled),
-        isPublic: toOptionalBoolean(features?.ratings?.bingo?.isPublic),
-        choices: mapLabelChoices(features?.ratings?.bingo?.choices),
-      }),
-      'free-text': compactObject({
-        enabled: toOptionalBoolean(features?.ratings?.['free-text']?.enabled),
-        maxLength: toOptionalNumber(features?.ratings?.['free-text']?.maxLength),
-      }),
-    }),
-    topRatedTalks: compactObject({
-      minimumNumberOfRatingsToBeConsidered: toOptionalNumber(features?.topRatedTalks?.minimumNumberOfRatingsToBeConsidered),
-      minimumAverageScoreToBeConsidered: toOptionalNumber(features?.topRatedTalks?.minimumAverageScoreToBeConsidered),
-      numberOfDailyTopTalksConsidered: toOptionalNumber(features?.topRatedTalks?.numberOfDailyTopTalksConsidered),
-    }),
-    recording: compactObject({
-      platform: cleanString(features?.recording?.platform),
-      youtubeHandle: cleanString(features?.recording?.youtubeHandle),
+  return values
+    .map((entry) => {
+      const type = normalizeSocialType(entry?.network);
+      const url = cleanString(entry?.url);
+      if (!type || !url) {
+        return null;
+      }
+      return { type, url };
+    })
+    .filter((entry): entry is { type: string; url: string } => !!entry);
+}
+
+function extractSpeakerIds(session: any): string[] {
+  const speakerIds = [
+    cleanString(session?.speaker1Id),
+    cleanString(session?.speaker2Id),
+    cleanString(session?.speaker3Id),
+  ].filter((speakerId): speakerId is string => !!speakerId);
+  return Array.from(new Set(speakerIds));
+}
+
+function normalizeTalkLanguageId(session: any, conference: any): string {
+  const sessionLang = cleanString(Array.isArray(session?.conference?.langs) ? session.conference.langs[0] : undefined);
+  if (sessionLang) {
+    return sessionLang.toLowerCase();
+  }
+  const confLang = cleanString(Array.isArray(conference?.languages) ? conference.languages[0] : undefined);
+  return (confLang ?? 'en').toLowerCase();
+}
+
+function buildZonedDateTime(localDate: string, time: string, timezone: string): string {
+  const normalizedDate = toLocalDate(localDate) ?? '1970-01-01';
+  const normalizedTime = normalizeIsoTime(time) ?? '00:00';
+  const offset = offsetForTimeZone(normalizedDate, normalizedTime, timezone);
+  return `${normalizedDate}T${normalizedTime}:00${offset}`;
+}
+
+function offsetForTimeZone(localDate: string, time: string, timezone: string): string {
+  try {
+    const probe = new Date(`${localDate}T${time}:00Z`);
+    if (Number.isNaN(probe.getTime())) {
+      return 'Z';
+    }
+
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'longOffset',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).formatToParts(probe);
+    const tzName = parts.find((part) => part.type === 'timeZoneName')?.value ?? '';
+    const match = tzName.match(/GMT([+-]\d{2}:\d{2})/);
+    return match?.[1] ?? 'Z';
+  } catch {
+    return 'Z';
+  }
+}
+
+function mapFeatures(features: any): any {
+  const ratingScaleIcon = cleanString(features?.ratings?.scale?.icon);
+  const ratingScaleNormalized = ratingScaleIcon === 'thumbs-up' ? 'thumbs-up' : 'star';
+
+  const result: any = {
+    favoritesEnabled: toOptionalBoolean(features?.favoritesEnabled) ?? true,
+    roomsDisplayed: toOptionalBoolean(features?.roomsDisplayed) ?? true,
+    remindMeOnceVideosAreAvailableEnabled: toOptionalBoolean(features?.remindMeOnceVideosAreAvailableEnabled) ?? false,
+    showInfosTab: toOptionalBoolean(features?.showInfosTab) ?? true,
+    hideLanguages: normalizeStringArray(features?.hideLanguages) ?? [],
+    showRoomCapacityIndicator: toOptionalBoolean(features?.showRoomCapacityIndicator) ?? false,
+    ratings: {
+      scale: {
+        enabled: toOptionalBoolean(features?.ratings?.scale?.enabled) ?? true,
+        icon: ratingScaleNormalized,
+        labels: normalizeStringArray(features?.ratings?.scale?.labels) ?? [],
+      },
+      bingo: {
+        enabled: toOptionalBoolean(features?.ratings?.bingo?.enabled) ?? false,
+        choices: mapLabelChoices(features?.ratings?.bingo?.choices) ?? [],
+      },
+      'free-text': {
+        enabled: toOptionalBoolean(features?.ratings?.['free-text']?.enabled) ?? false,
+        maxLength: toOptionalNumber(features?.ratings?.['free-text']?.maxLength) ?? -1,
+      },
+      'custom-scale': {
+        enabled: false,
+        choices: [],
+      },
+    },
+  };
+
+  const minRatings = toOptionalNumber(features?.topRatedTalks?.minimumNumberOfRatingsToBeConsidered);
+  const dailyTop = toOptionalNumber(features?.topRatedTalks?.numberOfDailyTopTalksConsidered);
+  const minAverage = toOptionalNumber(features?.topRatedTalks?.minimumAverageScoreToBeConsidered);
+  if (minRatings !== undefined && dailyTop !== undefined) {
+    result.topRatedTalks = {
+      minimumNumberOfRatingsToBeConsidered: minRatings,
+      minimumAverageScoreToBeConsidered: minAverage,
+      numberOfDailyTopTalksConsidered: dailyTop,
+    };
+  }
+
+  const platform = cleanString(features?.recording?.platform);
+  const youtubeHandle = cleanString(features?.recording?.youtubeHandle);
+  if (platform === 'youtube' && youtubeHandle) {
+    result.recording = {
+      platform: 'youtube',
+      youtubeHandle,
       ignoreVideosPublishedAfter: toLocalDate(features?.recording?.ignoreVideosPublishedAfter),
-      recordedFormatIds: normalizeStringArray(features?.recording?.recordedFormatIds),
-      notRecordedFormatIds: normalizeStringArray(features?.recording?.notRecordedFormatIds),
-      recordedRoomIds: normalizeStringArray(features?.recording?.recordedRoomIds),
-      notRecordedRoomIds: normalizeStringArray(features?.recording?.notRecordedRoomIds),
-      excludeTitleWordsFromMatching: normalizeStringArray(features?.recording?.excludeTitleWordsFromMatching),
-    }),
-  });
+      recordedFormatIds: normalizeStringArray(features?.recording?.recordedFormatIds) ?? [],
+      notRecordedFormatIds: normalizeStringArray(features?.recording?.notRecordedFormatIds) ?? [],
+      recordedRoomIds: normalizeStringArray(features?.recording?.recordedRoomIds) ?? [],
+      notRecordedRoomIds: normalizeStringArray(features?.recording?.notRecordedRoomIds) ?? [],
+      excludeTitleWordsFromMatching: normalizeStringArray(features?.recording?.excludeTitleWordsFromMatching) ?? [],
+    };
+  }
+
+  return result;
 }
 
 function mapFormattings(formattings: any): any {
-  if (!formattings || typeof formattings !== 'object') {
-    return undefined;
-  }
-
-  return compactObject({
-    talkFormatTitle: cleanString(formattings?.talkFormatTitle),
-    parseMarkdownOn: normalizeStringArray(formattings?.parseMarkdownOn),
-  });
+  const mode = cleanString(formattings?.talkFormatTitle);
+  return {
+    talkFormatTitle: mode === 'without-duration' ? 'without-duration' : 'with-duration',
+    parseMarkdownOn: (normalizeStringArray(formattings?.parseMarkdownOn) ?? [])
+      .filter((entry) => entry === 'speaker-bio' || entry === 'talk-summary'),
+  };
 }
 
 function mapTheming(theming: any): any {
-  if (!theming || typeof theming !== 'object') {
-    return undefined;
-  }
-
-  return compactObject({
-    colors: compactObject({
-      primaryHex: normalizeHexColor(theming?.colors?.primaryHex),
-      primaryContrastHex: normalizeHexColor(theming?.colors?.primaryContrastHex),
-      secondaryHex: normalizeHexColor(theming?.colors?.secondaryHex),
-      secondaryContrastHex: normalizeHexColor(theming?.colors?.secondaryContrastHex),
-      tertiaryHex: normalizeHexColor(theming?.colors?.tertiaryHex),
-      tertiaryContrastHex: normalizeHexColor(theming?.colors?.tertiaryContrastHex),
-      light: compactObject({
-        primaryHex: normalizeHexColor(theming?.colors?.light?.primaryHex),
-        primaryContrastHex: normalizeHexColor(theming?.colors?.light?.primaryContrastHex),
-        secondaryHex: normalizeHexColor(theming?.colors?.light?.secondaryHex),
-        secondaryContrastHex: normalizeHexColor(theming?.colors?.light?.secondaryContrastHex),
-        tertiaryHex: normalizeHexColor(theming?.colors?.light?.tertiaryHex),
-        tertiaryContrastHex: normalizeHexColor(theming?.colors?.light?.tertiaryContrastHex),
-      }),
-      dark: compactObject({
-        primaryHex: normalizeHexColor(theming?.colors?.dark?.primaryHex),
-        primaryContrastHex: normalizeHexColor(theming?.colors?.dark?.primaryContrastHex),
-        secondaryHex: normalizeHexColor(theming?.colors?.dark?.secondaryHex),
-        secondaryContrastHex: normalizeHexColor(theming?.colors?.dark?.secondaryContrastHex),
-        tertiaryHex: normalizeHexColor(theming?.colors?.dark?.tertiaryHex),
-        tertiaryContrastHex: normalizeHexColor(theming?.colors?.dark?.tertiaryContrastHex),
-      }),
-    }),
-    headingSrcSet: mapHeadingSrcSet(theming?.headingSrcSet),
-    headingCustomStyles: compactObject({
-      title: cleanString(theming?.headingCustomStyles?.title),
-      subTitle: cleanString(theming?.headingCustomStyles?.subTitle),
-      banner: cleanString(theming?.headingCustomStyles?.banner),
-    }),
-    customImportedFonts: mapImportedFonts(theming?.customImportedFonts),
-  });
+  return {
+    colors: {
+      primaryHex: normalizeHexColor(theming?.colors?.primaryHex) ?? PASTEL_PALETTE[0],
+      primaryContrastHex: normalizeHexColor(theming?.colors?.primaryContrastHex) ?? '#1F2937',
+      secondaryHex: normalizeHexColor(theming?.colors?.secondaryHex) ?? PASTEL_PALETTE[1],
+      secondaryContrastHex: normalizeHexColor(theming?.colors?.secondaryContrastHex) ?? '#1F2937',
+      tertiaryHex: normalizeHexColor(theming?.colors?.tertiaryHex) ?? PASTEL_PALETTE[2],
+      tertiaryContrastHex: normalizeHexColor(theming?.colors?.tertiaryContrastHex) ?? '#1F2937',
+    },
+    headingSrcSet: mapHeadingSrcSet(theming?.headingSrcSet) ?? null,
+    headingCustomStyles: mapHeadingCustomStyles(theming?.headingCustomStyles),
+    customImportedFonts: mapImportedFonts(theming?.customImportedFonts) ?? null,
+  };
 }
 
 function mapHeadingSrcSet(values: any): Array<{ url: string; descriptor: string }> | undefined {
@@ -406,7 +791,7 @@ function mapHeadingSrcSet(values: any): Array<{ url: string; descriptor: string 
     .map((entry) => {
       const url = cleanString(entry?.url);
       const descriptor = cleanString(entry?.descriptor);
-      if (!url || !descriptor) {
+      if (!url || !descriptor || !/^\d(?:w|x)$/.test(descriptor)) {
         return null;
       }
       return { url, descriptor };
@@ -414,6 +799,17 @@ function mapHeadingSrcSet(values: any): Array<{ url: string; descriptor: string 
     .filter((entry): entry is { url: string; descriptor: string } => !!entry);
 
   return srcSet.length ? srcSet : undefined;
+}
+
+function mapHeadingCustomStyles(value: any): { title: string | null; subTitle: string | null; banner: string | null } | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  return {
+    title: cleanString(value?.title) ?? null,
+    subTitle: cleanString(value?.subTitle) ?? null,
+    banner: cleanString(value?.banner) ?? null,
+  };
 }
 
 function mapImportedFonts(values: any): Array<{ provider: string; family: string }> | undefined {
@@ -425,7 +821,7 @@ function mapImportedFonts(values: any): Array<{ provider: string; family: string
     .map((entry) => {
       const provider = cleanString(entry?.provider);
       const family = cleanString(entry?.family);
-      if (!provider || !family) {
+      if (provider !== 'google-fonts' || !family) {
         return null;
       }
       return { provider, family };
@@ -454,13 +850,13 @@ function mapLabelChoices(values: any): Array<{ id: string; label: string }> | un
   return choices.length ? choices : undefined;
 }
 
-function mapSupportedTalkLanguages(values: any[]): Array<{ id: string; label: string }> | undefined {
+function mapSupportedTalkLanguages(values: any[]): Array<{ id: string; label: string; themeColor: string }> {
   if (!Array.isArray(values)) {
-    return undefined;
+    return [];
   }
 
   const languages = values
-    .map((language) => {
+    .map((language, index) => {
       const raw = cleanString(language);
       if (!raw) {
         return null;
@@ -469,16 +865,17 @@ function mapSupportedTalkLanguages(values: any[]): Array<{ id: string; label: st
       return {
         id: raw.toLowerCase(),
         label: raw.toUpperCase(),
+        themeColor: String(PASTEL_PALETTE[index % PASTEL_PALETTE.length]),
       };
     })
-    .filter((language): language is { id: string; label: string } => !!language);
+    .filter((language) => !!language) as Array<{ id: string; label: string; themeColor: string }>;
 
-  return languages.length ? languages : undefined;
+  return languages;
 }
 
-function mapRooms(values: any[]): Array<{ id: string; title: string }> | undefined {
+function mapRooms(values: any[]): Array<{ id: string; title: string }> {
   if (!Array.isArray(values)) {
-    return undefined;
+    return [];
   }
 
   const rooms = values
@@ -493,60 +890,58 @@ function mapRooms(values: any[]): Array<{ id: string; title: string }> | undefin
     })
     .filter((room): room is { id: string; title: string } => !!room);
 
-  return rooms.length ? rooms : undefined;
+  return rooms;
 }
 
-function mapTracks(values: any[]): Array<{ id: string; title: string; themeColor?: string }> | undefined {
+function mapTracks(values: any[]): Array<{ id: string; title: string; themeColor: string }> {
   if (!Array.isArray(values)) {
-    return undefined;
+    return [];
   }
 
-  const tracks: Array<{ id: string; title: string; themeColor?: string }> = [];
-  for (const track of values) {
+  const tracks: Array<{ id: string; title: string; themeColor: string }> = [];
+  for (let index = 0; index < values.length; index += 1) {
+    const track = values[index];
     const id = cleanString(track?.id);
     const title = cleanString(track?.name);
     if (!id || !title) {
       continue;
     }
 
-    const mapped = compactObject({
+    const mapped = {
       id,
       title,
-      themeColor: normalizeHexColor(track?.color),
-    });
-    if (mapped) {
-      tracks.push(mapped as { id: string; title: string; themeColor?: string });
-    }
+      themeColor: normalizeHexColor(track?.color) ?? PASTEL_PALETTE[index % PASTEL_PALETTE.length],
+    };
+    tracks.push(mapped);
   }
 
-  return tracks.length ? tracks : undefined;
+  return tracks;
 }
 
-function mapTalkFormats(values: any[]): Array<{ id: string; title: string; duration?: string; themeColor?: string }> | undefined {
+function mapTalkFormats(values: any[]): Array<{ id: string; title: string; duration: string; themeColor: string }> {
   if (!Array.isArray(values)) {
-    return undefined;
+    return [];
   }
 
-  const formats: Array<{ id: string; title: string; duration?: string; themeColor?: string }> = [];
-  for (const format of values) {
+  const formats: Array<{ id: string; title: string; duration: string; themeColor: string }> = [];
+  for (let index = 0; index < values.length; index += 1) {
+    const format = values[index];
     const id = cleanString(format?.id);
     const title = cleanString(format?.name);
     if (!id || !title) {
       continue;
     }
 
-    const mapped = compactObject({
+    const mapped = {
       id,
       title,
-      duration: toIsoDurationMinutes(format?.duration),
-      themeColor: normalizeHexColor(format?.color),
-    });
-    if (mapped) {
-      formats.push(mapped as { id: string; title: string; duration?: string; themeColor?: string });
-    }
+      duration: toIsoDurationMinutes(format?.duration) ?? 'PT30m',
+      themeColor: normalizeHexColor(format?.color) ?? PASTEL_PALETTE[index % PASTEL_PALETTE.length],
+    };
+    formats.push(mapped);
   }
 
-  return formats.length ? formats : undefined;
+  return formats;
 }
 
 function toIsoDurationMinutes(value: any): string | undefined {
@@ -554,7 +949,7 @@ function toIsoDurationMinutes(value: any): string | undefined {
   if (duration === undefined || duration <= 0) {
     return undefined;
   }
-  return `PT${Math.round(duration)}M`;
+  return `PT${Math.round(duration)}m`;
 }
 
 function normalizeStringArray(value: any): string[] | undefined {
@@ -576,7 +971,7 @@ function normalizeHexColor(value: any): string | undefined {
   }
 
   const raw = text.startsWith('#') ? text.slice(1) : text;
-  if (/^[0-9a-fA-F]{6}$/.test(raw)) {
+  if (/^[0-9a-fA-F]{3}$/.test(raw) || /^[0-9a-fA-F]{6}$/.test(raw)) {
     return `#${raw.toUpperCase()}`;
   }
 
@@ -602,28 +997,4 @@ function toOptionalBoolean(value: any): boolean | undefined {
     return value;
   }
   return undefined;
-}
-
-function compactObject<T extends object>(value: T): T | undefined {
-  const entries = Object.entries(value).filter(([, entry]) => {
-    if (entry === null || entry === undefined) {
-      return false;
-    }
-    if (typeof entry === 'string') {
-      return entry.trim().length > 0;
-    }
-    if (Array.isArray(entry)) {
-      return entry.length > 0;
-    }
-    if (typeof entry === 'object') {
-      return Object.keys(entry).length > 0;
-    }
-    return true;
-  });
-
-  if (!entries.length) {
-    return undefined;
-  }
-
-  return Object.fromEntries(entries) as T;
 }
