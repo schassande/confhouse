@@ -55,6 +55,13 @@ export interface RefreshConferenceDashboardReport {
   };
 }
 
+export interface GenerateVoxxrinDescriptorReport {
+  message: string;
+  filePath: string;
+  downloadUrl: string;
+  archivedPreviousFilePath: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConferenceAdminService {
   private readonly http = inject(HttpClient);
@@ -95,59 +102,31 @@ export class ConferenceAdminService {
   async downloadVoxxrinEventDescriptor(conferenceId: string): Promise<void> {
     const idToken = await this.getIdTokenOrThrow();
     const response = await firstValueFrom(
-      this.http.post(
+      this.http.post<GenerateVoxxrinDescriptorReport>(
         `${functionBaseUrl}generateVoxxrinEventDescriptor`,
         { conferenceId },
         {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
-          observe: 'response',
-          responseType: 'blob',
         }
       )
     );
 
-    const blob = response.body;
-    if (!blob) {
-      throw new Error('Empty Voxxrin descriptor response');
+    const downloadUrl = String(response?.downloadUrl ?? '').trim();
+    if (!downloadUrl) {
+      throw new Error('Missing download URL in Voxxrin descriptor response');
     }
 
-    const filename = this.extractFilenameFromContentDisposition(
-      response.headers.get('content-disposition')
-    ) ?? `voxxrin-${conferenceId}.json`;
-
-    const url = URL.createObjectURL(blob);
-    try {
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = filename;
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  private extractFilenameFromContentDisposition(contentDisposition: string | null): string | undefined {
-    const value = String(contentDisposition ?? '').trim();
-    if (!value) {
-      return undefined;
-    }
-
-    const utf8Match = value.match(/filename\*=UTF-8''([^;]+)/i);
-    if (utf8Match?.[1]) {
-      return decodeURIComponent(utf8Match[1]).trim();
-    }
-
-    const classicMatch = value.match(/filename=\"?([^\";]+)\"?/i);
-    if (classicMatch?.[1]) {
-      return classicMatch[1].trim();
-    }
-
-    return undefined;
+    const anchor = document.createElement('a');
+    anchor.href = downloadUrl;
+    anchor.download = 'voxxrin-full.json';
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   }
 
   private async getIdTokenOrThrow(): Promise<string> {

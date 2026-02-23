@@ -51,6 +51,9 @@ const ALLOWED_SOCIAL_TYPES = new Set([
   'bluesky',
 ]);
 
+const VOXXRIN_PUBLIC_FOLDER = 'public';
+const VOXXRIN_FILENAME = 'voxxrin-full.json';
+
 export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSeconds: 60 }, async (req, res) => {
   try {
     applyCorsHeaders(req, res);
@@ -85,17 +88,24 @@ export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSec
     const programData = await loadProgramData(db, conferenceId);
     const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData);
     const payload = JSON.stringify(descriptor, null, 2);
+    const storageResult = await saveVoxxrinDescriptorToStorage(conferenceId, payload);
 
     logger.info('generateVoxxrinEventDescriptor completed', {
       conferenceId,
       requesterEmail,
       hasDescriptor: !!descriptor,
       payloadSize: payload.length,
+      storagePath: storageResult.objectPath,
+      archivedPreviousFilePath: storageResult.archivedFilePath ?? null,
     });
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="voxxrin-${conferenceId}.json"`);
-    res.status(200).send(payload);
+    res.status(200).send({
+      message: 'Voxxrin descriptor stored',
+      filePath: storageResult.objectPath,
+      downloadUrl: storageResult.publicDownloadUrl,
+      archivedPreviousFilePath: storageResult.archivedFilePath ?? null,
+    });
   } catch (err: unknown) {
     if (err instanceof HttpError) {
       logger.warn(err.logMessage, err.meta);
@@ -112,6 +122,68 @@ export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSec
     });
   }
 });
+
+async function saveVoxxrinDescriptorToStorage(conferenceId: string, payload: string): Promise<{
+  objectPath: string;
+  publicDownloadUrl: string;
+  archivedFilePath?: string;
+}> {
+  const conferenceFolder = `${VOXXRIN_PUBLIC_FOLDER}/${sanitizeStoragePathSegment(conferenceId)}`;
+  const targetPath = `${conferenceFolder}/${VOXXRIN_FILENAME}`;
+  const bucket = admin.storage().bucket();
+  const targetFile = bucket.file(targetPath);
+
+  let archivedFilePath: string | undefined;
+  const [alreadyExists] = await targetFile.exists();
+  if (alreadyExists) {
+    const archivePath = `${conferenceFolder}/voxxrin-full-${buildArchiveSuffix()}.json`;
+    await targetFile.move(archivePath);
+    archivedFilePath = archivePath;
+  }
+
+  await targetFile.save(payload, {
+    resumable: false,
+    contentType: 'application/json; charset=utf-8',
+    metadata: {
+      cacheControl: 'public, max-age=60',
+    },
+  });
+
+  return {
+    objectPath: targetPath,
+    publicDownloadUrl: buildPublicDownloadUrl(bucket.name, targetPath),
+    archivedFilePath,
+  };
+}
+
+function sanitizeStoragePathSegment(value: string): string {
+  const normalized = String(value ?? '')
+    .trim()
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/[\\/]+/g, '-');
+  if (!normalized) {
+    throw new HttpError(
+      400,
+      'Invalid conferenceId',
+      'generateVoxxrinEventDescriptor rejected: invalid conferenceId for storage path'
+    );
+  }
+  return normalized;
+}
+
+function buildArchiveSuffix(now: Date = new Date()): string {
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(now.getUTCDate()).padStart(2, '0');
+  const hh = String(now.getUTCHours()).padStart(2, '0');
+  const mm = String(now.getUTCMinutes()).padStart(2, '0');
+  const ss = String(now.getUTCSeconds()).padStart(2, '0');
+  return `${y}${m}${d}-${hh}${mm}${ss}Z`;
+}
+
+function buildPublicDownloadUrl(bucketName: string, objectPath: string): string {
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(objectPath)}?alt=media`;
+}
 
 function applyCorsHeaders(req: any, res: any): void {
   const origin = String(req?.headers?.origin ?? '*');

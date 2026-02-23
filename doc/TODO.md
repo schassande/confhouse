@@ -1,11 +1,20 @@
 # TODO List
 
 ## Priority 1
+- bug in statistics
+- Voxxrin publication: 
+  - Waiting for Voxxrin details to get an env to use a single crawler with an online config file (Firebase Storage). File is already produced.
 - Conference duplication.
-- Voxxrin publication: produce a dedicated config file.
-  - Waiting for Voxxrin details to integrate: single crawler with an online config file (Firebase Storage).
 - Cancel speaker.
 - Speaker edit: when changing a speaker's unavailability, deallocate sessions from slots where the speaker is unavailable.
+- talk statistics
+  - Download from Voxxrin: Public events: GET {{baseUrl}}/api/events/{{eventId}}/talksStats?token={{secretToken}}
+  - show statistics result in session-allocation
+- Show ratings for speaker:
+  - GET {{baseUrl}}/api/events/{{eventId}}/dailyRatings/stats?token={{secretToken}}
+  - GET {{baseUrl}}/api/events/{{eventId}}/talks/{{talkId}}/feedbacks?token={{secretToken}}&updatedSince={{updatedSinceISODatetime}}
+  - GET {{baseUrl}}/api/events/{{eventId}}/talksEditors?token={{secretToken}}&baseUrl={{voxxrinInstanceBaseUrl}}
+
 
 ## Priority 2
 - Rename the Git repository / find a better name.
