@@ -198,114 +198,177 @@ export interface VoxxrinRecordingConfig {
 }
 /*
 {
-  "eventFamily": "devoxx",
-  "title": "Devoxx Belgium 2023",
-  "headingTitle": "Devoxx Belgium 2023",
-  "description": null,
-  "timezone": "Europe/Brussels",
-  "peopleDescription": null,
-  "websiteUrl": "https://devoxx.be",
-  "location": {
-    "country": "Belgium",
-    "city": "Antwerp"
-  },
-  "keywords": [ "Devoxx", "Java", "AI", "Cloud", "Big data", "Web", "Spring Boot", "Microservices", "Kubernetes", "Docker", "Serverless", "Architecture", "Security", "Performance", "Reactive", "Functional" ],
-  "start": "2023-10-02",
-  "end": "2023-10-06",
+  "title": "Séminaire 4SH 2024",
+  "headingTitle": "Séminaire 24",
+  "headingSubTitle": null,
+  "headingBackground": null,
+  "description": "Une journée de partage",
   "days": [
-    { "id": "monday", "localDate": "2023-10-02" },
-    { "id": "tuesday", "localDate": "2023-10-03" },
-    { "id": "wednesday", "localDate": "2023-10-04" },
-    { "id": "thursday", "localDate": "2023-10-05" },
-    { "id": "friday", "localDate": "2023-10-06" }
-  ],
-  "infos": {
-    "eventDescription": "Kinepolis Antwerp",
-    "venuePicture": "https://devoxx.be/wp-content/uploads/2023/08/kinepolis.jpeg",
-    "address": "Groenendaallaan 394, 2030 Antwerpen",
-    "floorPlans": [
-      { "label": "Cinema Rooms", "pictureUrl": "https://s3-eu-west-1.amazonaws.com/voxxeddays/webapp/images/95c4e19e-858d-4f18-a980-1df451a089d0.jpg" },
-    ]
-  },
-  "socialMedias": [
-    {"type": "website", "href": "https://devoxx.be/"},
-    {"type": "github", "href": "https://github.com/devoxx"}
-  ],
-  "sponsors": [
     {
-      "type": "Platinium", "typeColor": "#E5E4E2", "typeFontColor": "black",
-      "sponsorships": [
-        {"name": "ING", "logoUrl": "https://devoxx.be/wp-content/uploads/2023/05/INGLogo.jpg", "href": "https://www.ing.be/en/retail"},
-      ]
+      "id": "jeudi",
+      "localDate": "2024-06-06"
+    },
+    {
+      "id": "vendredi",
+      "localDate": "2024-06-07"
     }
   ],
+  "timezone": "Europe/Paris",
+  "keywords": [],
+  "location": {
+    "country": "France",
+    "city": "Montréal (32250)",
+    "address": "Domaine de Saint-Orens",
+    "coords": {
+      "latitude": 43.95077142518287,
+      "longitude": 0.21110246870549704
+    }
+  },
+  "peopleDescription": "100+ participants",
+  "backgroundUrl": "https://res.cloudinary.com/du7q1xw75/image/upload/v1716939222/jthj59ixhdmfqgelmf0k.jpg",
+  "logoUrl": "https://res.cloudinary.com/du7q1xw75/image/upload/v1716939369/yt2sh1nbs8php3akuzvl.png",
+  "theming": {
+    "colors": {
+      "primaryHex": "#ED203D",
+      "primaryContrastHex": "#ffffff",
+      "secondaryHex": "#434446",
+      "secondaryContrastHex": "#ffffff",
+      "tertiaryHex": "#7B6AA7",
+      "tertiaryContrastHex": "#ffffff"
+    },
+    "headingCustomStyles": null,
+    "headingSrcSet": null,
+    "customImportedFonts": null
+  },
   "features": {
-    "favoritesEnabled": true,
-    "roomsDisplayed": true,
-    "remindMeOnceVideosAreAvailableEnabled": false,
+    "favoritesEnabled": false,
     "showInfosTab": true,
-    "hideLanguages": [],
-    "showRoomCapacityIndicator:": false,
+    "roomsDisplayed": true,
+    "showRoomCapacityIndicator": false,
+    "remindMeOnceVideosAreAvailableEnabled": false,
     "ratings": {
       "scale": {
         "enabled": true,
         "icon": "star",
         "labels": [
-          "There are rooms for improvement",
-          "Talk was OK",
-          "Good talk",
-          "Great talk",
-          "Amazing talk"
+          "Je me suis endormi",
+          "Passable",
+          "C'était intéressant !",
+          "La meilleure présentation de ma vie 🤩"
         ]
       },
       "bingo": {
         "enabled": true,
-        "isPublic": false,
         "choices": [
-          { "id": "1", "label": "Difficult to understand" }
+          {
+            "id": "too-long",
+            "label": "C'était trop long"
+          },
+          {
+            "id": "interesting",
+            "label": "C'était intéressant"
+          },
+          {
+            "id": "amazing-speakers",
+            "label": "Les orateurs/rices était captivant(e)S"
+          },
+          {
+            "id": "good-moment",
+            "label": "J'ai passé un bon moment"
+          }
         ]
       },
       "free-text": {
         "enabled": false,
-        "maxLength": 400
+        "maxLength": -1
       },
+      "custom-scale": {
+        "enabled": false,
+        "choices": []
+      }
     },
-    "topRatedTalks": {
-      "minimumNumberOfRatingsToBeConsidered": 10,
-      "minimumAverageScoreToBeConsidered": 3,
-      "numberOfDailyTopTalksConsidered": 10
-    },
-    "recording" {
-      "platform": "youtube",
-      "youtubeHandle": "DevoxxForever",
-      "ignoreVideosPublishedAfter": "2023-10-10",
-      "notRecordedFormatIds": ["954", "968", "984"]
-    }
+    "hideLanguages": []
   },
-  "logoUrl": "https://devoxx.be/wp-content/uploads/2019/05/DEVOXX-Name-Only-TransparentBackground.png",
-  "backgroundUrl": "https://devoxx.be/wp-content/uploads/2023/06/time-min.jpg",
-  "theming": {
-    "colors": {
-      "secondaryContrastHex": "#FFFFFF",
-      "tertiaryHex": "#202020",
-      "tertiaryContrastHex": "#FFFFFF",
-      "secondaryHex": "#3880FF",
-      "primaryHex": "#F78125",
-      "primaryContrastHex": "#FFFFFF"
+  "talkFormats": [
+    {
+      "id": "presentation50m",
+      "title": "Présentation",
+      "duration": "PT50m",
+      "themeColor": "#165CE3"
     }
-  },
-  "supportedTalkLanguages": [
-    { "id": "en", "themeColor": "#165CE3", "label": "EN" }
-  ],
-  "rooms": [
-    { "id": "1160", "title": "Room 4" },
-    { "id": "1154", "title": "Room 10"}
   ],
   "talkTracks": [
-    { "id": "1253", "themeColor": "#9F0E3A", "title": "People & Culture" }
+    {
+      "id": "projects",
+      "title": "Projets",
+      "themeColor": "#EA7872"
+    },
+    {
+      "id": "numbers",
+      "title": "Chiffres",
+      "themeColor": "#DA8DE0"
+    }
   ],
-  "talkFormats": [
-    { "id": "956", "title": "Closing keynote", "duration": "PT45m", "themeColor": "#3EDDEF" }
+  "supportedTalkLanguages": [
+    {
+      "id": "fr",
+      "label": "FR",
+      "themeColor": "#165CE3"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room1",
+      "title": "Un nom de room"
+    },
+    {
+      "id": "hall",
+      "title": "Hall"
+    }
+  ],
+  "infos": {
+    "floorPlans": [],
+    "sponsors": [],
+    "socialMedias": []
+  },
+  "formattings": {
+    "talkFormatTitle": "with-duration",
+    "parseMarkdownOn": []
+  },
+  "talks": [
+    {
+      "id": "1",
+      "start": "2024-06-06T09:30:00+02:00",
+      "end": "2024-06-06T10:20:00+02:00",
+      "title": "Présentation des chiffres",
+      "trackId": "numbers",
+      "roomId": "room1",
+      "formatId": "presentation50m",
+      "langId": "fr",
+      "assets": [],
+      "summary": "",
+      "tags": [],
+      "speakers": [
+        {
+          "id": "xhn",
+          "fullName": "Xavier Hanin",
+          "photoUrl": "https://devoxxian-image-thumbnails.s3-eu-west-1.amazonaws.com/profile-be97eaa7-35a7-47cd-a206-1edf035dd483.jpeg",
+          "companyName": "4SH",
+          "bio": "",
+          "social": []
+        }
+      ],
+      "isOverflow": false
+    }
+  ],
+  "breaks": [
+    {
+      "start": "2024-06-06T09:00:00+02:00",
+      "end": "2024-06-06T09:30:00+02:00",
+      "icon": "cafe",
+      "title": "Petit dej'",
+      "roomId": "hall"
+    }
   ]
 }
 */

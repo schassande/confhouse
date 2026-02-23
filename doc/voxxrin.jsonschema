@@ -1,0 +1,1273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "localDate": {
+            "type": "string",
+            "pattern": "\\d{4}-\\d{2}-\\d{2}"
+          }
+        },
+        "required": [
+          "id",
+          "localDate"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "coords": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "latitude",
+            "longitude"
+          ],
+          "additionalProperties": false
+        },
+        "address": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "country",
+        "city"
+      ],
+      "additionalProperties": false
+    },
+    "peopleDescription": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "backgroundUrl": {
+      "type": "string"
+    },
+    "logoUrl": {
+      "type": "string"
+    },
+    "theming": {
+      "type": "object",
+      "properties": {
+        "colors": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "primaryHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                },
+                "primaryContrastHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                },
+                "secondaryHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                },
+                "secondaryContrastHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                },
+                "tertiaryHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                },
+                "tertiaryContrastHex": {
+                  "type": "string",
+                  "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                }
+              },
+              "required": [
+                "primaryHex",
+                "primaryContrastHex",
+                "secondaryHex",
+                "secondaryContrastHex",
+                "tertiaryHex",
+                "tertiaryContrastHex"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "light": {
+                  "type": "object",
+                  "properties": {
+                    "primaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "primaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "secondaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "secondaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "tertiaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "tertiaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    }
+                  },
+                  "required": [
+                    "primaryHex",
+                    "primaryContrastHex",
+                    "secondaryHex",
+                    "secondaryContrastHex",
+                    "tertiaryHex",
+                    "tertiaryContrastHex"
+                  ],
+                  "additionalProperties": false
+                },
+                "dark": {
+                  "type": "object",
+                  "properties": {
+                    "primaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "primaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "secondaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "secondaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "tertiaryHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    },
+                    "tertiaryContrastHex": {
+                      "type": "string",
+                      "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+                    }
+                  },
+                  "required": [
+                    "primaryHex",
+                    "primaryContrastHex",
+                    "secondaryHex",
+                    "secondaryContrastHex",
+                    "tertiaryHex",
+                    "tertiaryContrastHex"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "light",
+                "dark"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "headingCustomStyles": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "subTitle": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "banner": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "subTitle",
+                "banner"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "headingSrcSet": {
+          "default": null,
+          "anyOf": [
+            {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "descriptor": {
+                    "type": "string",
+                    "pattern": "\\d(?:w|x)"
+                  }
+                },
+                "required": [
+                  "url",
+                  "descriptor"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "customImportedFonts": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "const": "google-fonts"
+                  },
+                  "family": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "family"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "colors",
+        "headingCustomStyles",
+        "headingSrcSet",
+        "customImportedFonts"
+      ],
+      "additionalProperties": false
+    },
+    "headingTitle": {
+      "type": "string"
+    },
+    "headingSubTitle": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "headingBackground": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "roomsDisplayed": {
+          "type": "boolean"
+        },
+        "favoritesEnabled": {
+          "type": "boolean"
+        },
+        "remindMeOnceVideosAreAvailableEnabled": {
+          "type": "boolean"
+        },
+        "showInfosTab": {
+          "type": "boolean"
+        },
+        "hideLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "showRoomCapacityIndicator": {
+          "type": "boolean"
+        },
+        "ratings": {
+          "type": "object",
+          "properties": {
+            "bingo": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "choices": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "label"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "choices"
+              ],
+              "additionalProperties": false
+            },
+            "scale": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "icon": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "star"
+                    },
+                    {
+                      "type": "string",
+                      "const": "thumbs-up"
+                    }
+                  ]
+                },
+                "labels": {}
+              },
+              "required": [
+                "enabled",
+                "icon",
+                "labels"
+              ],
+              "additionalProperties": false
+            },
+            "free-text": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxLength": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "enabled",
+                "maxLength"
+              ],
+              "additionalProperties": false
+            },
+            "custom-scale": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "choices": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "happy"
+                          },
+                          {
+                            "type": "string",
+                            "const": "sad"
+                          },
+                          {
+                            "type": "string",
+                            "const": "thumbs-up"
+                          },
+                          {
+                            "type": "string",
+                            "const": "hand-right"
+                          },
+                          {
+                            "type": "string",
+                            "const": "thumbs-down"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "icon"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "choices"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "bingo",
+            "scale",
+            "free-text",
+            "custom-scale"
+          ],
+          "additionalProperties": false
+        },
+        "topRatedTalks": {
+          "type": "object",
+          "properties": {
+            "minimumNumberOfRatingsToBeConsidered": {
+              "type": "number"
+            },
+            "minimumAverageScoreToBeConsidered": {
+              "type": "number"
+            },
+            "numberOfDailyTopTalksConsidered": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "minimumNumberOfRatingsToBeConsidered",
+            "numberOfDailyTopTalksConsidered"
+          ],
+          "additionalProperties": false
+        },
+        "recording": {
+          "type": "object",
+          "properties": {
+            "platform": {
+              "type": "string",
+              "const": "youtube"
+            },
+            "youtubeHandle": {
+              "type": "string"
+            },
+            "recordedFormatIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "notRecordedFormatIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "recordedRoomIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "notRecordedRoomIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ignoreVideosPublishedAfter": {
+              "type": "string",
+              "pattern": "\\d{4}-\\d{2}-\\d{2}"
+            },
+            "excludeTitleWordsFromMatching": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "platform",
+            "youtubeHandle"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "roomsDisplayed",
+        "favoritesEnabled",
+        "remindMeOnceVideosAreAvailableEnabled",
+        "hideLanguages",
+        "ratings"
+      ],
+      "additionalProperties": false
+    },
+    "talkFormats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string",
+            "pattern": "PT\\d+m"
+          },
+          "themeColor": {
+            "type": "string",
+            "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "duration",
+          "themeColor"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "talkTracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "themeColor": {
+            "type": "string",
+            "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "themeColor"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "supportedTalkLanguages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "themeColor": {
+            "type": "string",
+            "pattern": "#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "themeColor"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "infos": {
+      "type": "object",
+      "properties": {
+        "floorPlans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "pictureUrl": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "pictureUrl"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "socialMedias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "website"
+                  },
+                  {
+                    "type": "string",
+                    "const": "twitter"
+                  },
+                  {
+                    "type": "string",
+                    "const": "x"
+                  },
+                  {
+                    "type": "string",
+                    "const": "linkedin"
+                  },
+                  {
+                    "type": "string",
+                    "const": "mastodon"
+                  },
+                  {
+                    "type": "string",
+                    "const": "instagram"
+                  },
+                  {
+                    "type": "string",
+                    "const": "youtube"
+                  },
+                  {
+                    "type": "string",
+                    "const": "twitch"
+                  },
+                  {
+                    "type": "string",
+                    "const": "github"
+                  },
+                  {
+                    "type": "string",
+                    "const": "facebook"
+                  },
+                  {
+                    "type": "string",
+                    "const": "flickr"
+                  },
+                  {
+                    "type": "string",
+                    "const": "bluesky"
+                  }
+                ]
+              },
+              "href": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "href"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sponsors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "typeColor": {
+                "type": "string"
+              },
+              "typeFontColor": {
+                "type": "string"
+              },
+              "sponsorships": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "logoUrl": {
+                      "type": "string"
+                    },
+                    "href": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "logoUrl",
+                    "href"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "type",
+              "typeColor",
+              "sponsorships"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "formattings": {
+      "type": "object",
+      "properties": {
+        "talkFormatTitle": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "with-duration"
+            },
+            {
+              "type": "string",
+              "const": "without-duration"
+            }
+          ]
+        },
+        "parseMarkdownOn": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "speaker-bio"
+              },
+              {
+                "type": "string",
+                "const": "talk-summary"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "talkFormatTitle",
+        "parseMarkdownOn"
+      ],
+      "additionalProperties": false
+    },
+    "talks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "speakers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "photoUrl": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "companyName": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "bio": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "social": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": "website"
+                          },
+                          {
+                            "type": "string",
+                            "const": "twitter"
+                          },
+                          {
+                            "type": "string",
+                            "const": "x"
+                          },
+                          {
+                            "type": "string",
+                            "const": "linkedin"
+                          },
+                          {
+                            "type": "string",
+                            "const": "mastodon"
+                          },
+                          {
+                            "type": "string",
+                            "const": "instagram"
+                          },
+                          {
+                            "type": "string",
+                            "const": "youtube"
+                          },
+                          {
+                            "type": "string",
+                            "const": "twitch"
+                          },
+                          {
+                            "type": "string",
+                            "const": "github"
+                          },
+                          {
+                            "type": "string",
+                            "const": "facebook"
+                          },
+                          {
+                            "type": "string",
+                            "const": "flickr"
+                          },
+                          {
+                            "type": "string",
+                            "const": "bluesky"
+                          }
+                        ]
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "fullName",
+                "id",
+                "social"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isOverflow": {
+            "default": false,
+            "type": "boolean"
+          },
+          "start": {
+            "type": "string",
+            "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "createdOn": {
+                      "type": "string",
+                      "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+                    },
+                    "assetUrl": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "recording"
+                    },
+                    "platform": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "youtube"
+                        },
+                        {
+                          "type": "string",
+                          "const": "unknown"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "createdOn",
+                    "assetUrl",
+                    "type",
+                    "platform"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "createdOn": {
+                      "type": "string",
+                      "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+                    },
+                    "assetUrl": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "slides"
+                    }
+                  },
+                  "required": [
+                    "createdOn",
+                    "assetUrl",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "createdOn": {
+                      "type": "string",
+                      "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+                    },
+                    "assetUrl": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "git-repository"
+                    },
+                    "platform": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "github"
+                        },
+                        {
+                          "type": "string",
+                          "const": "gitlab"
+                        },
+                        {
+                          "type": "string",
+                          "const": "unknown"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "createdOn",
+                    "assetUrl",
+                    "type",
+                    "platform"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "createdOn": {
+                      "type": "string",
+                      "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+                    },
+                    "assetUrl": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "misc"
+                    }
+                  },
+                  "required": [
+                    "createdOn",
+                    "assetUrl",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "trackId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "formatId": {
+            "type": "string"
+          },
+          "langId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "speakers",
+          "id",
+          "title",
+          "isOverflow",
+          "start",
+          "end",
+          "summary",
+          "tags",
+          "assets",
+          "trackId",
+          "roomId",
+          "formatId",
+          "langId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "breaks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "ticket"
+              },
+              {
+                "type": "string",
+                "const": "restaurant"
+              },
+              {
+                "type": "string",
+                "const": "cafe"
+              },
+              {
+                "type": "string",
+                "const": "beer"
+              },
+              {
+                "type": "string",
+                "const": "movie"
+              },
+              {
+                "type": "string",
+                "const": "wallet"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string",
+            "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|(?:[+-]\\d{2}:\\d{2}))"
+          }
+        },
+        "required": [
+          "icon",
+          "title",
+          "roomId",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "title",
+    "days",
+    "timezone",
+    "keywords",
+    "location",
+    "backgroundUrl",
+    "logoUrl",
+    "theming",
+    "headingTitle",
+    "headingSubTitle",
+    "headingBackground",
+    "features",
+    "talkFormats",
+    "talkTracks",
+    "supportedTalkLanguages",
+    "rooms",
+    "formattings",
+    "talks",
+    "breaks"
+  ],
+  "additionalProperties": false
+}

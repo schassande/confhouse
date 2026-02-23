@@ -1,145 +1,94 @@
 # Conference Manager
 
-This project contains:
-- A Firebase backend (Cloud Functions, Firestore, Auth)
-- An Angular frontend (in the `frontend` folder), hosted on Firebase Hosting
+Conference Manager is a web application to run a technical conference end-to-end: configure the event, manage sessions and speakers, plan the schedule, and publish the final program.
 
-## Local development
+## Objective
 
-### Backend (Cloud Functions)
-1. Install dependencies:
-   ```sh
-   cd functions
-   npm install
-   ```
-2. To emulate locally:
-   ```sh
-   firebase emulators:start
-   ```
+The main goal is **conference operations management**:
+- Prepare and configure a conference.
+- Manage the CFP lifecycle and internal program decisions.
+- Build and maintain the conference schedule.
+- Publish conference data to external platforms.
 
-### Frontend (Angular)
-1. Install dependencies:
-   ```sh
-   cd frontend
-   npm install
-   ```
-2. Start the dev server:
-   ```sh
-   ng serve
-   ```
+## External Integrations
 
-## Deployment
+- **Conference Hall**: used for the CFP side (importing proposals/speakers and syncing CFP-related data).
+- **Voxxrin**: used for publication (event descriptor generation and publication-oriented configuration).
 
-1. Build the frontend:
-   ```sh
-   cd frontend
-   ng build --configuration production
-   ```
-2. Deploy to Firebase:
-   ```sh
-   firebase deploy
-   ```
+## Key Features
 
-## Hosting access
+- Conference creation and administration.
+- Conference configuration:
+  - General settings.
+  - Session types.
+  - Tracks.
+  - Rooms.
+  - Planning structure (days/slots).
+- Session management:
+  - Session list.
+  - Session create/edit.
+  - Import from Conference Hall.
+- Speaker management:
+  - Conference speaker list.
+  - Availability management.
+- Program allocation:
+  - Assign sessions to slots and rooms.
+- Activities management:
+  - Activity setup.
+  - Activity participation tracking.
+  - Activity admin pages.
+- Sponsor management:
+  - Sponsor configuration.
+  - Sponsor operations.
+- Publication:
+  - Voxxrin configuration.
+  - Voxxrin event descriptor export.
+  - Planning PDF/ZIP exports.
+- Dashboards and operational monitoring for conference management.
+- Platform administration:
+  - Person administration.
+  - Platform-level configuration.
 
-- [https://conference-manager-007.web.app](https://conference-manager-007.web.app)
+## License
 
----
+This project is licensed under the **LGPL**.
 
-For advanced configuration, see the Firebase and Angular documentation.
+## Tech Stack
+
+### Frontend
+- **Angular 21**
+- **TypeScript**
+- **Angular Router**
+- **AngularFire** (`@angular/fire`)
+- **PrimeNG + PrimeIcons**
+- **ngx-translate** (i18n)
+- **RxJS**
+
+### Backend
+- **Firebase Cloud Functions** (HTTP + scheduled jobs)
+- **Node.js 24**
+- **TypeScript**
+- **Firebase Admin SDK**
+
+### Data and Hosting
+- **Cloud Firestore** (persistent data)
+- **Firebase Authentication**
+- **Firebase Hosting**
+- **Firebase Emulator Suite** (local development)
+
+## Project Structure
+
+- `frontend/`: Angular application.
+- `functions/`: Firebase Cloud Functions.
+- `doc/`: functional and technical documentation.
+
+## Documentation
+
+- [Development Notes](doc/dev.md)
+- [Pages Documentation](doc/pages.md)
+- [Data Model](doc/datamodel.md)
+- [TODO List](doc/TODO.md)
+- [Test Guide](doc/TEST_GUIDE.md)
+- [Voxxrin JSON Schema](doc/voxxrin.jsonschema)
 
 
-## Pages
-### Home
-- **Home:** The home page of the application
-### Person
-- **Register:** Application user can register an account (authentication with firebase, link the account to a Person in firestore).
-- **Login:** Login page for users having an account.
-- **Reset password:** Reset the password of a user. If the person exists, then links it.
-- **People List (Admin):** Admin view to list and manage all persons.
-- **Edit Person:** Edit person information.
-- **View Person:** View person information.
-
-### Conference
-- **Conference List:** List of all available conferences.
-- **Conference Home:** Landing page for a specific conference.
-
-### Conference Configuration
-- **General Configuration:** Edit conference name, dates, days, administrators, location, logo, and description.
-- **ConferenceHall Configuration:** Manage ConferenceHall platform access (URL, ID, token).
-- **Voxxrin Configuration:** Configure Voxxrin integration (sandbox/prod URLs and tokens).
-- **Tracks Configuration:** Manage tracks (name, description, color).
-- **Session Types Configuration:** Manage session types for the conference.
-- **Planning Structure Configuration:** Configure the planning structure for the conference.
-
-### Planning
-- **Planning Screen:** Main planning and scheduling interface.
-- **Planning Visualization:** View the schedule with filters (by day, mode: session/language/speaker).
-
-### Speaker
-- **Speakers List:** List of all speakers.
-- **Edit Speaker Popup:** Edit speaker details in a popup dialog.
-
-### Session
-- **My Sessions:** User's personal session list.
-- **Conference Sessions List:** List of all sessions for a conference, filterable by session type.
-- **Import/Update from ConferenceHall:** Import or update sessions from ConferenceHall.
-- **Edit Session Popup:** Edit session details in a popup dialog.
-- **View Session Popup:** View session details in a popup dialog.
-
-### Activities (Speaker Dinner, Unconference, etc.)
-- **Activity List:** List of all activities.
-- **Edit Activity:** Edit activity details.
-- **View Activity:** View activity details.
-- **Activity Registration Management:** Manage registrations for activities.
-
-### Sponsor
-- **Edit Sponsor Popup:** Edit sponsor details in a popup dialog.
-
-## model
-
-### Session status diagram:
-
-```mermaid
-stateDiagram-v2
-    [*] --> SUBMITTED
-
-    SUBMITTED --> REJECTED: Committee rejects the session proposal
-    SUBMITTED --> ACCEPTED: Committee accepts the session proposal
-    SUBMITTED --> WAITLISTED: Committee waitlists the proposal
-
-    REJECTED --> ACCEPTED: Committee made a mistake.
-    WAITLISTED --> REJECTED: Waitlist not needed
-    WAITLISTED --> ACCEPTED: Replaces another approved session
-
-    ACCEPTED --> SPEAKER_CONFIRMED: Speaker confirms participation
-    ACCEPTED --> SCHEDULED: Committee schedules the session
-
-    SCHEDULED --> DECLINED_BY_SPEAKER: The speaker declines the session
-    SCHEDULED --> PROGRAMMED: Speaker confirms (post-scheduling)
-    SCHEDULED --> ACCEPTED: Committee unschedules the session
-
-    SPEAKER_CONFIRMED --> PROGRAMMED: Committee schedules the session
-
-    PROGRAMMED --> SPEAKER_CONFIRMED: Committee unschedules the session
-    PROGRAMMED --> CANCELLED: Speaker cancels
-
-```
-TODO list :
-- Export excel: Speaker, session
-- Duplication conference
-- Cancel speaker
-- Speaker Edit: lors de la modification de l'indispo d'un speaker il faut désallouer les sessions sur les slots ou le speaker est indispo
-- Publication voxxrin : fichier config produit. 
-  - Attente d'info Voxxrin pour intégrer 
-  - Produire les infos sur les sessions, speakers, sponsors et le schedule
-- Intendance
-
-Bonus
-- Liste de couleur par défaut pour les track et les types de session
-- Theme dark
-- soumission de session par les speakers
-- Gestion des sponsors
-- Evaluation des sessions (abandon conferencehall)
-  - Envoie emails
-- Mode mono conference
