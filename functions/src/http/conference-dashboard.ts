@@ -68,6 +68,9 @@ export async function recomputeAndPersistConferenceDashboard(
     .collection(FIRESTORE_COLLECTIONS.SESSION)
     .where('conference.conferenceId', '==', conferenceId)
     .get();
+  const slotTypesSnap = await db
+    .collection(FIRESTORE_COLLECTIONS.SLOT_TYPE)
+    .get();
   const allocationsSnap = await db
     .collection(FIRESTORE_COLLECTIONS.SESSION_ALLOCATION)
     .where('conferenceId', '==', conferenceId)
@@ -121,8 +124,10 @@ export async function recomputeAndPersistConferenceDashboard(
     }
   });
 
-  const totalSlots = countTotalConferenceSlots(conferenceData);
-  const allocatedSlots = allocationsSnap.size;
+  const slotTypeIsSessionById = buildSlotTypeIsSessionMap(slotTypesSnap);
+  const sessionSlotStats = collectSessionSlotStats(conferenceData, slotTypeIsSessionById);
+  const totalSlots = sessionSlotStats.total;
+  const allocatedSlots = countAllocatedSessionSlots(allocationsSnap, sessionSlotStats);
   const ratio = totalSlots > 0 ? allocatedSlots / totalSlots : 0;
   const conferenceStartDate = getConferenceStartDate(conferenceData);
   const daysBeforeConference = computeDaysBeforeConference(conferenceStartDate, now);
@@ -218,12 +223,96 @@ function extractSpeakerIds(session: any): string[] {
   return Array.from(new Set(ids));
 }
 
-function countTotalConferenceSlots(conferenceData: any): number {
+interface SessionSlotStats {
+  total: number;
+  slotIds: Set<string>;
+  slotKeys: Set<string>;
+}
+
+function buildSlotTypeIsSessionMap(
+  slotTypesSnap: admin.firestore.QuerySnapshot<admin.firestore.DocumentData>
+): Map<string, boolean> {
+  const map = new Map<string, boolean>();
+  slotTypesSnap.docs.forEach((docSnap) => {
+    const slotType = docSnap.data() as any;
+    const slotTypeId = String(slotType?.id ?? docSnap.id ?? '').trim();
+    if (!slotTypeId) {
+      return;
+    }
+    map.set(slotTypeId, !!slotType?.isSession);
+  });
+  return map;
+}
+
+function collectSessionSlotStats(
+  conferenceData: any,
+  slotTypeIsSessionById: Map<string, boolean>
+): SessionSlotStats {
+  const slotIds = new Set<string>();
+  const slotKeys = new Set<string>();
+  let total = 0;
+
   const days = Array.isArray(conferenceData?.days) ? conferenceData.days : [];
-  return days.reduce((acc: number, day: any) => {
+  days.forEach((day: any) => {
+    const dayId = String(day?.id ?? '').trim();
     const slots = Array.isArray(day?.slots) ? day.slots : [];
-    return acc + slots.length;
-  }, 0);
+    slots.forEach((slot: any) => {
+      if (!isSessionSlot(slot, slotTypeIsSessionById)) {
+        return;
+      }
+
+      total += 1;
+      const slotId = String(slot?.id ?? '').trim();
+      if (!slotId) {
+        return;
+      }
+      slotIds.add(slotId);
+      if (dayId) {
+        slotKeys.add(buildDaySlotKey(dayId, slotId));
+      }
+    });
+  });
+
+  return { total, slotIds, slotKeys };
+}
+
+function isSessionSlot(slot: any, slotTypeIsSessionById: Map<string, boolean>): boolean {
+  const slotTypeId = String(slot?.slotTypeId ?? '').trim();
+  if (slotTypeIsSessionById.has(slotTypeId)) {
+    return !!slotTypeIsSessionById.get(slotTypeId);
+  }
+  return !!String(slot?.sessionTypeId ?? '').trim();
+}
+
+function countAllocatedSessionSlots(
+  allocationsSnap: admin.firestore.QuerySnapshot<admin.firestore.DocumentData>,
+  sessionSlotStats: SessionSlotStats
+): number {
+  let allocated = 0;
+  allocationsSnap.docs.forEach((docSnap) => {
+    const allocation = docSnap.data() as any;
+    const slotId = String(allocation?.slotId ?? '').trim();
+    if (!slotId) {
+      return;
+    }
+
+    const dayId = String(allocation?.dayId ?? '').trim();
+    if (dayId && sessionSlotStats.slotKeys.size > 0) {
+      if (sessionSlotStats.slotKeys.has(buildDaySlotKey(dayId, slotId))) {
+        allocated += 1;
+      }
+      return;
+    }
+
+    if (sessionSlotStats.slotIds.has(slotId)) {
+      allocated += 1;
+    }
+  });
+  return allocated;
+}
+
+function buildDaySlotKey(dayId: string, slotId: string): string {
+  return `${dayId}::${slotId}`;
 }
 
 function getConferenceStartDate(conferenceData: any): string {

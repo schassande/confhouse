@@ -1,0 +1,13 @@
+{
+  "name": "cfp-manager-root",
+  "private": true,
+  "scripts": {
+    "build:frontend": "npm --prefix frontend run build",
+    "build:functions": "npm --prefix functions run build",
+    "build": "npm run build:frontend && npm run build:functions",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:functions": "npm run build && firebase deploy --only functions",
+    "deploy:storage": "npm run build && firebase deploy --only storage",
+    "deploy:all": "npm run build && firebase deploy --only hosting,functions,storage"
+  }
+}
