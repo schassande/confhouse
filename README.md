@@ -1,6 +1,6 @@
-# Conference Manager
+# Conference House
 
-Conference Manager is a web application to run a technical conference end-to-end: configure the event, manage sessions and speakers, plan the schedule, and publish the final program.
+Conference House is a web application to run a technical conference end-to-end: configure the event, manage sessions and speakers, plan the schedule, and publish the final program.
 
 ## Objective
 

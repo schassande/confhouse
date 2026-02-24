@@ -16,7 +16,6 @@
 
 
 ## Priority 2
-- Rename the Git repository / find a better name.
 - Default color list for tracks and session types.
 - Dark theme.
 - Drop Conference Hall dependency
