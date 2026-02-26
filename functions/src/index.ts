@@ -5,7 +5,7 @@ import { resetConferenceHallImport } from './http/reset-conference-hall-import';
 import { deleteConference } from './http/delete-conference';
 import { duplicateConference } from './http/duplicate-conference';
 import { refreshConferenceDashboard } from './http/refresh-conference-dashboard';
-import { generateVoxxrinEventDescriptor } from './http/generate-voxxrin-event-descriptor';
+import { refreshVoxxrinSchedule } from './http/refresh-voxxrin-schedule';
 import { recomputeConferenceDashboardDaily } from './scheduler/recompute-conference-dashboard-daily';
 
 setGlobalOptions({ maxInstances: 10 });
@@ -17,6 +17,6 @@ export {
   deleteConference,
   duplicateConference,
   refreshConferenceDashboard,
-  generateVoxxrinEventDescriptor,
+  refreshVoxxrinSchedule,
   recomputeConferenceDashboardDaily,
 };

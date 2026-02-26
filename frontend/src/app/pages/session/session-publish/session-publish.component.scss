@@ -106,3 +106,30 @@
 .pdf-link {
   margin-right: 0.55rem;
 }
+
+.operation-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0 6px;
+  text-align: center;
+}
+
+.operation-waiting p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.voxxrin-result-section {
+  margin-top: 1rem;
+}
+
+.json-result {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  background: #f8f9fb;
+  overflow: auto;
+}

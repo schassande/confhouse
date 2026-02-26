@@ -1,4 +1,21 @@
 <section class="session-publish">
+  <p-dialog
+    [modal]="true"
+    [visible]="voxxrinRefreshing()"
+    [header]="''"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="false"
+    [dismissableMask]="false"
+    [closeOnEscape]="false"
+    [style]="{ width: 'min(420px, 92vw)' }"
+  >
+    <div class="operation-waiting">
+      <p-progressSpinner strokeWidth="4" fill="transparent" animationDuration="1.6s"></p-progressSpinner>
+      <p>{{ 'CONFERENCE.CONFIG.PUBLISH.VOXXRIN_REFRESH_IN_PROGRESS' | translate }}</p>
+    </div>
+  </p-dialog>
+
   <h1 class="page-title">{{ 'CONFERENCE.CONFIG.PUBLISH.TITLE' | translate }}</h1>
   <p class="page-description">{{ 'CONFERENCE.CONFIG.PUBLISH.DESCRIPTION' | translate }}</p>
 
@@ -18,25 +35,32 @@
       <button
         type="button"
         class="action-link action-button"
-        (click)="downloadVoxxrinDescriptor()"
-        [disabled]="downloading()"
+        (click)="publishToVoxxrin()"
+        [disabled]="voxxrinRefreshing()"
       >
-        <div class="action-icon"><i class="pi pi-download"></i></div>
+        <div class="action-icon"><i class="pi pi-send"></i></div>
         <div class="action-content">
-          <div class="action-title">{{ 'CONFERENCE.CONFIG.PUBLISH.DOWNLOAD_VOXXRIN_JSON' | translate }}</div>
+          <div class="action-title">{{ 'CONFERENCE.CONFIG.PUBLISH.PUBLISH_TO_VOXXRIN' | translate }}</div>
           <div class="action-subtitle">{{ conf.name }} {{ conf.edition }}</div>
         </div>
       </button>
     </div>
 
-    @if (downloadError()) {
-      <p class="error-text">{{ 'CONFERENCE.CONFIG.PUBLISH.DOWNLOAD_VOXXRIN_JSON_ERROR' | translate }}</p>
-    }
     @if (voxxrinDownloadUrl(); as voxxrinUrl) {
       <p class="storage-link">
         Lien HTTP Firebase Storage:
         <a [href]="voxxrinUrl" target="_blank" rel="noopener noreferrer">{{ voxxrinUrl }}</a>
       </p>
+    }
+
+    @if (voxxrinRefreshError()) {
+      <p class="error-text">{{ voxxrinRefreshError() }}</p>
+    }
+    @if (voxxrinRefreshResult(); as result) {
+      <section class="voxxrin-result-section">
+        <h2 class="pdf-title">{{ 'CONFERENCE.CONFIG.PUBLISH.VOXXRIN_REFRESH_RESULT_TITLE' | translate }}</h2>
+        <pre class="json-result">{{ result | json }}</pre>
+      </section>
     }
 
     <section class="pdf-section">

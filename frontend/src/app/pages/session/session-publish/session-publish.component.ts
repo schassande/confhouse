@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConferenceService } from '../../../services/conference.service';
 import { Conference, Day, Room } from '../../../model/conference.model';
 import { ConferenceAdminService } from '../../../services/conference-admin.service';
@@ -11,7 +13,7 @@ import { PlanningPdfService } from '../../../services/planning-pdf.service';
 @Component({
   selector: 'app-session-publish',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, ButtonModule],
+  imports: [CommonModule, RouterModule, TranslateModule, ButtonModule, DialogModule, ProgressSpinnerModule],
   templateUrl: './session-publish.component.html',
   styleUrls: ['./session-publish.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,17 +27,19 @@ export class SessionPublishComponent {
 
   private readonly _conference = signal<Conference | undefined>(undefined);
   private readonly _loading = signal(true);
-  private readonly _downloading = signal(false);
-  private readonly _downloadError = signal<string>('');
   private readonly _pdfDownloading = signal(false);
   private readonly _pdfDownloadError = signal<string>('');
+  private readonly _voxxrinRefreshing = signal(false);
+  private readonly _voxxrinRefreshError = signal<string>('');
+  private readonly _voxxrinRefreshResult = signal<unknown | null>(null);
 
   readonly conference = computed(() => this._conference());
   readonly loading = computed(() => this._loading());
-  readonly downloading = computed(() => this._downloading());
-  readonly downloadError = computed(() => this._downloadError());
   readonly pdfDownloading = computed(() => this._pdfDownloading());
   readonly pdfDownloadError = computed(() => this._pdfDownloadError());
+  readonly voxxrinRefreshing = computed(() => this._voxxrinRefreshing());
+  readonly voxxrinRefreshError = computed(() => this._voxxrinRefreshError());
+  readonly voxxrinRefreshResult = computed(() => this._voxxrinRefreshResult());
   readonly voxxrinDownloadUrl = computed(() => {
     const conferenceId = this.conference()?.id;
     return conferenceId
@@ -60,22 +64,26 @@ export class SessionPublishComponent {
     });
   }
 
-  async downloadVoxxrinDescriptor(): Promise<void> {
+  async publishToVoxxrin(): Promise<void> {
     const conferenceId = this.conference()?.id;
-    if (!conferenceId || this._downloading()) {
+    if (!conferenceId || this._voxxrinRefreshing()) {
       return;
     }
 
-    this._downloading.set(true);
-    this._downloadError.set('');
+    this._voxxrinRefreshing.set(true);
+    this._voxxrinRefreshError.set('');
+    this._voxxrinRefreshResult.set(null);
     try {
-      await this.conferenceAdminService.downloadVoxxrinEventDescriptor(conferenceId);
+      const response = await this.conferenceAdminService.refreshVoxxrinSchedule(conferenceId);
+      this._voxxrinRefreshResult.set(response?.voxxrinResponse ?? response ?? {});
     } catch (error: unknown) {
-      this._downloadError.set(error instanceof Error
-        ? error.message
-        : this.translateService.instant('CONFERENCE.CONFIG.PUBLISH.DOWNLOAD_GENERIC_ERROR'));
+      this._voxxrinRefreshError.set(
+        error instanceof Error
+          ? error.message
+          : this.translateService.instant('CONFERENCE.CONFIG.PUBLISH.VOXXRIN_REFRESH_ERROR')
+      );
     } finally {
-      this._downloading.set(false);
+      this._voxxrinRefreshing.set(false);
     }
   }
 

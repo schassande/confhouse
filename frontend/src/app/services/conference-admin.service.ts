@@ -74,11 +74,16 @@ export interface DuplicateConferenceReport {
   createdAt: string;
 }
 
-export interface GenerateVoxxrinDescriptorReport {
+export interface VoxxrinDescriptorStorageReport {
   message: string;
   filePath: string;
   downloadUrl: string;
   archivedPreviousFilePath: string | null;
+}
+
+export interface RefreshVoxxrinScheduleReport extends VoxxrinDescriptorStorageReport {
+  voxxrinStatus: number;
+  voxxrinResponse: unknown;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -134,11 +139,11 @@ export class ConferenceAdminService {
     return response.report;
   }
 
-  async downloadVoxxrinEventDescriptor(conferenceId: string): Promise<void> {
+  async refreshVoxxrinSchedule(conferenceId: string): Promise<RefreshVoxxrinScheduleReport> {
     const idToken = await this.getIdTokenOrThrow();
-    const response = await firstValueFrom(
-      this.http.post<GenerateVoxxrinDescriptorReport>(
-        `${functionBaseUrl}generateVoxxrinEventDescriptor`,
+    return await firstValueFrom(
+      this.http.post<RefreshVoxxrinScheduleReport>(
+        `${functionBaseUrl}refreshVoxxrinSchedule`,
         { conferenceId },
         {
           headers: {
@@ -147,21 +152,6 @@ export class ConferenceAdminService {
         }
       )
     );
-
-    const downloadUrl = String(response?.downloadUrl ?? '').trim();
-    if (!downloadUrl) {
-      throw new Error('Missing download URL in Voxxrin descriptor response');
-    }
-
-    const anchor = document.createElement('a');
-    anchor.href = downloadUrl;
-    anchor.download = 'voxxrin-full.json';
-    anchor.target = '_blank';
-    anchor.rel = 'noopener';
-    anchor.style.display = 'none';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
   }
 
   getVoxxrinEventDescriptorPublicUrl(conferenceId: string): string {

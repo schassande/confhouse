@@ -54,6 +54,20 @@ const ALLOWED_SOCIAL_TYPES = new Set([
 const VOXXRIN_PUBLIC_FOLDER = 'public';
 const VOXXRIN_FILENAME = 'voxxrin-full.json';
 
+export interface VoxxrinDescriptorStorageResult {
+  objectPath: string;
+  publicDownloadUrl: string;
+  archivedFilePath?: string;
+}
+
+export interface GeneratedVoxxrinDescriptor {
+  conferenceData: any;
+  voxxrinConfig: any;
+  descriptor: any;
+  payload: string;
+  storageResult: VoxxrinDescriptorStorageResult;
+}
+
 export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSeconds: 60 }, async (req, res) => {
   try {
     applyCorsHeaders(req, res);
@@ -75,20 +89,8 @@ export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSec
     const { conferenceData } = await loadConference(db, conferenceId, 'generateVoxxrinEventDescriptor');
     ensureRequesterIsOrganizer(conferenceData, conferenceId, requesterEmail, 'generateVoxxrinEventDescriptor');
 
-    const voxxrinConfig = await loadVoxxrinConfig(db, conferenceId);
-    if (!voxxrinConfig) {
-      throw new HttpError(
-        400,
-        'Voxxrin config not found',
-        'generateVoxxrinEventDescriptor rejected: voxxrin config not found',
-        { conferenceId }
-      );
-    }
-
-    const programData = await loadProgramData(db, conferenceId);
-    const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData);
-    const payload = JSON.stringify(descriptor, null, 2);
-    const storageResult = await saveVoxxrinDescriptorToStorage(conferenceId, payload);
+    const generated = await generateVoxxrinDescriptorForConference(db, conferenceId, conferenceData);
+    const { descriptor, payload, storageResult } = generated;
 
     logger.info('generateVoxxrinEventDescriptor completed', {
       conferenceId,
@@ -123,11 +125,30 @@ export const generateVoxxrinEventDescriptor = onRequest({ cors: true, timeoutSec
   }
 });
 
-async function saveVoxxrinDescriptorToStorage(conferenceId: string, payload: string): Promise<{
-  objectPath: string;
-  publicDownloadUrl: string;
-  archivedFilePath?: string;
-}> {
+export async function generateVoxxrinDescriptorForConference(
+  db: admin.firestore.Firestore,
+  conferenceId: string,
+  preloadedConferenceData?: any
+): Promise<GeneratedVoxxrinDescriptor> {
+  const conferenceData = preloadedConferenceData ?? (await loadConference(db, conferenceId, 'generateVoxxrinEventDescriptor')).conferenceData;
+  const voxxrinConfig = await loadVoxxrinConfig(db, conferenceId);
+  if (!voxxrinConfig) {
+    throw new HttpError(
+      400,
+      'Voxxrin config not found',
+      'generateVoxxrinEventDescriptor rejected: voxxrin config not found',
+      { conferenceId }
+    );
+  }
+
+  const programData = await loadProgramData(db, conferenceId);
+  const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData);
+  const payload = JSON.stringify(descriptor, null, 2);
+  const storageResult = await saveVoxxrinDescriptorToStorage(conferenceId, payload);
+  return { conferenceData, voxxrinConfig, descriptor, payload, storageResult };
+}
+
+async function saveVoxxrinDescriptorToStorage(conferenceId: string, payload: string): Promise<VoxxrinDescriptorStorageResult> {
   const conferenceFolder = `${VOXXRIN_PUBLIC_FOLDER}/${sanitizeStoragePathSegment(conferenceId)}`;
   const targetPath = `${conferenceFolder}/${VOXXRIN_FILENAME}`;
   const bucket = admin.storage().bucket();
