@@ -5,7 +5,8 @@
   } @else {
     @let range = conferenceDateRange(conf);
     @if (range && range.start && range.end) {
-      <div class="conference-dates">
+      <div class="conference-dates info-row">
+        <fa-icon [icon]="faCalendarDays" />
         <strong>{{ 'HOME.CONF_DATES' | translate }}:</strong>
         {{ range.start | date : 'dd MMM yyyy' }}
         @if (range.start !== range.end) {
@@ -13,17 +14,20 @@
         }
       </div>
     }
-    <div>
+    <div class="info-row">
+      <fa-icon [icon]="faLocationDot" />
       {{ conf.location }}
     </div>
     @if (conf.description[lang()]) {
-      <div>
+      <div class="info-row">
+        <fa-icon [icon]="faCircleInfo" />
         <strong>{{ 'CONFERENCE.DESCRIPTION' | translate }}:</strong>
         <span>{{ conf.description[lang()] }}</span>
       </div>
     }
     @if (conf.website) {
-      <div class="website">
+      <div class="website info-row">
+        <fa-icon [icon]="faGlobe" />
         <span>Site web:</span>
         <a [href]="conf.website" target="_blank" rel="noopener noreferrer">{{ conf.website }}</a>
       </div>
@@ -39,22 +43,36 @@
         <a [href]="conf.cfp.website" target="_blank" rel="noopener noreferrer">{{ conf.cfp.website }}</a>
       }
     </div>
+
     @if (currentPerson() && (visibleActivities().length > 0 || canManageConference())) {
     <div style="margin-top: 1rem;">
-      <div class="activity-list"> 
-        @if (canManageConference()) {
-        <div class="activity" [routerLink]="['/conference', conf.id, 'manage']">
-            <div class="activity-icon pi pi-cog"></div>
-            <div class="activity-name">Gerer la conference</div>
-        </div>
-        }
+      
+      <div class="action-list-name">Vos activités:</div>
+      <div class="action-list"> 
         @for (activity of visibleActivities(); track activity.id) {
-          <div class="activity" [routerLink]="['/conference', conf.id, 'activities', activity.id, 'participation']">
-            <div class="activity-icon pi {{ activity.icon }}"></div>
-            <div class="activity-name">{{ activity.name }}</div>
+          <div class="action" [routerLink]="['/conference', conf.id, 'activities', activity.id, 'participation']">
+            <i class="action-icon {{ activity.icon }}"></i>
+            <div class="action-name">{{ activity.name }}</div>
           </div>
         }
       </div>
+      
+      <div class="action-list-name">Vos sessions:</div>
+      <div class="action-list"> 
+        <div class="action" [routerLink]="['/conference', conf.id, 'manage']">
+            <div class="action-icon fa-solid fa-comments"></div>
+            <div class="action-name">Feeback</div>
+        </div>
+      </div>
+      @if (canManageConference()) {
+        <div class="action-list-name">Organisateur:</div>
+        <div class="action-list"> 
+          <div class="action" [routerLink]="['/conference', conf.id, 'manage']">
+            <div class="action-icon pi pi-cog"></div>
+            <div class="action-name">Gerer la conference</div>
+          </div>
+        </div>
+      }
     </div>
     }
   }

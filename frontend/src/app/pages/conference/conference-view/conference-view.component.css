@@ -6,22 +6,32 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-direction: column
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  margin-top: 12px;
-}
-.activity {
-  display: flex;
   flex-direction: column;
-  gap: 12px;
 
-  .activity-icon {
-    font-size: 5rem;
-    color: #1976d2;
+
+   .action-list-name {
+    margin-top: 30px;
+    width: 100%;
+    text-align: left;
+   }
+  .action-list {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .action {
+    padding: 10px;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .action-icon {
+      font-size: 5rem;
+      color: #1976d2;
+    }
   }
 }
+

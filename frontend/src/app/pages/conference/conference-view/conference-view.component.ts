@@ -10,16 +10,23 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Activity, ParticipantType } from '../../../model/activity.model';
 import { ActivityService } from '../../../services/activity.service';
 import { UserSignService } from '../../../services/usersign.service';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-conference-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, CardModule, TagModule, TranslateModule],
+  imports: [CommonModule, RouterModule, CardModule, TagModule, TranslateModule, FontAwesomeModule],
   templateUrl: './conference-view.component.html',
   styleUrls: ['./conference-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConferenceViewComponent {
+  readonly faCalendarDays = faCalendarDays;
+  readonly faLocationDot = faLocationDot;
+  readonly faCircleInfo = faCircleInfo;
+  readonly faGlobe = faGlobe;
+
   private readonly route = inject(ActivatedRoute);
   private readonly conferenceService = inject(ConferenceService);
   private readonly activityService = inject(ActivityService);
