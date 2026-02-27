@@ -95,6 +95,21 @@
     "LOADING": "Chargement de la conférence...",
     "DESCRIPTION": "Description",
     "NOT_FOUND": "Conférence non trouvée",
+    "VIEW": {
+      "WEBSITE": "Site web",
+      "CFP": "CFP",
+      "MY_ACTIVITIES": "Votre participation à la conférence",
+      "MY_SESSIONS_FEEDBACK": "Vos sessions en tant qu'orateur et leurs feedbacks",
+      "ORGANIZER": "Organisateur",
+      "MANAGE": "Gerer la conference",
+      "SESSION": {
+        "TITLE": "Titre",
+        "SPEAKERS": "Orateurs",
+        "ABSTRACT": "Résumé",
+        "REFERENCE": "Référence",
+        "REVIEW": "Evaluation moyenne du CFP"
+      }
+    },
     "MANAGE": {
       "TITLE": "Gestion de la conférence",
       "SUBTITLE": "Choisissez l'action à effectuer.",

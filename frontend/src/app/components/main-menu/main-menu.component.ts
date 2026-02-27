@@ -62,7 +62,19 @@ export class MainMenuComponent {
       'MENU.ADMIN_PLATFORM_CONFIG'
     ]));
 
-    const items: MenuItem[] = [
+    const items: MenuItem[] = [];
+    const p = this.person();
+    const email = String(p?.email ?? '').trim();
+    if (email) {
+      items.push({
+        label: email,
+        icon: 'pi pi-envelope',
+        disabled: true,
+      });
+      items.push({ separator: true });
+    }
+
+    items.push(
       {
         label: labels['MENU.PROFILE'],
         icon: 'pi pi-cog',
@@ -73,7 +85,7 @@ export class MainMenuComponent {
         icon: 'pi pi-sign-out',
         command: () => this.logout()
       }
-    ];
+    );
 
     items.push({ separator: true });
     items.push(
@@ -89,7 +101,6 @@ export class MainMenuComponent {
       }
     );
 
-    const p = this.person();
     if (p && p.isPlatformAdmin) {
       items.push({ separator: true });
       items.push(

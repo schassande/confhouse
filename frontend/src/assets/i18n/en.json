@@ -108,6 +108,21 @@
     "LOADING": "Loading conference...",
     "NOT_FOUND": "Conference not found",
     "DESCRIPTION": "Description",
+    "VIEW": {
+      "WEBSITE": "Website",
+      "CFP": "CFP",
+      "MY_ACTIVITIES": "Your participation to the conference",
+      "MY_SESSIONS_FEEDBACK": "Your sessions and their feedbacks as speaker",
+      "ORGANIZER": "Organizer",
+      "MANAGE": "Manage conference",
+      "SESSION": {
+        "TITLE": "Title",
+        "SPEAKERS": "Speakers",
+        "ABSTRACT": "Abstract",
+        "REFERENCE": "Reference",
+        "REVIEW": "Review by CFP committee"
+      }
+    },
     "MANAGE": {
       "TITLE": "Conference management",
       "SUBTITLE": "Choose the action to perform.",

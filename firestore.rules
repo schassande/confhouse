@@ -117,7 +117,8 @@ service cloud.firestore {
     }
     match /session-allocation/{document=**} {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
-      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+      allow read: if true;
+      allow update, delete: if isConferenceOrganizer(resource.data.conferenceId);
     }
 
     match /activity/{document=**} {

@@ -67,6 +67,15 @@
 :host ::ng-deep .avatar-menu-panel {
   min-width: 190px;
 }
+:host ::ng-deep .avatar-menu-panel .p-menu-item-link {
+  align-items: flex-start;
+}
+:host ::ng-deep .avatar-menu-panel .p-menu-item-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
 .menu-flag {
   margin-right: 0.5rem;
 }

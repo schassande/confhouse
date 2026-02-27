@@ -28,14 +28,14 @@
     @if (conf.website) {
       <div class="website info-row">
         <fa-icon [icon]="faGlobe" />
-        <span>Site web:</span>
+        <span>{{ 'CONFERENCE.VIEW.WEBSITE' | translate }}:</span>
         <a [href]="conf.website" target="_blank" rel="noopener noreferrer">{{ conf.website }}</a>
       </div>
     }
     <div class="cfp">
       @if (cfpDateRange(conf); as cfpRange) {
         <div class="cfp-dates">
-          <strong>CFP:</strong>
+          <strong>{{ 'CONFERENCE.VIEW.CFP' | translate }}:</strong>
           {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
         </div>
       }
@@ -44,11 +44,9 @@
       }
     </div>
 
-    @if (currentPerson() && (visibleActivities().length > 0 || canManageConference())) {
-    <div style="margin-top: 1rem;">
-      
-      <div class="action-list-name">Vos activités:</div>
-      <div class="action-list"> 
+    @if (currentPerson() && (visibleActivities().length > 0 || canManageConference() || speakerFeedbackSessions().length > 0)) {
+      <div class="action-list-name">{{ 'CONFERENCE.VIEW.MY_ACTIVITIES' | translate }}:</div>
+      <div class="action-list">
         @for (activity of visibleActivities(); track activity.id) {
           <div class="action" [routerLink]="['/conference', conf.id, 'activities', activity.id, 'participation']">
             <i class="action-icon {{ activity.icon }}"></i>
@@ -56,24 +54,84 @@
           </div>
         }
       </div>
-      
-      <div class="action-list-name">Vos sessions:</div>
-      <div class="action-list"> 
-        <div class="action" [routerLink]="['/conference', conf.id, 'manage']">
-            <div class="action-icon fa-solid fa-comments"></div>
-            <div class="action-name">Feeback</div>
+
+      @if (speakerFeedbackSessions().length > 0) {
+        <div class="action-list-name">{{ 'CONFERENCE.VIEW.MY_SESSIONS_FEEDBACK' | translate }}:</div>
+        <div class="session-list">
+          @for (session of speakerFeedbackSessions(); track session.id) {
+            <div class="session-row">
+              <div class="session-header">
+                <div class="session-title">{{ 'CONFERENCE.VIEW.SESSION.TITLE' | translate }}: {{ session.title }}</div>
+                <div class="session-status">
+                  <app-session-status-badge [status]="session.conference?.status"></app-session-status-badge>
+                </div>
+              </div>
+              <div class="session-info">
+                <div class="session-type">
+                  @let currentSessionType = sessionType(session);
+                  <p-tag
+                    [value]="sessionTypeName(session)"
+                    [style]="{
+                      'background-color': currentSessionType?.color || '#64748B',
+                      color: computeTextColorForBackground(currentSessionType?.color || '#64748B'),
+                      border: 'none'
+                    }"
+                  ></p-tag>
+                  @let currentTrack = sessionTrack(session);
+                  <p-tag
+                    [value]="sessionTrackName(session)"
+                    [style]="{
+                      'background-color': currentTrack?.color || '#334155',
+                      color: computeTextColorForBackground(currentTrack?.color || '#334155'),
+                      border: 'none'
+                    }"
+                  ></p-tag>
+                </div>
+                <div class="session-speakers">
+                  <span class="session-label">{{ 'CONFERENCE.VIEW.SESSION.SPEAKERS' | translate }}:</span>
+                  <span>
+                    @for (speaker of sessionSpeakers(session); track speaker.id; let last = $last) {
+                      {{ speaker.fullName }}@if (speaker.company) { ({{ speaker.company }}) }@if (!last) {, }
+                    }
+                  </span>
+                </div>
+                <div class="session-slot">
+                  <strong>{{ 'SESSION.EDIT.ALLOCATED_SLOT' | translate }}:</strong>
+                  @if (sessionSlotLabel(session)) {
+                    {{ sessionSlotLabel(session) }}
+                  } @else {
+                    {{ 'SESSION.EDIT.SLOT_NOT_ALLOCATED' | translate }}
+                  }
+                </div>
+                <div class="session-abstract">
+                  <strong>{{ 'CONFERENCE.VIEW.SESSION.ABSTRACT' | translate }}:</strong> {{ session.abstract }}
+                </div>
+                <div class="session-reference">
+                  <strong>{{ 'CONFERENCE.VIEW.SESSION.REFERENCE' | translate }}:</strong> {{ session.references }}
+                </div>
+                @if (session.conference?.review) {
+                  <div class="session-review">
+                    <strong>{{ 'CONFERENCE.VIEW.SESSION.REVIEW' | translate }}:</strong>
+                    {{ session.conference?.review?.average | number: '1.0-2' }}
+                  </div>
+                }
+                  <a [href]="session.conference?.feedback?.privateUrl" target="_blank" rel="noopener noreferrer">
+                    <span class="session-feedback-icon fa-solid fa-comments"></span>Lire les feedbacks
+                  </a>
+              </div>
+            </div>
+          }
         </div>
-      </div>
+      }
       @if (canManageConference()) {
-        <div class="action-list-name">Organisateur:</div>
-        <div class="action-list"> 
+        <div class="action-list-name">{{ 'CONFERENCE.VIEW.ORGANIZER' | translate }}:</div>
+        <div class="action-list">
           <div class="action" [routerLink]="['/conference', conf.id, 'manage']">
             <div class="action-icon pi pi-cog"></div>
-            <div class="action-name">Gerer la conference</div>
+            <div class="action-name">{{ 'CONFERENCE.VIEW.MANAGE' | translate }}</div>
           </div>
         </div>
       }
-    </div>
     }
   }
 </div>
