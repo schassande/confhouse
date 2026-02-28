@@ -17,8 +17,8 @@
 
   .non-responded-count {
     width: 100%;
-    text-align: left;
-    color: #1d4ed8;
+    text-align: center;
+    color: red;
     font-weight: 600;
     margin-top: 6px;
   }
