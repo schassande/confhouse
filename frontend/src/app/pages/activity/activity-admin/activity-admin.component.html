@@ -7,7 +7,12 @@
   <section class="stats">
     <article class="stat-card">
       <h3>{{ 'CONFERENCE.ACTIVITY_ADMIN.REGISTERED_COUNT' | translate }}</h3>
-      <p class="registered-count-value">{{ participantCount() }}</p>
+      <p class="registered-count-value">
+        {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.ACCEPTED' | translate }}: {{ yesParticipationCount() }}
+      </p>
+      <p class="registered-count-value">
+        {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED' | translate }}: {{ noParticipationCount() }}
+      </p>
     </article>
     @for (attributeStat of attributeStats(); track attributeStat.attributeName) {
     <article class="stat-card">
@@ -46,6 +51,13 @@
         [placeholder]="'CONFERENCE.ACTIVITY_ADMIN.SEARCH_PLACEHOLDER' | translate"
         class="w-full"
       />
+      <p-select
+        [options]="participationFilterOptions()"
+        [ngModel]="participationFilter()"
+        (ngModelChange)="onParticipationFilterChange($event)"
+        optionLabel="label"
+        optionValue="value"
+      ></p-select>
       <span class="participants-count">
         <span class="count-number">{{ filteredParticipantRows().length }}</span>
         <span class="count-separator">/</span>
@@ -69,16 +81,21 @@
                 <h3>{{ row.displayName }}</h3>
                 <p>{{ row.email }}</p>
               </div>
-              <p-tag [value]="participantTypeLabel(row.participation.participantType)" severity="contrast"></p-tag>
+              <p-tag
+                [value]="row.participation.participation ? ('CONFERENCE.ACTIVITY_PARTICIPATION.ACCEPTED' | translate) : ('CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED' | translate)"
+                [severity]="row.participation.participation ? 'success' : 'danger'"
+              ></p-tag>
             </div>
-            <div class="attributes">
-              @for (attr of row.attributes; track attr.name) {
-              <div class="attribute-row">
-                <span>{{ attr.name }}:</span>
-                <strong>{{ attr.value }}</strong>
+            @if (row.participation.participation) {
+              <div class="attributes">
+                @for (attr of row.attributes; track attr.name) {
+                <div class="attribute-row">
+                  <span>{{ attr.name }}:</span>
+                  <strong>{{ attr.value }}</strong>
+                </div>
+                }
               </div>
-              }
-            </div>
+            }
           </article>
           }
         </div>

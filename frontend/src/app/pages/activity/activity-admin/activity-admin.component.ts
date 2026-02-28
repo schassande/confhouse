@@ -6,6 +6,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DataViewModule } from 'primeng/dataview';
 import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { Activity, ActivityAttribute, ActivityParticipation } from '../../../model/activity.model';
 import { Person } from '../../../model/person.model';
@@ -30,9 +31,21 @@ interface ParticipantRow {
   searchField: string;
 }
 
+type ParticipationFilter = 'ALL' | 'ACCEPTED' | 'REFUSED';
+
 @Component({
   selector: 'app-activity-admin',
-  imports: [CommonModule, RouterModule, TranslateModule, DataViewModule, TagModule, FormsModule, InputTextModule, ButtonModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TranslateModule,
+    DataViewModule,
+    TagModule,
+    FormsModule,
+    InputTextModule,
+    ButtonModule,
+    SelectModule,
+  ],
   templateUrl: './activity-admin.component.html',
   styleUrl: './activity-admin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,20 +65,27 @@ export class ActivityAdminComponent {
   readonly participations = signal<ActivityParticipation[]>([]);
   readonly personsById = signal<Map<string, Person>>(new Map());
   readonly searchKeyword = signal('');
+  readonly participationFilter = signal<ParticipationFilter>('ALL');
 
   readonly pageTitle = computed(() => {
     const activity = this.activity();
     return this.translateService.instant('CONFERENCE.ACTIVITY_ADMIN.TITLE', { name: activity?.name ?? '' });
   });
 
-  readonly participantCount = computed(() => this.participations().length);
+  readonly respondedCount = computed(() => this.participations().length);
+  readonly yesParticipationCount = computed(() =>
+    this.participations().filter((participation) => !!participation.participation).length
+  );
+  readonly noParticipationCount = computed(() =>
+    this.respondedCount() - this.yesParticipationCount()
+  );
 
   readonly attributeStats = computed<AttributeStat[]>(() => {
     const activity = this.activity();
     if (!activity) {
       return [];
     }
-    const participations = this.participations();
+    const participations = this.participations().filter((participation) => !!participation.participation);
     return (activity.specificAttributes ?? [])
       .filter((attribute) => attribute.attributeType === 'LIST' || attribute.attributeType === 'BOOLEAN')
       .map((attribute) => this.computeAttributeStat(attribute, participations));
@@ -103,11 +123,27 @@ export class ActivityAdminComponent {
 
   readonly filteredParticipantRows = computed<ParticipantRow[]>(() => {
     const keyword = String(this.searchKeyword() ?? '').trim().toLowerCase();
-    if (!keyword) {
-      return this.participantRows();
-    }
-    return this.participantRows().filter((row) => row.searchField.includes(keyword));
+    const filter = this.participationFilter();
+    return this.participantRows().filter((row) => {
+      const byKeyword = !keyword || row.searchField.includes(keyword);
+      if (!byKeyword) {
+        return false;
+      }
+      if (filter === 'ACCEPTED') {
+        return !!row.participation.participation;
+      }
+      if (filter === 'REFUSED') {
+        return !row.participation.participation;
+      }
+      return true;
+    });
   });
+
+  readonly participationFilterOptions = computed(() => ([
+    { label: this.translateService.instant('CONFERENCE.ACTIVITY_ADMIN.FILTER_ALL'), value: 'ALL' as ParticipationFilter },
+    { label: this.translateService.instant('CONFERENCE.ACTIVITY_PARTICIPATION.ACCEPTED'), value: 'ACCEPTED' as ParticipationFilter },
+    { label: this.translateService.instant('CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED'), value: 'REFUSED' as ParticipationFilter },
+  ]));
 
   ngOnInit(): void {
     const conferenceId = this.conferenceId();
@@ -151,6 +187,10 @@ export class ActivityAdminComponent {
 
   onSearchKeywordChange(value: string): void {
     this.searchKeyword.set(String(value ?? ''));
+  }
+
+  onParticipationFilterChange(value: ParticipationFilter): void {
+    this.participationFilter.set(value ?? 'ALL');
   }
 
   addParticipation(): void {

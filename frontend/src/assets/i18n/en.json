@@ -112,6 +112,7 @@
       "WEBSITE": "Website",
       "CFP": "CFP",
       "MY_ACTIVITIES": "Your participation to the conference",
+      "NON_RESPONDED_COUNT": "{{count}} participation response(s) missing",
       "MY_SESSIONS_FEEDBACK": "Your sessions and their feedbacks as speaker",
       "ORGANIZER": "Organizer",
       "MANAGE": "Manage conference",
@@ -206,6 +207,7 @@
       "SEARCH": "Search",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "You are not allowed to register for this activity.",
+      "PARTICIPATION": "Participation",
       "PARTICIPANT_TYPE": "Participant type",
       "DELETE": "Delete registration",
       "SAVE": "Save registration",
@@ -218,12 +220,15 @@
       "DELETE_ERROR": "Unable to delete registration",
       "AVAILABLE_ACTIVITIES": "Available activities",
       "REGISTERED": "Registered",
-      "NOT_REGISTERED": "Not registered"
+      "NOT_REGISTERED": "Not registered",
+      "REFUSED": "Refused",
+      "ACCEPTED": "Accepted"
     },
     "ACTIVITY_ADMIN": {
       "SELECT_TITLE": "Select an activity to manage",
       "TITLE": "Activity management {{name}}",
       "REGISTERED_COUNT": "Registered participants",
+      "FILTER_ALL": "All",
       "PARTICIPANTS_TITLE": "Participants list",
       "ADD_PARTICIPATION": "Add participation",
       "SEARCH_PLACEHOLDER": "Search name, email, attribute values",
@@ -752,5 +757,4 @@
     }
   }
 }
-
 

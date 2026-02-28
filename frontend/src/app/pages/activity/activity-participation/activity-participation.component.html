@@ -50,72 +50,71 @@
     </ng-template>
 
     @if (isOrganizer()) {
-    <div class="organizer-panel">
-      <p-checkbox
-        inputId="otherPerson"
-        [binary]="true"
-        [ngModel]="selectingOtherPerson()"
-        (onChange)="onToggleOtherPerson(!!$event.checked)"
-      ></p-checkbox>
-      <label for="otherPerson">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.FOR_OTHER_PERSON' | translate }}</label>
-    </div>
+      <div class="organizer-panel">
+        <p-checkbox
+          inputId="otherPerson"
+          [binary]="true"
+          [ngModel]="selectingOtherPerson()"
+          (onChange)="onToggleOtherPerson(!!$event.checked)"
+        ></p-checkbox>
+        <label for="otherPerson">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.FOR_OTHER_PERSON' | translate }}</label>
+      </div>
 
-    @if (selectingOtherPerson()) {
-    <div class="person-search">
-      <input
-        pInputText
-        type="email"
-        [ngModel]="searchEmail()"
-        (ngModelChange)="onSearchEmailChange($event)"
-        [placeholder]="'CONFERENCE.ACTIVITY_PARTICIPATION.EMAIL_PLACEHOLDER' | translate"
-      />
-      <button pButton type="button" (click)="searchPersonByEmail()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SEARCH' | translate"></button>
-    </div>
+      @if (selectingOtherPerson()) {
+        <div class="person-search">
+          <input
+            pInputText
+            type="email"
+            [ngModel]="searchEmail()"
+            (ngModelChange)="onSearchEmailChange($event)"
+            [placeholder]="'CONFERENCE.ACTIVITY_PARTICIPATION.EMAIL_PLACEHOLDER' | translate"
+          />
+          <button pButton type="button" (click)="searchPersonByEmail()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SEARCH' | translate"></button>
+        </div>
+      }
     }
-    }
-
     @if (targetPerson(); as person) {
     <p class="target-person">
       {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.TARGET_PERSON' | translate }}:
       <strong>{{ person.firstName }} {{ person.lastName }}</strong> ({{ person.email }})
+      <p-tag [value]="'CONFERENCE.ACTIVITIES.PARTICIPANT_TYPE.' + participantTypeForTarget() | translate" severity="secondary" style="margin-left: 0.5rem;"></p-tag>
     </p>
     }
+    <div style="margin-top: 30px;"></div>
 
     @if (!canCurrentUserParticipate() && !isOrganizer()) {
     <p class="warning">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.NOT_AUTHORIZED' | translate }}</p>
     } @else if (form(); as participationForm) {
     <form [formGroup]="participationForm" class="participation-form">
-      <div class="form-section">
-        <label>{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.PARTICIPANT_TYPE' | translate }} <span>*</span></label>
-        <p-select
-          formControlName="participantType"
-          [options]="participantTypeOptions()"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-        ></p-select>
+      <div>
+        <p-checkbox style="display: inline-block;" inputId="participation" formControlName="participation" [binary]="true"></p-checkbox>
+        <label style="display: inline-block; margin-left: 0.5rem;" for="participation">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.PARTICIPATION' | translate }}</label>
       </div>
-      @for (attribute of currentActivity.specificAttributes; track attribute.attributeName; let idx = $index) {
-      <div class="form-section">
-        <label>{{ attribute.attributeName }} @if (attribute.attributeRequired) {<span>*</span>}</label>
+      <div style="margin-left: 50px;">
+        @if (participationForm.get('participation')?.value) {
+          @for (attribute of currentActivity.specificAttributes; track attribute.attributeName; let idx = $index) {
+          <div class="form-section" style="margin-bottom: 20px;">
+            <label>{{ attribute.attributeName }} @if (attribute.attributeRequired) {<span>*</span>}</label>
 
-        @if (isText(attribute)) {
-        <input pInputText type="text" [formControlName]="controlName(idx)" class="w-full" />
-        }
-        @if (isInteger(attribute)) {
-        <p-inputNumber [formControlName]="controlName(idx)" [min]="attribute.attributeMinValue ?? null" [max]="attribute.attributeMaxValue ?? null"></p-inputNumber>
-        }
-        @if (isList(attribute)) {
-        <p-select [formControlName]="controlName(idx)" [options]="listOptions(attribute)" optionLabel="label" optionValue="value" class="w-full"></p-select>
-        }
-        @if (isBoolean(attribute)) {
-        <p-checkbox [formControlName]="controlName(idx)" [binary]="true"></p-checkbox>
-        }
-        @if (isDate(attribute)) {
-        <p-datepicker [formControlName]="controlName(idx)" [showIcon]="true" appendTo="body"></p-datepicker>
+            @if (isText(attribute)) {
+            <input pInputText type="text" [formControlName]="controlName(idx)" class="w-full" />
+            }
+            @if (isInteger(attribute)) {
+            <p-inputNumber [formControlName]="controlName(idx)" [min]="attribute.attributeMinValue ?? null" [max]="attribute.attributeMaxValue ?? null"></p-inputNumber>
+            }
+            @if (isList(attribute)) {
+            <p-select [formControlName]="controlName(idx)" [options]="listOptions(attribute)" optionLabel="label" optionValue="value" class="w-full"></p-select>
+            }
+            @if (isBoolean(attribute)) {
+            <p-checkbox [formControlName]="controlName(idx)" [binary]="true"></p-checkbox>
+            }
+            @if (isDate(attribute)) {
+            <p-datepicker [formControlName]="controlName(idx)" [showIcon]="true" appendTo="body"></p-datepicker>
+            }
+          </div>
+          }
         }
       </div>
-      }
 
       <div class="actions">
         @if (targetParticipation()) {

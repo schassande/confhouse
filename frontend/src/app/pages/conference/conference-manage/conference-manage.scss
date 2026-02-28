@@ -161,3 +161,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.action-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 20px;
+  align-items: center;
+
+  .action-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #d7d7d7;
+    border-radius: 30px;
+    color: #1f2937;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  } 
+}

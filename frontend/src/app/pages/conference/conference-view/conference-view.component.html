@@ -46,9 +46,21 @@
 
     @if (currentPerson() && (visibleActivities().length > 0 || canManageConference() || speakerFeedbackSessions().length > 0)) {
       <div class="action-list-name">{{ 'CONFERENCE.VIEW.MY_ACTIVITIES' | translate }}:</div>
+      @if (nonRespondedActivityCount() > 0) {
+        <div class="non-responded-count">
+          {{ 'CONFERENCE.VIEW.NON_RESPONDED_COUNT' | translate: { count: nonRespondedActivityCount() } }}
+        </div>
+      }
       <div class="action-list">
         @for (activity of visibleActivities(); track activity.id) {
           <div class="action" [routerLink]="['/conference', conf.id, 'activities', activity.id, 'participation']">
+            @if (activityResponseState(activity.id) === 'YES') {
+              <i class="action-check action-check-yes fa-solid fa-circle-check"></i>
+            } @else if (activityResponseState(activity.id) === 'NO') {
+              <i class="action-check action-check-no fa-solid fa-circle-xmark"></i>
+            } @else {
+              <i class="action-check action-check-unknown fa-solid fa-circle-question"></i>
+            }
             <i class="action-icon {{ activity.icon }}"></i>
             <div class="action-name">{{ activity.name }}</div>
           </div>

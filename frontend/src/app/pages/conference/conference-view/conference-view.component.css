@@ -15,6 +15,14 @@
     text-align: left;
   }
 
+  .non-responded-count {
+    width: 100%;
+    text-align: left;
+    color: #1d4ed8;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+
   .action-list {
     display: flex;
     flex-direction: row;
@@ -24,6 +32,7 @@
   }
 
   .action {
+    position: relative;
     padding: 10px;
     border: 1px solid #ccc;
     display: flex;
@@ -38,6 +47,25 @@
     .action-icon {
       font-size: 5rem;
       color: #1976d2;
+    }
+
+    .action-check {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 1.5rem;
+    }
+
+    .action-check-yes {
+      color: #16a34a;
+    }
+
+    .action-check-no {
+      color: #dc2626;
+    }
+
+    .action-check-unknown {
+      color: #2563eb;
     }
   }
 

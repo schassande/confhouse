@@ -66,6 +66,8 @@ export interface ActivityParticipation extends PersistentData {
   personId: string;
   /** Participant type at registration time */
   participantType: ParticipantType;
+  /** Whether the person is currently registered for this activity.*/
+  participation: boolean;
   /** List of attribute values for this participation */
   attributes: {
     /** Name of the attribute */

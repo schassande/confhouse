@@ -9,6 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { TranslateModule } from '@ngx-translate/core';
 import { Activity, ParticipantType } from '../../../model/activity.model';
 import { ActivityService } from '../../../services/activity.service';
+import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import { UserSignService } from '../../../services/usersign.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,8 @@ interface SessionSpeakerView {
   fullName: string;
   company: string;
 }
+
+type ActivityResponseState = 'UNKNOWN' | 'YES' | 'NO';
 
 @Component({
   selector: 'app-conference-view',
@@ -50,12 +53,14 @@ export class ConferenceViewComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly conferenceService = inject(ConferenceService);
   private readonly activityService = inject(ActivityService);
+  private readonly activityParticipationService = inject(ActivityParticipationService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
   private readonly personService = inject(PersonService);
   private readonly userSignService = inject(UserSignService);
   private readonly _conference = signal<Conference | undefined>(undefined);
   private readonly _activities = signal<Activity[]>([]);
+  private readonly _activityResponseByActivityId = signal<Map<string, ActivityResponseState>>(new Map());
   private readonly _speakerSessions = signal<Session[]>([]);
   private readonly _sessionAllocations = signal<SessionAllocation[]>([]);
   private readonly speakerInfoById = signal<Map<string, SessionSpeakerView>>(new Map());
@@ -70,6 +75,30 @@ export class ConferenceViewComponent {
       this.activityService.byConferenceId(conferenceId).subscribe((activities) => this._activities.set(activities ?? []));
       this.sessionAllocationService.byConferenceId(conferenceId).subscribe((allocations) => this._sessionAllocations.set(allocations ?? []));
     }
+
+    effect((onCleanup) => {
+      const conferenceId = String(this.conference()?.id ?? '').trim();
+      const personId = String(this.currentPerson()?.id ?? '').trim();
+      if (!conferenceId || !personId) {
+        this._activityResponseByActivityId.set(new Map());
+        return;
+      }
+
+      const sub = this.activityParticipationService.byPersonId(personId).subscribe((participations) => {
+        const next = new Map<string, ActivityResponseState>();
+        (participations ?? [])
+          .filter((item) => String(item.conferenceId ?? '').trim() === conferenceId)
+          .forEach((item) => {
+            const activityId = String(item.activityId ?? '').trim();
+            if (!activityId) {
+              return;
+            }
+            next.set(activityId, item.participation ? 'YES' : 'NO');
+          });
+        this._activityResponseByActivityId.set(next);
+      });
+      onCleanup(() => sub.unsubscribe());
+    });
 
     effect((onCleanup) => {
       const conference = this.conference();
@@ -227,6 +256,14 @@ export class ConferenceViewComponent {
   });
 
   speakerFeedbackSessions = computed(() => this._speakerSessions());
+
+  activityResponseState(activityId: string): ActivityResponseState {
+    return this._activityResponseByActivityId().get(String(activityId ?? '').trim()) ?? 'UNKNOWN';
+  }
+
+  nonRespondedActivityCount = computed(() =>
+    this.visibleActivities().filter((activity) => this.activityResponseState(activity.id) === 'UNKNOWN').length
+  );
 
   private readonly sessionAllocationBySessionId = computed(() => {
     const map = new Map<string, SessionAllocation>();

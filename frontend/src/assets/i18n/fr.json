@@ -99,6 +99,7 @@
       "WEBSITE": "Site web",
       "CFP": "CFP",
       "MY_ACTIVITIES": "Votre participation Ã  la confÃ©rence",
+      "NON_RESPONDED_COUNT": "Il reste {{count}} participation(s) sans reponse",
       "MY_SESSIONS_FEEDBACK": "Vos sessions en tant qu'orateur et leurs feedbacks",
       "ORGANIZER": "Organisateur",
       "MANAGE": "Gerer la conference",
@@ -193,6 +194,7 @@
       "SEARCH": "Rechercher",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "Vous n etes pas autorise a vous inscrire a cette activite.",
+      "PARTICIPATION": "Participation",
       "PARTICIPANT_TYPE": "Type participant",
       "DELETE": "Supprimer l inscription",
       "SAVE": "Enregistrer l inscription",
@@ -205,12 +207,15 @@
       "DELETE_ERROR": "Impossible de supprimer l inscription",
       "AVAILABLE_ACTIVITIES": "Activites disponibles",
       "REGISTERED": "Inscrit",
-      "NOT_REGISTERED": "Non inscrit"
+      "NOT_REGISTERED": "Non inscrit",
+      "REFUSED": "Refusée",
+      "ACCEPTED": "Acceptée"
     },
     "ACTIVITY_ADMIN": {
       "SELECT_TITLE": "Selectionnez une activite a gerer",
       "TITLE": "Gestion de l activite {{name}}",
       "REGISTERED_COUNT": "Nombre d inscrits",
+      "FILTER_ALL": "Tous",
       "PARTICIPANTS_TITLE": "Liste des participants",
       "ADD_PARTICIPATION": "Ajouter une participation",
       "SEARCH_PLACEHOLDER": "Rechercher nom, email, valeurs d attributs",
@@ -750,5 +755,4 @@
     }
   }
 }
-
 

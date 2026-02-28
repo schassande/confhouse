@@ -22,6 +22,7 @@ import { Person } from '../../../model/person.model';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import { ActivityService } from '../../../services/activity.service';
 import { ConferenceService } from '../../../services/conference.service';
+import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
 import { UserSignService } from '../../../services/usersign.service';
 
@@ -62,6 +63,7 @@ export class ActivityParticipationComponent {
   private readonly conferenceService = inject(ConferenceService);
   private readonly activityService = inject(ActivityService);
   private readonly activityParticipationService = inject(ActivityParticipationService);
+  private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
   private readonly personService = inject(PersonService);
   private readonly userSignService = inject(UserSignService);
   private readonly translateService = inject(TranslateService);
@@ -79,6 +81,7 @@ export class ActivityParticipationComponent {
   readonly targetPerson = signal<Person | null>(null);
   readonly targetParticipation = signal<ActivityParticipation | null>(null);
   readonly registeredActivityIds = signal<Set<string>>(new Set());
+  readonly conferenceSpeakerPersonIds = signal<Set<string>>(new Set());
   readonly form = signal<FormGroup | null>(null);
 
   readonly selectingOtherPerson = signal(false);
@@ -101,7 +104,7 @@ export class ActivityParticipationComponent {
     const person = this.currentUserPerson();
     const conference = this.conference();
     const roles = new Set<ParticipantType>(['ATTENDEE']);
-    if (person?.isSpeaker) {
+    if (person?.id && this.conferenceSpeakerPersonIds().has(person.id)) {
       roles.add('SPEAKER');
     }
     if (conference && person?.email && conference.organizerEmails.includes(person.email)) {
@@ -140,17 +143,9 @@ export class ActivityParticipationComponent {
       .sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
   });
 
-  readonly activityTypeLabel = (type: ParticipantType) =>
-    this.translateService.instant(`CONFERENCE.ACTIVITIES.PARTICIPANT_TYPE.${type}`);
-
-  readonly participantTypeOptions = computed<SelectOption[]>(() => {
-    const activity = this.activity();
-    const allowed = (activity?.participantTypes?.length ? activity.participantTypes : ['SPEAKER', 'ATTENDEE', 'SPONSOR', 'ORGANIZER']) as ParticipantType[];
-    return allowed.map((value) => ({
-      label: this.translateService.instant(`CONFERENCE.ACTIVITIES.PARTICIPANT_TYPE.${value}`),
-      value,
-    }));
-  });
+  readonly participantTypeForTarget = computed<ParticipantType>(() =>
+    this.inferParticipantTypeForPerson(this.targetPerson())
+  );
 
   isRegistered(activityId: string): boolean {
     return this.registeredActivityIds().has(activityId);
@@ -176,6 +171,19 @@ export class ActivityParticipationComponent {
         this.cdr.markForCheck();
       },
       error: (error) => console.error('Error loading conference:', error),
+    });
+
+    this.conferenceSpeakerService.byConferenceId(conferenceId).pipe(take(1)).subscribe({
+      next: (conferenceSpeakers) => {
+        const ids = new Set(
+          (conferenceSpeakers ?? [])
+            .map((speaker) => String(speaker.personId ?? '').trim())
+            .filter((id) => !!id)
+        );
+        this.conferenceSpeakerPersonIds.set(ids);
+        this.cdr.markForCheck();
+      },
+      error: (error) => console.error('Error loading conference speakers:', error),
     });
 
     this.activityService.byConferenceId(conferenceId).pipe(take(1)).subscribe({
@@ -349,12 +357,7 @@ export class ActivityParticipationComponent {
     });
 
     const previous = this.targetParticipation();
-    const participantTypeControl = form.get('participantType');
-    const selectedParticipantType = String(participantTypeControl?.value ?? '').trim() as ParticipantType;
-    if (!selectedParticipantType) {
-      participantTypeControl?.markAsTouched();
-      return;
-    }
+    const selectedParticipantType = this.inferParticipantTypeForPerson(targetPerson);
     const payload: ActivityParticipation = {
       id: previous?.id ?? '',
       lastUpdated: previous?.lastUpdated ?? '',
@@ -362,6 +365,7 @@ export class ActivityParticipationComponent {
       activityId: activity.id,
       personId: targetPerson.id,
       participantType: selectedParticipantType,
+      participation: !!form.get('participation')?.value,
       attributes,
     };
     console.log('Saving participation with payload:', payload);
@@ -370,7 +374,11 @@ export class ActivityParticipationComponent {
         this.targetParticipation.set(saved);
         this.registeredActivityIds.update((current) => {
           const next = new Set(current);
-          next.add(saved.activityId);
+          if (saved.participation) {
+            next.add(saved.activityId);
+          } else {
+            next.delete(saved.activityId);
+          }
           return next;
         });
         this.messageService.add({
@@ -487,6 +495,7 @@ export class ActivityParticipationComponent {
         const ids = new Set(
           (participations ?? [])
             .filter((item) => String(item.conferenceId ?? '').trim() === conferenceId)
+            .filter((item) => !!item.participation)
             .map((item) => item.activityId)
             .filter((id) => !!id)
         );
@@ -501,21 +510,18 @@ export class ActivityParticipationComponent {
 
   private buildParticipationForm(activity: Activity): void {
     const controls: Record<string, FormControl> = {
-      participantType: new FormControl<ParticipantType | null>(null, [Validators.required]),
+      participation: new FormControl<boolean>(true, { nonNullable: true }),
     };
     (activity.specificAttributes ?? []).forEach((attribute, index) => {
-      const validators = attribute.attributeRequired && attribute.attributeType !== 'BOOLEAN'
-        ? [Validators.required]
-        : [];
-      const control = new FormControl(this.defaultValueFor(attribute), validators);
+      const control = new FormControl(this.defaultValueFor(attribute));
       controls[this.controlName(index)] = control;
     });
-    this.form.set(this.fb.group(controls));
-    const targetPerson = this.targetPerson();
-    if (targetPerson) {
-      const inferred = this.inferParticipantTypeForPerson(targetPerson, activity);
-      this.form()?.get('participantType')?.setValue(inferred);
-    }
+    const formGroup = this.fb.group(controls);
+    this.form.set(formGroup);
+    this.updateAttributeValidators(activity, formGroup, !!formGroup.get('participation')?.value);
+    formGroup.get('participation')?.valueChanges.subscribe((value) => {
+      this.updateAttributeValidators(activity, formGroup, !!value);
+    });
   }
 
   private patchFormFromParticipation(participation: ActivityParticipation | null): void {
@@ -528,7 +534,7 @@ export class ActivityParticipationComponent {
       this.buildParticipationForm(activity);
       return;
     }
-    form.get('participantType')?.setValue(participation.participantType ?? null);
+    form.get('participation')?.setValue(!!participation.participation);
     const byName = new Map(
       (participation.attributes ?? []).map((entry) => [String(entry.name ?? '').trim(), String(entry.value ?? '')])
     );
@@ -539,6 +545,22 @@ export class ActivityParticipationComponent {
       }
       const rawValue = byName.get(attribute.attributeName);
       control.setValue(this.deserializeAttributeValue(attribute, rawValue));
+    });
+    this.updateAttributeValidators(activity, form, !!form.get('participation')?.value);
+  }
+
+  private updateAttributeValidators(activity: Activity, form: FormGroup, participate: boolean): void {
+    (activity.specificAttributes ?? []).forEach((attribute, index) => {
+      const control = form.get(this.controlName(index));
+      if (!control) {
+        return;
+      }
+      if (participate && attribute.attributeRequired && attribute.attributeType !== 'BOOLEAN') {
+        control.setValidators([Validators.required]);
+      } else {
+        control.clearValidators();
+      }
+      control.updateValueAndValidity({ emitEvent: false });
     });
   }
 
@@ -583,21 +605,19 @@ export class ActivityParticipationComponent {
     }
   }
 
-  private inferParticipantTypeForPerson(person: Person, activity: Activity): ParticipantType {
+  private inferParticipantTypeForPerson(person: Person | null): ParticipantType {
+    if (!person) {
+      return 'ATTENDEE';
+    }
     const conference = this.conference();
-    const candidates: ParticipantType[] = [];
-    if (conference && conference.organizerEmails?.includes(person.email)) {
-      candidates.push('ORGANIZER');
+    const email = String(person.email ?? '').trim();
+    const personId = String(person.id ?? '').trim();
+    if (conference && email && conference.organizerEmails?.includes(email)) {
+      return 'ORGANIZER';
     }
-    if (person.isSpeaker) {
-      candidates.push('SPEAKER');
+    if (personId && this.conferenceSpeakerPersonIds().has(personId)) {
+      return 'SPEAKER';
     }
-    candidates.push('ATTENDEE');
-    const allowed = activity.participantTypes ?? [];
-    if (allowed.length === 0) {
-      return candidates[0];
-    }
-    const selected = candidates.find((candidate) => allowed.includes(candidate));
-    return selected ?? allowed[0];
+    return 'ATTENDEE';
   }
 }
