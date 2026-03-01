@@ -517,6 +517,15 @@
       </p-accordion>
 
       <div class="actions">
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [label]="'COMMON.CANCEL' | translate"
+          icon="pi pi-times"
+          (click)="cancel()"
+          [disabled]="saving()"
+        ></button>
         <button pButton type="button" [label]="'COMMON.SAVE' | translate" icon="pi pi-save" (click)="save()" [loading]="saving()"></button>
       </div>
     </form>

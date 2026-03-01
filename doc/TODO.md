@@ -1,7 +1,6 @@
 # TODO List
 
 ## Priority 1
-- page config voxxrin: bouton de retour vers voxxrin publish
 - Cancel speaker.
 - Speaker edit: when changing a speaker's unavailability, deallocate sessions from slots where the speaker is unavailable.
 

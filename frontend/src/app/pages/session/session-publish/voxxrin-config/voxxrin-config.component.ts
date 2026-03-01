@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -40,6 +40,7 @@ export class VoxxrinConfigComponent implements OnInit {
   readonly conference = input<Conference | undefined>(undefined);
 
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly conferenceService = inject(ConferenceService);
   private readonly conferenceSecretService = inject(ConferenceSecretService);
   private readonly fb = inject(FormBuilder);
@@ -237,12 +238,20 @@ export class VoxxrinConfigComponent implements OnInit {
       this.persistedSecretToken = secretToken;
       this.persistedConfig = saved;
       this.floorPlans.set([...(saved.infos?.floorPlans ?? [])]);
-      this.initializeForm(this.buildForm(saved));
+      await this.navigateToSessionPublish(conferenceId);
     } catch (error) {
       console.error('Unable to save Voxxrin config', error);
     } finally {
       this.saving.set(false);
     }
+  }
+
+  async cancel(): Promise<void> {
+    const conferenceId = this.effectiveConference()?.id;
+    if (!conferenceId) {
+      return;
+    }
+    await this.navigateToSessionPublish(conferenceId);
   }
 
   private async loadConfig(conferenceId: string): Promise<void> {
@@ -256,6 +265,10 @@ export class VoxxrinConfigComponent implements OnInit {
       this.floorPlans.set([]);
       this.initializeForm(this.buildForm(null));
     }
+  }
+
+  private async navigateToSessionPublish(conferenceId: string): Promise<void> {
+    await this.router.navigate(['/conference', conferenceId, 'publish']);
   }
 
   private async loadSecretToken(conferenceId: string): Promise<void> {
