@@ -10,7 +10,7 @@ export interface VoxxrinConfig extends PersistentData {
   /** Target conference for this publication config */
   conferenceId: string;
 
-  /** Voxxrin API base URL (for example https://api-demo.voxxr.in) */
+  /** Voxxrin API base URL (for example api-demo.voxxr.in) */
   baseUrl?: string;
 
   /** Voxxrin event identifier */

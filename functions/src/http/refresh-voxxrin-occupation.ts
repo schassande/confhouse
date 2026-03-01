@@ -51,7 +51,7 @@ export const refreshVoxxrinOccupation = onRequest({ cors: true, timeoutSeconds: 
       );
     }
 
-    const statsUrl = `${baseUrl}/api/events/${encodeURIComponent(eventId)}/talksStats?token=${encodeURIComponent(token)}`;
+    const statsUrl = `https://${baseUrl}/api/events/${encodeURIComponent(eventId)}/talksStats?token=${encodeURIComponent(token)}`;
     const stats = await callVoxxrinTalksStatsApi(statsUrl);
     const report = await updateSessionOccupations(db, conferenceId, stats.perTalkStats ?? []);
 

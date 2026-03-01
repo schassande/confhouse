@@ -48,7 +48,7 @@ export const refreshVoxxrinSchedule = onRequest({ cors: true, timeoutSeconds: 60
       );
     }
 
-    const refreshUrl = `${baseUrl}/api/crawlers/${encodeURIComponent(eventId)}/refreshScheduleRequest?token=${encodeURIComponent(token)}`;
+    const refreshUrl = `https://${baseUrl}/api/crawlers/${encodeURIComponent(eventId)}/refreshScheduleRequest?token=${encodeURIComponent(token)}`;
     const voxxrinResponse = await callVoxxrinRefreshApi(refreshUrl);
 
     logger.info('refreshVoxxrinSchedule completed', {
