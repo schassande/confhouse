@@ -11,6 +11,7 @@ import {
   ensureRequesterIsOrganizer,
 } from './conference-http-common';
 import { generateVoxxrinDescriptorForConference } from './generate-voxxrin-event-descriptor';
+import { refreshVoxxrinFeedbackPrivateUrls } from './refresh-voxxrin-feedback-private-urls';
 
 const VOXXRIN_SECRET_TOKEN_NAME = 'VOXXRIN_SECRET_TOKEN';
 
@@ -50,6 +51,13 @@ export const refreshVoxxrinSchedule = onRequest({ cors: true, timeoutSeconds: 60
 
     const refreshUrl = `https://${baseUrl}/api/crawlers/${encodeURIComponent(eventId)}/refreshScheduleRequest?token=${encodeURIComponent(token)}`;
     const voxxrinResponse = await callVoxxrinRefreshApi(refreshUrl);
+    const feedbackSyncReport = await refreshVoxxrinFeedbackPrivateUrls({
+      db,
+      conferenceId,
+      baseUrl,
+      eventId,
+      token,
+    });
 
     logger.info('refreshVoxxrinSchedule completed', {
       conferenceId,
@@ -57,6 +65,7 @@ export const refreshVoxxrinSchedule = onRequest({ cors: true, timeoutSeconds: 60
       storagePath: generated.storageResult.objectPath,
       archivedPreviousFilePath: generated.storageResult.archivedFilePath ?? null,
       voxxrinStatus: voxxrinResponse.status,
+      feedbackSyncReport,
     });
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -67,6 +76,7 @@ export const refreshVoxxrinSchedule = onRequest({ cors: true, timeoutSeconds: 60
       archivedPreviousFilePath: generated.storageResult.archivedFilePath ?? null,
       voxxrinStatus: voxxrinResponse.status,
       voxxrinResponse: voxxrinResponse.payload,
+      feedbackSyncReport,
     });
   } catch (err: unknown) {
     if (err instanceof HttpError) {
