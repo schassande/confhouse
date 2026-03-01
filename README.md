@@ -28,12 +28,16 @@ The main goal is **conference operations management**:
 - Session management:
   - Session list.
   - Session create/edit.
-  - Import from Conference Hall.
+  - Import sessions, speakers track and categories from Conference Hall.
 - Speaker management:
   - Conference speaker list.
   - Availability management.
 - Program allocation:
   - Assign sessions to slots and rooms.
+  - Automatic allocation
+  - Program view by track
+  - Program view by language
+  - Program view by room occupation (via Voxxrin data)
 - Activities management:
   - Activity setup.
   - Activity participation tracking.
@@ -64,6 +68,7 @@ This project is licensed under the **LGPL**.
 - **PrimeNG + PrimeIcons**
 - **ngx-translate** (i18n)
 - **RxJS**
+- [Font Awesome icons](https://fontawesome.com/search?c=marketing&ic=free-collection)
 
 ### Backend
 - **Firebase Cloud Functions** (HTTP + scheduled jobs)
@@ -91,5 +96,3 @@ This project is licensed under the **LGPL**.
 - [TODO List](doc/TODO.md)
 - [Test Guide](doc/TEST_GUIDE.md)
 - [Voxxrin JSON Schema](doc/voxxrin.jsonschema)
-
-

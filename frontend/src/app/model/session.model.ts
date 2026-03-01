@@ -51,7 +51,8 @@ export interface Session extends PersistentData {
     review : {
       average: number;
       votes: number;
-    }
+    },
+    occupation?: number;
   }
 }
 

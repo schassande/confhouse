@@ -40,6 +40,10 @@
           <i class="pi pi-calendar"></i>
           <span>{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate }}</span>
         </a>
+        <a class="action-link" href="" (click)="downloadExcel($event)">
+          <i class="pi pi-file-excel"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.EXPORT_EXCEL' | translate }}</span>
+        </a>
       </div>
     </div>
     <div class="action-category">
@@ -65,6 +69,12 @@
           <i class="pi pi-globe"></i>
           <span>{{ 'CONFERENCE.MANAGE.ACTIONS.PUBLISH' | translate }}</span>
         </a>
+        <a class="action-link" href="" (click)="refreshOccupation($event)">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.ROOMS_OCCUPATION' | translate }}</span>
+        </a>
+
+        
       </div>
     </div>
     <div class="action-category">
@@ -97,10 +107,6 @@
     </div>
   </div>
   <div class="action-bar" *ngIf="conferenceId() as id">
-    <a class="action-bar-item" href="" (click)="downloadExcel($event)">
-      <i class="pi pi-file-excel"></i>
-      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.EXPORT_EXCEL' | translate }}</span>
-    </a>
     <a class="action-bar-item" (click)="openDuplicateDialog()" style="background-color: #e8f5e9; border-color: #c8e6c9;">
       <i class="pi pi-clone"></i>
       <span>{{ 'CONFERENCE.MANAGE.DUPLICATE.BUTTON' | translate }}</span>
@@ -124,6 +130,21 @@
   @if (excelExportError() && conferenceId()) {
   <div class="danger-zone">
       <p class="delete-error">{{ excelExportError() }}</p>
+  </div>
+  }
+  @if (occupationRefreshing() && conferenceId()) {
+  <div class="danger-zone">
+      <p>{{ 'CONFERENCE.MANAGE.OCCUPATION_REFRESH_IN_PROGRESS' | translate }}</p>
+  </div>
+  }
+  @if (occupationRefreshError() && conferenceId()) {
+  <div class="danger-zone">
+      <p class="delete-error">{{ occupationRefreshError() }}</p>
+  </div>
+  }
+  @if (occupationRefreshSuccessAt() && conferenceId()) {
+  <div class="danger-zone">
+      <p>{{ 'CONFERENCE.MANAGE.OCCUPATION_REFRESH_SUCCESS' | translate:{ date: occupationRefreshSuccessAt() } }}</p>
   </div>
   }
   <p-dialog

@@ -86,6 +86,14 @@ export interface RefreshVoxxrinScheduleReport extends VoxxrinDescriptorStorageRe
   voxxrinResponse: unknown;
 }
 
+export interface RefreshVoxxrinOccupationReport {
+  sessionsInConference: number;
+  statsReceived: number;
+  sessionsUpdated: number;
+  unmatchedTalkStats: number;
+  refreshedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConferenceAdminService {
   private readonly http = inject(HttpClient);
@@ -152,6 +160,22 @@ export class ConferenceAdminService {
         }
       )
     );
+  }
+
+  async refreshVoxxrinOccupation(conferenceId: string): Promise<RefreshVoxxrinOccupationReport> {
+    const idToken = await this.getIdTokenOrThrow();
+    const response = await firstValueFrom(
+      this.http.post<{ report: RefreshVoxxrinOccupationReport }>(
+        `${functionBaseUrl}refreshVoxxrinOccupation`,
+        { conferenceId },
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      )
+    );
+    return response.report;
   }
 
   getVoxxrinEventDescriptorPublicUrl(conferenceId: string): string {

@@ -92,15 +92,19 @@
             [disabled]="speakerOptions().length === 0"
             styleClass="speaker-select"
           ></p-select>
-          <div class="planning-filter-checkbox">
-            <p-checkbox
-              inputId="show-lang-colors"
-              [binary]="true"
-              [ngModel]="showLangColors()"
-              (ngModelChange)="showLangColors.set(!!$event)"
-            ></p-checkbox>
-            <label for="show-lang-colors">{{ 'SESSION.ALLOCATION.SHOW_LANG' | translate }}</label>
-          </div>
+          <label class="speaker-select-label" for="color-by-select">
+            {{ 'SESSION.ALLOCATION.COLOR_BY' | translate }}
+          </label>
+          <p-select
+            inputId="color-by-select"
+            [options]="colorByOptions()"
+            [ngModel]="colorByMode()"
+            (ngModelChange)="colorByMode.set($event ?? 'track')"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            styleClass="color-by-select"
+          ></p-select>
         </div>
 
         @for (dayPlanning of dayPlanningViews(); track dayPlanning.day.id) {

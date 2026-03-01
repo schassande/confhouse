@@ -2,9 +2,6 @@
 
 ## Priority 1
 - page config voxxrin: bouton de retour vers voxxrin publish
-- talk statistics
-  - Download from Voxxrin: Public events: GET {{baseUrl}}/api/events/{{eventId}}/talksStats?token={{secretToken}}
-  - show statistics result in session-allocation
 - Show ratings for speaker:
   - GET {{baseUrl}}/api/events/{{eventId}}/dailyRatings/stats?token={{secretToken}}
   - GET {{baseUrl}}/api/events/{{eventId}}/talks/{{talkId}}/feedbacks?token={{secretToken}}&updatedSince={{updatedSinceISODatetime}}

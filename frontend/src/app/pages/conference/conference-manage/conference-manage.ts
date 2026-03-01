@@ -70,6 +70,9 @@ export class ConferenceManage {
   readonly deleteError = signal<string>('');
   readonly excelExporting = signal(false);
   readonly excelExportError = signal<string>('');
+  readonly occupationRefreshing = signal(false);
+  readonly occupationRefreshError = signal<string>('');
+  readonly occupationRefreshSuccessAt = signal<string>('');
   readonly duplicateDialogVisible = signal(false);
   readonly duplicating = signal(false);
   readonly duplicateError = signal<string>('');
@@ -155,6 +158,29 @@ export class ConferenceManage {
       this.excelExportError.set(message || this.translateService.instant('CONFERENCE.MANAGE.EXCEL_EXPORT_ERROR'));
     } finally {
       this.excelExporting.set(false);
+    }
+  }
+
+  async refreshOccupation(event?: Event): Promise<void> {
+    event?.preventDefault();
+    const conferenceId = this.conferenceId();
+    if (!conferenceId || this.occupationRefreshing()) {
+      return;
+    }
+
+    this.occupationRefreshing.set(true);
+    this.occupationRefreshError.set('');
+    this.occupationRefreshSuccessAt.set('');
+    try {
+      const report = await this.conferenceAdminService.refreshVoxxrinOccupation(conferenceId);
+      this.occupationRefreshSuccessAt.set(String(report.refreshedAt ?? '').trim());
+    } catch (error: unknown) {
+      const message = error instanceof Error
+        ? error.message
+        : this.translateService.instant('CONFERENCE.MANAGE.OCCUPATION_REFRESH_ERROR');
+      this.occupationRefreshError.set(message || this.translateService.instant('CONFERENCE.MANAGE.OCCUPATION_REFRESH_ERROR'));
+    } finally {
+      this.occupationRefreshing.set(false);
     }
   }
 

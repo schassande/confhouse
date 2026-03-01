@@ -34,6 +34,8 @@ interface SelectOption {
   value: string;
 }
 
+type ColorByMode = 'track' | 'lang' | 'occupation';
+
 interface SlotView {
   key: string;
   day: Day;
@@ -116,7 +118,8 @@ export class SessionAllocation implements OnInit {
   readonly selectedSessionTypeIds = signal<string[]>([]);
   readonly selectedTrackIds = signal<string[]>([]);
   readonly selectedSpeakerId = signal('');
-  readonly showLangColors = signal(false);
+  readonly colorByMode = signal<ColorByMode>('track');
+  readonly colorByOptions = signal<SelectOption[]>([]);
   readonly hasUnavailabilityFilter = signal(false);
   readonly unallocatedSearchText = signal('');
   readonly draggingPayload = signal<DragPayload | null>(null);
@@ -155,6 +158,18 @@ export class SessionAllocation implements OnInit {
         value: speakerId,
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  private readonly allocatedOccupationMax = computed(() => {
+    let max = 0;
+    this.allocations().forEach((allocation) => {
+      const session = this.sessionById().get(allocation.sessionId);
+      const occupation = this.sessionOccupationValue(session);
+      if (occupation > max) {
+        max = occupation;
+      }
+    });
+    return max;
   });
 
   private readonly sessionById = computed(() => {
@@ -369,6 +384,11 @@ export class SessionAllocation implements OnInit {
         this.slotTypes.set(slotTypes);
       });
 
+    this.refreshColorByOptions();
+    this.translateService.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshColorByOptions());
+
     this.loading.set(false);
   }
 
@@ -387,7 +407,14 @@ export class SessionAllocation implements OnInit {
   }
 
   slotText(slotView: SlotView): string {
-    return this.selectedSession(slotView)?.title ?? '';
+    const session = this.selectedSession(slotView);
+    if (!session) {
+      return '';
+    }
+    if (this.colorByMode() === 'occupation') {
+      return `${this.sessionOccupationValue(session)} - ${session.title}`;
+    }
+    return session.title;
   }
 
   slotStyle(slotView: SlotView): Record<string, string | number> {
@@ -443,10 +470,14 @@ export class SessionAllocation implements OnInit {
   }
 
   sessionDisplayColor(session: Session): string {
-    if (!this.showLangColors()) {
-      return this.sessionTrackColor(session);
+    const mode = this.colorByMode();
+    if (mode === 'lang') {
+      return this.sessionLanguageColor(session);
     }
-    return this.sessionLanguageColor(session);
+    if (mode === 'occupation') {
+      return this.sessionOccupationColor(session);
+    }
+    return this.sessionTrackColor(session);
   }
 
   selectedSessionId(slotView: SlotView): string | null {
@@ -1131,6 +1162,31 @@ export class SessionAllocation implements OnInit {
     return palette[hash % palette.length];
   }
 
+  private sessionOccupationValue(session: Session | undefined): number {
+    const value = Number(session?.conference?.occupation ?? 0);
+    if (!Number.isFinite(value) || value < 0) {
+      return 0;
+    }
+    return Math.floor(value);
+  }
+
+  private sessionOccupationColor(session: Session): string {
+    const occupation = this.sessionOccupationValue(session);
+    const maxOccupation = this.allocatedOccupationMax();
+    const index = maxOccupation <= 0
+      ? 0
+      : Math.max(0, Math.min(9, Math.round((occupation / maxOccupation) * 9)));
+    return OCCUPATION_COLOR_SCALE[index];
+  }
+
+  private refreshColorByOptions(): void {
+    this.colorByOptions.set([
+      { label: this.translateService.instant('SESSION.ALLOCATION.COLOR_BY_TRACK'), value: 'track' },
+      { label: this.translateService.instant('SESSION.ALLOCATION.COLOR_BY_LANG'), value: 'lang' },
+      { label: this.translateService.instant('SESSION.ALLOCATION.COLOR_BY_OCCUPATION'), value: 'occupation' },
+    ]);
+  }
+
   private setDragPayload(event: DragEvent, payload: DragPayload): void {
     this.draggingPayload.set(payload);
     if (!event.dataTransfer) {
@@ -1155,3 +1211,16 @@ export class SessionAllocation implements OnInit {
     return this.draggingPayload();
   }
 }
+
+const OCCUPATION_COLOR_SCALE = [
+  '#B91C1C',
+  '#DC2626',
+  '#EA580C',
+  '#F97316',
+  '#F59E0B',
+  '#EAB308',
+  '#84CC16',
+  '#22C55E',
+  '#16A34A',
+  '#15803D',
+] as const;

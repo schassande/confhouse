@@ -78,4 +78,7 @@ firebase emulators:start --only storage
 
 ## Hosting access
 
+### Snowcamp
 - [https://conference-manager-007.web.app](https://conference-manager-007.web.app)
+- https://conf.snowcamp.io
+- Test env: https://app-demo.voxxr.in/events/snc27-test/schedule

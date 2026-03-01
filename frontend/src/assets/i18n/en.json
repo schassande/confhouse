@@ -158,6 +158,9 @@
       "DELETE_ERROR": "Conference deletion failed.",
       "EXCEL_EXPORT_GENERATING": "Generating Excel export...",
       "EXCEL_EXPORT_ERROR": "Excel export failed.",
+      "OCCUPATION_REFRESH_IN_PROGRESS": "Refreshing rooms occupation...",
+      "OCCUPATION_REFRESH_SUCCESS": "Rooms occupation refreshed at {{date}}",
+      "OCCUPATION_REFRESH_ERROR": "Rooms occupation refresh failed.",
       "DUPLICATE": {
         "BUTTON": "Duplicate conference",
         "TITLE": "Duplicate conference",
@@ -188,6 +191,7 @@
         "ALLOCATION": "Allocate",
         "SESSIONS": "Manage sessions",
         "SPEAKERS": "Manage speakers",
+        "ROOMS_OCCUPATION":"Download occupation",
         "CONFIG_ACTIVITIES": "Configure",
         "CONFIG_SPONSOR": "Configure",
         "MANAGE_SPONSOR": "Manage",
@@ -713,6 +717,10 @@
       "FILTER_SESSION_TYPE": "Session types",
       "FILTER_TRACK": "Tracks",
       "HIGHLIGHT_SPEAKER": "Highlight",
+      "COLOR_BY": "Color by",
+      "COLOR_BY_TRACK": "Track",
+      "COLOR_BY_LANG": "Lang",
+      "COLOR_BY_OCCUPATION": "Occupation",
       "SHOW_LANG": "Show lang",
       "AUTO_ALLOCATE": "Auto Allocate",
       "FILTER_HAS_UNAVAILABILITY": "Has unavailability",
@@ -757,4 +765,3 @@
     }
   }
 }
-

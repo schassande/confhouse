@@ -6,6 +6,7 @@ import { deleteConference } from './http/delete-conference';
 import { duplicateConference } from './http/duplicate-conference';
 import { refreshConferenceDashboard } from './http/refresh-conference-dashboard';
 import { refreshVoxxrinSchedule } from './http/refresh-voxxrin-schedule';
+import { refreshVoxxrinOccupation } from './http/refresh-voxxrin-occupation';
 import { recomputeConferenceDashboardDaily } from './scheduler/recompute-conference-dashboard-daily';
 
 setGlobalOptions({ maxInstances: 10 });
@@ -18,5 +19,6 @@ export {
   duplicateConference,
   refreshConferenceDashboard,
   refreshVoxxrinSchedule,
+  refreshVoxxrinOccupation,
   recomputeConferenceDashboardDaily,
 };

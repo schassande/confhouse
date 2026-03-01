@@ -145,6 +145,9 @@
       "DELETE_ERROR": "La suppression de la conference a echoué.",
       "EXCEL_EXPORT_GENERATING": "Generation du fichier Excel...",
       "EXCEL_EXPORT_ERROR": "La generation du fichier Excel a echoue.",
+      "OCCUPATION_REFRESH_IN_PROGRESS": "Mise a jour de l'occupation des salles...",
+      "OCCUPATION_REFRESH_SUCCESS": "Occupation des salles mise a jour a {{date}}",
+      "OCCUPATION_REFRESH_ERROR": "La mise a jour de l'occupation des salles a echoue.",
       "DUPLICATE": {
         "BUTTON": "Dupliquer la conference",
         "TITLE": "Dupliquer la conference",
@@ -174,6 +177,7 @@
         "ALLOCATION": "Allouer",
         "SESSIONS": "Gérer les sessions",
         "SPEAKERS": "Gérer les speakers",
+        "ROOMS_OCCUPATION":"Télécharger occupation",
         "CONFIG_ACTIVITIES": "Configurer",
         "ACTIVITY_PARTICIPATION": "Inscription",
         "ACTIVITY_ADMIN": "Gestion des activites",
@@ -698,6 +702,10 @@
       "FILTER_SESSION_TYPE": "Types de session",
       "FILTER_TRACK": "Tracks",
       "HIGHLIGHT_SPEAKER": "Mise en évidence",
+      "COLOR_BY": "Color by",
+      "COLOR_BY_TRACK": "Track",
+      "COLOR_BY_LANG": "Lang",
+      "COLOR_BY_OCCUPATION": "Occupation",
       "SHOW_LANG": "Afficher langue",
       "AUTO_ALLOCATE": "Auto Allocate",
       "FILTER_HAS_UNAVAILABILITY": "a des indisponibilités",
@@ -755,4 +763,3 @@
     }
   }
 }
-
