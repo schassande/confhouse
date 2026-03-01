@@ -590,7 +590,7 @@ export class SessionAllocation implements OnInit {
     if (!this.isSessionTypeCompatibleById(payload.sessionId, slotView)) {
       return;
     }
-    await this.assignSessionToSlot(payload.sessionId, slotView);
+    await this.assignSessionToSlot(payload.sessionId, slotView, payload.sourceSlotKey);
   }
 
   async onUnallocatedDrop(event: DragEvent): Promise<void> {
@@ -759,7 +759,7 @@ export class SessionAllocation implements OnInit {
     }
   }
 
-  private async assignSessionToSlot(sessionId: string, slotView: SlotView): Promise<boolean> {
+  private async assignSessionToSlot(sessionId: string, slotView: SlotView, sourceSlotKey?: string): Promise<boolean> {
     const conferenceId = this.conferenceId();
     if (!conferenceId) {
       return false;
@@ -774,6 +774,73 @@ export class SessionAllocation implements OnInit {
 
     if (currentTargetAllocation?.sessionId === sessionId) {
       return true;
+    }
+
+    if (
+      sourceSlotKey
+      && sourceSlotKey !== slotView.key
+      && currentTargetAllocation?.sessionId
+      && currentTargetAllocation.sessionId !== sessionId
+    ) {
+      const sourceAllocation = this.allocationBySlotKey().get(sourceSlotKey);
+      const sourceSlotView = this.slotViewByKey().get(sourceSlotKey);
+      const sourceSession = this.sessionById().get(sessionId);
+      const targetSession = this.sessionById().get(currentTargetAllocation.sessionId);
+
+      const canSwap =
+        !!sourceAllocation
+        && !!sourceSlotView
+        && !!sourceSession
+        && !!targetSession
+        && sourceAllocation.sessionId === sessionId
+        && (sourceSession.conference?.sessionTypeId ?? '') === (targetSession.conference?.sessionTypeId ?? '')
+        && this.isSessionTypeCompatible(targetSession, sourceSlotView);
+
+      if (canSwap) {
+        if (!sourceAllocation || !sourceSlotView) {
+          return false;
+        }
+        const sourceConflicts = this.findSpeakerAvailabilityConflicts(sessionId, slotView);
+        const targetConflicts = this.findSpeakerAvailabilityConflicts(currentTargetAllocation.sessionId, sourceSlotView);
+        if (sourceConflicts.length > 0) {
+          this.showAvailabilityConflict(sourceConflicts);
+          return false;
+        }
+        if (targetConflicts.length > 0) {
+          this.showAvailabilityConflict(targetConflicts);
+          return false;
+        }
+
+        this.saving.set(true);
+        try {
+          const sourceMoved = await firstValueFrom(
+            this.sessionAllocationService.save({
+              ...sourceAllocation,
+              conferenceId,
+              dayId: slotView.day.id,
+              slotId: slotView.slot.id,
+              roomId: slotView.room.id,
+              sessionId,
+            })
+          );
+          this.updateLocalAllocationsAfterSave(sourceMoved, slotView.key);
+
+          const targetMoved = await firstValueFrom(
+            this.sessionAllocationService.save({
+              ...currentTargetAllocation,
+              conferenceId,
+              dayId: sourceSlotView.day.id,
+              slotId: sourceSlotView.slot.id,
+              roomId: sourceSlotView.room.id,
+              sessionId: currentTargetAllocation.sessionId,
+            })
+          );
+          this.updateLocalAllocationsAfterSave(targetMoved, sourceSlotView.key);
+          return true;
+        } finally {
+          this.saving.set(false);
+        }
+      }
     }
 
     const conflicts = this.findSpeakerAvailabilityConflicts(sessionId, slotView);

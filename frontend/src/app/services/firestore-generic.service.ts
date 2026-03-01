@@ -50,10 +50,10 @@ export abstract class FirestoreGenericService<T extends PersistentData> {
   }
   public save(item: T): Observable<T> {
     if (item.id) {
-      console.log(`Updating ${this.getCollectionName()}:${item.id}...`);
+      // console.log(`Updating ${this.getCollectionName()}:${item.id}...`);
       return this.update(item);
     } else {
-      console.log(`Creating ${this.getCollectionName()}:${item.id}...`);
+      // console.log(`Creating ${this.getCollectionName()}:${item.id}...`);
       return this.create(item);
     }
   }
@@ -61,10 +61,10 @@ export abstract class FirestoreGenericService<T extends PersistentData> {
   private create(item: T): Observable<T> {
     // Génère un ID unique
     item.id = doc(this.itemsCollection()).id;
-    console.log(`Creating new item with ID: ${item.id}`);
+    // console.log(`Creating new item with ID: ${item.id}`);
     item.lastUpdated = new Date().getTime().toString();
     const itemDoc = doc(this.firestore, `${this.getCollectionName()}/${item.id}`);
-    console.log(`Document ID: ${itemDoc.id}`);
+    // console.log(`Document ID: ${itemDoc.id}`);
     const sanitized = this.removeUndefinedDeep(item) as T;
     return from(setDoc(itemDoc, sanitized).then(() => sanitized));
   }
