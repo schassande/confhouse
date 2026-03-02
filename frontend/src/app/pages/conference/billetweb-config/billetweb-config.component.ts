@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -53,6 +53,8 @@ export class BilletwebConfigComponent {
 
   readonly events = signal<BilletwebEvent[]>([]);
   readonly tickets = signal<BilletwebTicketTypeOption[]>([]);
+  private readonly eventsCache = new Map<string, BilletwebEvent[]>();
+  private readonly eventsInFlight = new Map<string, Promise<BilletwebEvent[]>>();
 
   readonly form = this.fb.nonNullable.group({
     apiUrl: ['', [Validators.required]],
@@ -81,6 +83,15 @@ export class BilletwebConfigComponent {
       this.tickets.set([]);
       if (normalized) {
         void this.loadTickets(normalized);
+      }
+    });
+    this.form.valueChanges.pipe(
+      map(() => this.getConnectionSignature()),
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe((signature) => {
+      if (signature) {
+        void this.preloadEvents();
       }
     });
     void this.initialize();
@@ -139,7 +150,7 @@ export class BilletwebConfigComponent {
   }
 
   async refreshEvents(): Promise<void> {
-    await this.loadEvents();
+    await this.loadEvents(true);
   }
 
   async save(): Promise<void> {
@@ -228,6 +239,8 @@ export class BilletwebConfigComponent {
           sponsorConferenceTicketTypeId: String(config.ticketTypes?.sponsorConference?.ticketTypeId ?? ''),
           sponsorStandTicketTypeId: String(config.ticketTypes?.sponsorStand?.ticketTypeId ?? ''),
         }, { emitEvent: false });
+      } else {
+        void this.preloadEvents();
       }
     } catch (error: unknown) {
       this.errorMessage.set(this.toErrorMessage(error));
@@ -236,11 +249,25 @@ export class BilletwebConfigComponent {
     }
   }
 
-  private async loadEvents(): Promise<void> {
+  private async preloadEvents(): Promise<void> {
+    if (!this.canGoToStep2()) {
+      return;
+    }
+    try {
+      await this.getOrLoadEvents(false);
+    } catch {
+      // Keep preload silent; explicit actions (test/next/refresh) surface errors.
+    }
+  }
+
+  private async loadEvents(forceReload = false): Promise<void> {
+    if (!this.canGoToStep2()) {
+      return;
+    }
     this.loadingEvents.set(true);
     this.errorMessage.set('');
     try {
-      const events = await this.fetchEvents();
+      const events = await this.getOrLoadEvents(forceReload);
       this.events.set(events);
     } catch (error: unknown) {
       this.events.set([]);
@@ -248,6 +275,48 @@ export class BilletwebConfigComponent {
     } finally {
       this.loadingEvents.set(false);
     }
+  }
+
+  private async getOrLoadEvents(forceReload: boolean): Promise<BilletwebEvent[]> {
+    const signature = this.getConnectionSignature();
+    if (!signature) {
+      return [];
+    }
+
+    if (!forceReload) {
+      const cached = this.eventsCache.get(signature);
+      if (cached) {
+        return cached;
+      }
+      const inFlight = this.eventsInFlight.get(signature);
+      if (inFlight) {
+        return await inFlight;
+      }
+    } else {
+      this.eventsCache.delete(signature);
+    }
+
+    const promise = this.fetchEvents();
+    this.eventsInFlight.set(signature, promise);
+    try {
+      const events = await promise;
+      this.eventsCache.set(signature, events);
+      return events;
+    } finally {
+      this.eventsInFlight.delete(signature);
+    }
+  }
+
+  private getConnectionSignature(): string {
+    const raw = this.form.getRawValue();
+    const apiUrl = raw.apiUrl.trim();
+    const userId = raw.userId.trim();
+    const keyVersion = raw.keyVersion.trim();
+    const key = raw.key.trim();
+    if (!apiUrl || !userId || !keyVersion || !key) {
+      return '';
+    }
+    return `${apiUrl}|${userId}|${keyVersion}|${key}`;
   }
 
   private async fetchEvents(): Promise<BilletwebEvent[]> {
