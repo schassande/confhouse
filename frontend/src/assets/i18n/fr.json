@@ -183,6 +183,7 @@
         "ACTIVITY_ADMIN": "Gestion des activites",
         "PUBLISH": "Publier",
         "EXPORT_EXCEL": "Export Excel",
+        "BILLETWEB": "Configuration BilletWeb",
         "CATEGORY_SPONSOR": "Sponsor",
         "CONFIG_SPONSOR": "Configurer",
         "MANAGE_SPONSOR": "Gérer"
@@ -498,6 +499,31 @@
           "SESSION_DELETED": "Sessions supprimées",
           "SPEAKER_DELETED": "Orateurs supprimés"
         }
+      },
+      "BILLETWEB": {
+        "TITLE": "Configuration BilletWeb",
+        "STEPS": {
+          "CONNECTION": "Connexion BilletWeb",
+          "EVENT": "Choix de l événement",
+          "TICKETS": "Les types de ticket"
+        },
+        "API_URL": "API URL",
+        "USER_ID": "User ID",
+        "KEY_VERSION": "Version de clé",
+        "KEY": "Clé secrète",
+        "TEST": "Tester",
+        "TEST_RESULT": "{{count}} conférence(s) trouvée(s).",
+        "EVENT_ID": "Evénement BilletWeb",
+        "EVENT_PLACEHOLDER": "Sélectionner un événement",
+        "REFRESH_EVENTS": "Rafraîchir la liste",
+        "LOADING_TICKETS": "Chargement des types de ticket...",
+        "SPEAKER_TICKET": "Ticket speaker",
+        "ORGANIZER_TICKET": "Ticket organisateur",
+        "SPONSOR_CONFERENCE_TICKET": "Ticket sponsor conférence",
+        "SPONSOR_STAND_TICKET": "Ticket sponsor stand",
+        "TICKET_PLACEHOLDER": "Sélectionner un type de ticket",
+        "PREVIOUS": "Précédent",
+        "NEXT": "Suivant"
       },
       "VOXXRIN": {
         "TITLE": "Configuration Voxxrin",

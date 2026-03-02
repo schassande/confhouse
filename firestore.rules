@@ -147,6 +147,10 @@ service cloud.firestore {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
       allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
     }
+    match /billetweb-config/{document=**} {
+      allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
+      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+    }
 
     match /{document=**} {
       allow read, write: if false;

@@ -1,0 +1,80 @@
+.billetweb-config-container {
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header-row h1 {
+  margin: 0 0 1rem;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.field-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.full-width {
+  max-width: none;
+}
+
+.field input,
+.field p-select {
+  width: 100%;
+  max-width: 420px;
+  justify-self: start;
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.result-message {
+  color: #14532d;
+}
+
+.step-nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+.step-nav-right {
+  justify-content: flex-end;
+}
+
+.step-nav-left {
+  justify-content: flex-start;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.error-message {
+  color: #b91c1c;
+  margin: 0;
+}

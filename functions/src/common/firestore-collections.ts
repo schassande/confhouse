@@ -4,6 +4,7 @@ export const FIRESTORE_COLLECTIONS = {
   PLATFORM_CONFIG: 'platform-config',
   CONFERENCE_HALL_CONFIG: 'conference-hall-config',
   VOXXRIN_CONFIG: 'voxxrin-config',
+  BILLETWEB_CONFIG: 'billetweb-config',
   CONFERENCE_SECRET: 'conferenceSecret',
   SESSION: 'session',
   PERSON: 'person',

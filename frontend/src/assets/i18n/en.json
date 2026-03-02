@@ -198,7 +198,8 @@
         "ACTIVITY_PARTICIPATION": "Participation",
         "ACTIVITY_ADMIN": "Activity management",
         "PUBLISH": "Publish program",
-        "EXPORT_EXCEL": "Export to Excel"
+        "EXPORT_EXCEL": "Export to Excel",
+        "BILLETWEB": "BilletWeb configuration"
       }
     },
     "ACTIVITY_PARTICIPATION": {
@@ -556,6 +557,31 @@
           "SESSION_DELETED": "Deleted sessions",
           "SPEAKER_DELETED": "Deleted speakers"
         }
+      },
+      "BILLETWEB": {
+        "TITLE": "BilletWeb configuration",
+        "STEPS": {
+          "CONNECTION": "BilletWeb connection",
+          "EVENT": "Event selection",
+          "TICKETS": "Ticket types"
+        },
+        "API_URL": "API URL",
+        "USER_ID": "User ID",
+        "KEY_VERSION": "Key version",
+        "KEY": "Secret key",
+        "TEST": "Test",
+        "TEST_RESULT": "{{count}} conference(s) found.",
+        "EVENT_ID": "BilletWeb event",
+        "EVENT_PLACEHOLDER": "Select an event",
+        "REFRESH_EVENTS": "Refresh list",
+        "LOADING_TICKETS": "Loading ticket types...",
+        "SPEAKER_TICKET": "Speaker ticket",
+        "ORGANIZER_TICKET": "Organizer ticket",
+        "SPONSOR_CONFERENCE_TICKET": "Conference sponsor ticket",
+        "SPONSOR_STAND_TICKET": "Stand sponsor ticket",
+        "TICKET_PLACEHOLDER": "Select a ticket type",
+        "PREVIOUS": "Previous",
+        "NEXT": "Next"
       },
       "VOXXRIN": {
         "TITLE": "Voxxrin configuration",

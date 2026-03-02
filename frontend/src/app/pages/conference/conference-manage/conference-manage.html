@@ -40,6 +40,10 @@
           <i class="pi pi-calendar"></i>
           <span>{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate }}</span>
         </a>
+        <a class="action-link" [routerLink]="['/conference', id, 'config', 'billetweb']">
+          <i class="pi pi-ticket"></i>
+          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.BILLETWEB' | translate }}</span>
+        </a>
         <a class="action-link" href="" (click)="downloadExcel($event)">
           <i class="pi pi-file-excel"></i>
           <span>{{ 'CONFERENCE.MANAGE.ACTIONS.EXPORT_EXCEL' | translate }}</span>

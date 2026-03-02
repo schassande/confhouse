@@ -103,6 +103,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard],
   },
   {
+    path: 'conference/:conferenceId/config/billetweb',
+    loadComponent: () => import('./pages/conference/billetweb-config/billetweb-config.component').then((m) => m.BilletwebConfigComponent),
+    canActivate: [AuthGuard, ConferenceOrganizerGuard, ConferenceManageContextGuard],
+  },
+  {
     path: 'conference/:conferenceId/activity-participation',
     loadComponent: () => import('./pages/activity/activity-participation/activity-participation.component').then((m) => m.ActivityParticipationComponent),
     canActivate: [AuthGuard, ConferenceManageContextGuard],

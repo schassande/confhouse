@@ -1,0 +1,223 @@
+<section class="billetweb-config-container">
+  <div class="header-row">
+    <h1>
+      {{ conference()?.name }} {{ conference()?.edition }} - {{ 'CONFERENCE.CONFIG.BILLETWEB.TITLE' | translate }}
+    </h1>
+  </div>
+
+  @if (loading()) {
+    <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
+  } @else {
+    <form [formGroup]="form" class="config-form">
+      <p-stepper [value]="activeStep()" [linear]="true">
+        <p-step-list>
+          <p-step [value]="1">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.CONNECTION' | translate }}</p-step>
+          <p-step [value]="2">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.EVENT' | translate }}</p-step>
+          <p-step [value]="3">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.TICKETS' | translate }}</p-step>
+        </p-step-list>
+        <p-step-panels>
+          <p-step-panel [value]="1">
+            <ng-template #content>
+              <div class="step-content">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="apiUrl">{{ 'CONFERENCE.CONFIG.BILLETWEB.API_URL' | translate }}</label>
+                    <input id="apiUrl" pInputText type="text" formControlName="apiUrl" />
+                  </div>
+                  <div class="field">
+                    <label for="userId">{{ 'CONFERENCE.CONFIG.BILLETWEB.USER_ID' | translate }}</label>
+                    <input id="userId" pInputText type="text" formControlName="userId" />
+                  </div>
+                  <div class="field">
+                    <label for="keyVersion">{{ 'CONFERENCE.CONFIG.BILLETWEB.KEY_VERSION' | translate }}</label>
+                    <input id="keyVersion" pInputText type="text" formControlName="keyVersion" />
+                  </div>
+                  <div class="field">
+                    <label for="key">{{ 'CONFERENCE.CONFIG.BILLETWEB.KEY' | translate }}</label>
+                    <input id="key" pInputText type="text" formControlName="key" autocomplete="off" />
+                  </div>
+                </div>
+
+                <div class="inline-actions">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-check"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.TEST' | translate"
+                    (click)="testConnection()"
+                    [disabled]="!canGoToStep2() || testingConnection()"
+                    [loading]="testingConnection()"
+                  ></button>
+                </div>
+
+                @if (connectionTestResultCount() !== null) {
+                  <p class="result-message">
+                    {{ 'CONFERENCE.CONFIG.BILLETWEB.TEST_RESULT' | translate:{ count: connectionTestResultCount() } }}
+                  </p>
+                }
+
+                <div class="step-nav step-nav-right">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
+                    (click)="nextStep()"
+                    [disabled]="!canGoToStep2()"
+                  ></button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
+
+          <p-step-panel [value]="2">
+            <ng-template #content>
+              <div class="step-content">
+                <div class="field full-width">
+                  <label for="eventId">{{ 'CONFERENCE.CONFIG.BILLETWEB.EVENT_ID' | translate }}</label>
+                  <p-select
+                    inputId="eventId"
+                    formControlName="eventId"
+                    [options]="eventOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.EVENT_PLACEHOLDER' | translate"
+                  ></p-select>
+                </div>
+
+                <div class="inline-actions">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-refresh"
+                    severity="secondary"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.REFRESH_EVENTS' | translate"
+                    (click)="refreshEvents()"
+                    [loading]="loadingEvents()"
+                  ></button>
+                </div>
+
+                <div class="step-nav">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.PREVIOUS' | translate"
+                    (click)="previousStep()"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
+                    (click)="nextStep()"
+                    [disabled]="!canGoToStep3()"
+                  ></button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
+
+          <p-step-panel [value]="3">
+            <ng-template #content>
+              <div class="step-content">
+                @if (loadingTickets()) {
+                  <p>{{ 'CONFERENCE.CONFIG.BILLETWEB.LOADING_TICKETS' | translate }}</p>
+                }
+
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="speakerTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPEAKER_TICKET' | translate }}</label>
+                    <p-select
+                      inputId="speakerTicketTypeId"
+                      formControlName="speakerTicketTypeId"
+                      [options]="ticketOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
+                    ></p-select>
+                  </div>
+
+                  <div class="field">
+                    <label for="organizerTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.ORGANIZER_TICKET' | translate }}</label>
+                    <p-select
+                      inputId="organizerTicketTypeId"
+                      formControlName="organizerTicketTypeId"
+                      [options]="ticketOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
+                    ></p-select>
+                  </div>
+
+                  <div class="field">
+                    <label for="sponsorConferenceTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_CONFERENCE_TICKET' | translate }}</label>
+                    <p-select
+                      inputId="sponsorConferenceTicketTypeId"
+                      formControlName="sponsorConferenceTicketTypeId"
+                      [options]="ticketOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
+                    ></p-select>
+                  </div>
+
+                  <div class="field">
+                    <label for="sponsorStandTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_STAND_TICKET' | translate }}</label>
+                    <p-select
+                      inputId="sponsorStandTicketTypeId"
+                      formControlName="sponsorStandTicketTypeId"
+                      [options]="ticketOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
+                    ></p-select>
+                  </div>
+                </div>
+
+                <div class="step-nav step-nav-left">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.PREVIOUS' | translate"
+                    (click)="previousStep()"
+                  ></button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
+        </p-step-panels>
+      </p-stepper>
+
+      @if (errorMessage()) {
+        <p class="error-message">{{ errorMessage() }}</p>
+      }
+
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-times"
+          severity="secondary"
+          [label]="'COMMON.CANCEL' | translate"
+          (click)="cancel()"
+          [disabled]="saving()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-save"
+          [label]="'COMMON.SAVE' | translate"
+          (click)="save()"
+          [loading]="saving()"
+          [disabled]="!canSave()"
+        ></button>
+      </div>
+    </form>
+  }
+</section>
