@@ -41,12 +41,8 @@
           <span>{{ 'CONFERENCE.CONFIG.PLANNING_STRUCTURE.TAB' | translate }}</span>
         </a>
         <a class="action-link" [routerLink]="['/conference', id, 'config', 'billetweb']">
-          <i class="pi pi-ticket"></i>
+          <i class="fa-solid fa-id-badge"></i>
           <span>{{ 'CONFERENCE.MANAGE.ACTIONS.BILLETWEB' | translate }}</span>
-        </a>
-        <a class="action-link" href="" (click)="downloadExcel($event)">
-          <i class="pi pi-file-excel"></i>
-          <span>{{ 'CONFERENCE.MANAGE.ACTIONS.EXPORT_EXCEL' | translate }}</span>
         </a>
       </div>
     </div>
@@ -111,6 +107,10 @@
     </div>
   </div>
   <div class="action-bar" *ngIf="conferenceId() as id">
+    <a class="action-bar-item" href="" (click)="downloadExcel($event)">
+      <i class="pi pi-file-excel"></i>
+      <span>{{ 'CONFERENCE.MANAGE.ACTIONS.EXPORT_EXCEL' | translate }}</span>
+    </a>
     <a class="action-bar-item" (click)="openDuplicateDialog()" style="background-color: #e8f5e9; border-color: #c8e6c9;">
       <i class="pi pi-clone"></i>
       <span>{{ 'CONFERENCE.MANAGE.DUPLICATE.BUTTON' | translate }}</span>

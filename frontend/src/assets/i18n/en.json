@@ -199,7 +199,7 @@
         "ACTIVITY_ADMIN": "Activity management",
         "PUBLISH": "Publish program",
         "EXPORT_EXCEL": "Export to Excel",
-        "BILLETWEB": "BilletWeb configuration"
+        "BILLETWEB": "BilletWeb"
       }
     },
     "ACTIVITY_PARTICIPATION": {
