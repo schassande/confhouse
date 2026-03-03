@@ -84,8 +84,25 @@
 
     @if (!canCurrentUserParticipate() && !isOrganizer()) {
     <p class="warning">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.NOT_AUTHORIZED' | translate }}</p>
+    } @else if (showRegistrationClosedMessage()) {
+    <div class="warning-block">
+      <p class="warning">{{ registrationClosedMessageKey() | translate }}</p>
+      <p>
+        {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.REGISTRATION_WINDOW' | translate }}:
+        <strong>{{ registrationWindowLabel() }}</strong>
+      </p>
+    </div>
     } @else if (form(); as participationForm) {
     <form [formGroup]="participationForm" class="participation-form">
+      @if (isParticipationReadOnly()) {
+      <div class="readonly-info">
+        <p>{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.READONLY_OUTSIDE_WINDOW' | translate }}</p>
+        <p>
+          {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.REGISTRATION_WINDOW' | translate }}:
+          <strong>{{ registrationWindowLabel() }}</strong>
+        </p>
+      </div>
+      }
       <div>
         <p-checkbox style="display: inline-block;" inputId="participation" formControlName="participation" [binary]="true"></p-checkbox>
         <label style="display: inline-block; margin-left: 0.5rem;" for="participation">{{ 'CONFERENCE.ACTIVITY_PARTICIPATION.PARTICIPATION' | translate }}</label>
@@ -118,9 +135,9 @@
 
       <div class="actions">
         @if (targetParticipation()) {
-        <button pButton type="button" class="p-button-danger" (click)="deleteParticipation()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.DELETE' | translate"></button>
+        <button pButton type="button" class="p-button-danger" (click)="deleteParticipation()" [disabled]="isParticipationReadOnly()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.DELETE' | translate"></button>
         }
-        <button pButton type="button" class="p-button-success" (click)="saveParticipation()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SAVE' | translate"></button>
+        <button pButton type="button" class="p-button-success" (click)="saveParticipation()" [disabled]="isParticipationReadOnly()" [label]="'CONFERENCE.ACTIVITY_PARTICIPATION.SAVE' | translate"></button>
       </div>
     </form>
     }

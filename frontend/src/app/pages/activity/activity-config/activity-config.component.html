@@ -53,6 +53,23 @@
               </div>
             </div>
             <p class="activity-description">{{ activityDescription(activity) }}</p>
+            @if (activity.registerParticipant) {
+            <div class="activity-registration-meta">
+              <p-tag [value]="'CONFERENCE.ACTIVITIES.REGISTRATION_REQUIRED' | translate" severity="info"></p-tag>
+              @if (activity.registrationStart) {
+              <p>
+                {{ 'CONFERENCE.ACTIVITIES.REGISTRATION_START' | translate }}:
+                {{ formatActivityDate(activity.registrationStart) }}
+              </p>
+              }
+              @if (activity.registrationEnd) {
+              <p>
+                {{ 'CONFERENCE.ACTIVITIES.REGISTRATION_END' | translate }}:
+                {{ formatActivityDate(activity.registrationEnd) }}
+              </p>
+              }
+            </div>
+            }
           </article>
           }
         </div>
@@ -157,6 +174,37 @@
       </div>
 
       @if (form.get('registerParticipant')?.value) {
+      <div class="form-row">
+        <div class="form-section">
+          <label for="registrationStart" class="form-label">
+            {{ 'CONFERENCE.ACTIVITIES.REGISTRATION_START' | translate }}
+          </label>
+          <p-datepicker
+            inputId="registrationStart"
+            formControlName="registrationStart"
+            [showIcon]="true"
+            [showTime]="true"
+            hourFormat="24"
+            appendTo="body"
+            class="w-full"
+          ></p-datepicker>
+        </div>
+        <div class="form-section">
+          <label for="registrationEnd" class="form-label">
+            {{ 'CONFERENCE.ACTIVITIES.REGISTRATION_END' | translate }}
+          </label>
+          <p-datepicker
+            inputId="registrationEnd"
+            formControlName="registrationEnd"
+            [showIcon]="true"
+            [showTime]="true"
+            hourFormat="24"
+            appendTo="body"
+            class="w-full"
+          ></p-datepicker>
+        </div>
+      </div>
+
       <div class="form-section">
         <label for="participantTypes" class="form-label">{{ 'CONFERENCE.ACTIVITIES.PARTICIPANT_TYPES' | translate }}</label>
         <p-multiselect

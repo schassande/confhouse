@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DataViewModule } from 'primeng/dataview';
+import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
@@ -41,6 +42,7 @@ interface ActivitySlotInfo {
     TranslateModule,
     ButtonModule,
     DataViewModule,
+    DatePickerModule,
     DialogModule,
     InputTextModule,
     TextareaModule,
@@ -237,6 +239,16 @@ export class ActivityConfigComponent {
     };
 
     const specificAttributes = this.extractSpecificAttributes(currentForm);
+    const registrationStartIso = this.fromDatePickerValue(currentForm.get('registrationStart')?.value);
+    const registrationEndIso = this.fromDatePickerValue(currentForm.get('registrationEnd')?.value);
+    if (registrationStartIso && registrationEndIso && new Date(registrationStartIso).getTime() >= new Date(registrationEndIso).getTime()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translateService.instant('COMMON.ERROR'),
+        detail: this.translateService.instant('CONFERENCE.ACTIVITIES.INVALID_REGISTRATION_DATES'),
+      });
+      return;
+    }
     const editId = this.editingId();
     const previous = this.currentEditingActivity();
 
@@ -250,6 +262,8 @@ export class ActivityConfigComponent {
       slotId: selectedSlotId || undefined,
       start: startIso,
       end: endIso,
+      registrationStart: registrationStartIso || undefined,
+      registrationEnd: registrationEndIso || undefined,
       description: {
         EN: String(currentForm.value.description_en ?? '').trim(),
         FR: String(currentForm.value.description_fr ?? '').trim(),
@@ -371,6 +385,8 @@ export class ActivityConfigComponent {
       slotId: [activity?.slotId ?? '', []],
       start: [this.toDateTimeInput(linkedSlot?.start ?? activity?.start), [Validators.required]],
       end: [this.toDateTimeInput(linkedSlot?.end ?? activity?.end), [Validators.required]],
+      registrationStart: [this.toDatePickerValue(activity?.registrationStart), []],
+      registrationEnd: [this.toDatePickerValue(activity?.registrationEnd), []],
       description_en: [activity?.description?.['EN'] ?? activity?.description?.['en'] ?? '', []],
       description_fr: [activity?.description?.['FR'] ?? activity?.description?.['fr'] ?? '', []],
       participantTypes: [activity?.participantTypes ?? [], []],
@@ -384,6 +400,7 @@ export class ActivityConfigComponent {
       ),
     });
     this.syncDateInputsState(formGroup);
+    this.syncRegistrationPeriodState(formGroup);
     this.form.set(formGroup);
   }
 
@@ -489,6 +506,25 @@ export class ActivityConfigComponent {
     return date.toISOString();
   }
 
+  private toDatePickerValue(value: string | undefined): Date | null {
+    if (!value) {
+      return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private fromDatePickerValue(value: unknown): string {
+    if (!value) {
+      return '';
+    }
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+    }
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+  }
+
   private activitySchedule(activity: Activity): { start: string; end: string } {
     const linked = this.getActivitySlotInfoById(activity.slotId);
     if (linked) {
@@ -519,6 +555,30 @@ export class ActivityConfigComponent {
     };
     apply(slotIdControl?.value);
     slotIdControl?.valueChanges.subscribe((value) => apply(value));
+  }
+
+  private syncRegistrationPeriodState(formGroup: FormGroup): void {
+    const registerParticipantControl = formGroup.get('registerParticipant');
+    const registrationStartControl = formGroup.get('registrationStart');
+    const registrationEndControl = formGroup.get('registrationEnd');
+    const apply = (rawValue: unknown) => {
+      const enabled = Boolean(rawValue);
+      if (enabled) {
+        registrationStartControl?.clearValidators();
+        registrationEndControl?.clearValidators();
+        registrationStartControl?.enable({ emitEvent: false });
+        registrationEndControl?.enable({ emitEvent: false });
+      } else {
+        registrationStartControl?.clearValidators();
+        registrationEndControl?.clearValidators();
+        registrationStartControl?.disable({ emitEvent: false });
+        registrationEndControl?.disable({ emitEvent: false });
+      }
+      registrationStartControl?.updateValueAndValidity({ emitEvent: false });
+      registrationEndControl?.updateValueAndValidity({ emitEvent: false });
+    };
+    apply(registerParticipantControl?.value);
+    registerParticipantControl?.valueChanges.subscribe((value) => apply(value));
   }
 
   private getActivitySlotInfoById(slotId: string | undefined): ActivitySlotInfo | undefined {

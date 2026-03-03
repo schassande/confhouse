@@ -199,6 +199,10 @@
       "SEARCH": "Rechercher",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "Vous n etes pas autorise a vous inscrire a cette activite.",
+      "REGISTRATION_NOT_OPEN_YET": "La periode d'inscription n'a pas encore commence pour cette activite.",
+      "REGISTRATION_CLOSED": "La periode d'inscription est terminee pour cette activite.",
+      "REGISTRATION_WINDOW": "Periode d'inscription",
+      "READONLY_OUTSIDE_WINDOW": "La periode d'inscription est fermee, votre participation existante est affichee en lecture seule.",
       "PARTICIPATION": "Participation",
       "PARTICIPANT_TYPE": "Type participant",
       "DELETE": "Supprimer l'inscription",
@@ -242,6 +246,9 @@
       "SLOT_HELP": "Quand un slot est lié, les heures debut/fin viennent du slot.",
       "START": "Debut",
       "END": "Fin",
+      "REGISTRATION_REQUIRED": "Inscription requise",
+      "REGISTRATION_START": "Debut des inscriptions",
+      "REGISTRATION_END": "Fin des inscriptions",
       "DESCRIPTION_EN": "Description (Anglais)",
       "DESCRIPTION_FR": "Description (Français)",
       "PARTICIPANT_TYPES": "Types de participants",
@@ -281,6 +288,7 @@
       "ACTIVITY_DELETED": "Activité supprimée avec succès",
       "ACTIVITY_DELETE_ERROR": "Erreur lors de la suppression de l'activité",
       "INVALID_DATES": "La date de debut doit etre avant la date de fin",
+      "INVALID_REGISTRATION_DATES": "La date de debut des inscriptions doit etre avant la date de fin des inscriptions",
       "INVALID_SLOT": "Le slot d'activite selectionne est invalide."
     },
     "SPEAKERS": {

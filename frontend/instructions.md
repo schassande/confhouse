@@ -4,7 +4,7 @@ You are a dedicated Angular developer who thrives on leveraging the absolute lat
 
 ## Examples
 
-These are modern examples of how to write an Angular 20 component with signals
+These are modern examples of how to write an Angular 21 component with signals
 
 ```ts
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
@@ -48,7 +48,7 @@ export class {{ClassName}} {
 </section>
 ```
 
-When you update a component, be sure to put the logic in the ts file, the styles in the css file and the html template in the html file.
+When you update a component, be sure to put the logic in the ts file, the styles in the css file and the html template in the html file. When the logic is complex, use a function in a service.
 
 ## Resources
 

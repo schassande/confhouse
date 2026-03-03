@@ -146,9 +146,26 @@ export class ActivityParticipationComponent {
   readonly participantTypeForTarget = computed<ParticipantType>(() =>
     this.inferParticipantTypeForPerson(this.targetPerson())
   );
+  readonly registrationWindow = computed(() => this.computeRegistrationWindow(this.activity()));
+  readonly isParticipationEditOpen = computed(() => this.isNowInRegistrationWindow(this.registrationWindow()));
+  readonly isParticipationReadOnly = computed(() => !this.isParticipationEditOpen() && !!this.targetParticipation());
+  readonly showRegistrationClosedMessage = computed(() => !this.isParticipationEditOpen() && !this.targetParticipation());
+  readonly registrationClosedMessageKey = computed(() => {
+    const window = this.registrationWindow();
+    const now = Date.now();
+    if (window.startMs !== null && now < window.startMs) {
+      return 'CONFERENCE.ACTIVITY_PARTICIPATION.REGISTRATION_NOT_OPEN_YET';
+    }
+    return 'CONFERENCE.ACTIVITY_PARTICIPATION.REGISTRATION_CLOSED';
+  });
 
   isRegistered(activityId: string): boolean {
     return this.registeredActivityIds().has(activityId);
+  }
+
+  registrationWindowLabel(): string {
+    const window = this.registrationWindow();
+    return `${this.formatDateTime(window.startIso)} - ${this.formatDateTime(window.endIso)}`;
   }
 
   openActivity(activityId: string): void {
@@ -346,6 +363,9 @@ export class ActivityParticipationComponent {
     if (!this.canCurrentUserParticipate() && !this.isOrganizer()) {
       return;
     }
+    if (this.isParticipationReadOnly() || this.showRegistrationClosedMessage()) {
+      return;
+    }
 
     const attributes = (activity.specificAttributes ?? []).map((attribute, index) => {
       const controlName = this.controlName(index);
@@ -372,6 +392,7 @@ export class ActivityParticipationComponent {
     this.activityParticipationService.save(payload).pipe(take(1)).subscribe({
       next: (saved) => {
         this.targetParticipation.set(saved);
+        this.applyParticipationEditionState();
         this.registeredActivityIds.update((current) => {
           const next = new Set(current);
           if (saved.participation) {
@@ -402,6 +423,9 @@ export class ActivityParticipationComponent {
   deleteParticipation(): void {
     const target = this.targetParticipation();
     if (!target) {
+      return;
+    }
+    if (this.isParticipationReadOnly()) {
       return;
     }
     this.activityParticipationService.delete(target.id).then(() => {
@@ -471,6 +495,7 @@ export class ActivityParticipationComponent {
       next: (participation) => {
         this.targetParticipation.set(participation ?? null);
         this.patchFormFromParticipation(participation ?? null);
+        this.applyParticipationEditionState();
         this.loading.set(false);
         this.cdr.markForCheck();
       },
@@ -522,6 +547,7 @@ export class ActivityParticipationComponent {
     formGroup.get('participation')?.valueChanges.subscribe((value) => {
       this.updateAttributeValidators(activity, formGroup, !!value);
     });
+    this.applyParticipationEditionState();
   }
 
   private patchFormFromParticipation(participation: ActivityParticipation | null): void {
@@ -547,6 +573,7 @@ export class ActivityParticipationComponent {
       control.setValue(this.deserializeAttributeValue(attribute, rawValue));
     });
     this.updateAttributeValidators(activity, form, !!form.get('participation')?.value);
+    this.applyParticipationEditionState();
   }
 
   private updateAttributeValidators(activity: Activity, form: FormGroup, participate: boolean): void {
@@ -603,6 +630,60 @@ export class ActivityParticipationComponent {
       default:
         return rawValue;
     }
+  }
+
+  private applyParticipationEditionState(): void {
+    const form = this.form();
+    const activity = this.activity();
+    if (!form || !activity) {
+      return;
+    }
+    if (this.isParticipationReadOnly()) {
+      form.disable({ emitEvent: false });
+      return;
+    }
+    form.enable({ emitEvent: false });
+    this.updateAttributeValidators(activity, form, !!form.get('participation')?.value);
+  }
+
+  private computeRegistrationWindow(activity: Activity | undefined): { startIso: string; endIso: string; startMs: number | null; endMs: number | null } {
+    const startIso = String(activity?.registrationStart ?? '').trim();
+    const endIso = String(activity?.registrationEnd ?? '').trim();
+    const startMs = this.parseIsoToTimestamp(startIso);
+    const endMs = this.parseIsoToTimestamp(endIso);
+    return { startIso, endIso, startMs, endMs };
+  }
+
+  private isNowInRegistrationWindow(window: { startMs: number | null; endMs: number | null }): boolean {
+    if (window.startMs === null || window.endMs === null) {
+      return true;
+    }
+    const now = Date.now();
+    return now >= window.startMs && now <= window.endMs;
+  }
+
+  private parseIsoToTimestamp(value: string): number | null {
+    if (!value) {
+      return null;
+    }
+    const date = new Date(value);
+    const time = date.getTime();
+    return Number.isNaN(time) ? null : time;
+  }
+
+  private formatDateTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value || '-';
+    }
+    const lang = (this.translateService.currentLang || this.translateService.getDefaultLang() || 'en').toLowerCase();
+    return new Intl.DateTimeFormat(lang, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
   }
 
   private inferParticipantTypeForPerson(person: Person | null): ParticipantType {

@@ -83,6 +83,20 @@
         margin: 0.75rem 0 0 0;
         color: #374151;
       }
+
+      .activity-registration-meta {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        align-items: flex-start;
+
+        p {
+          margin: 0;
+          color: #4b5563;
+          font-size: 0.9rem;
+        }
+      }
     }
 
     .empty-state {

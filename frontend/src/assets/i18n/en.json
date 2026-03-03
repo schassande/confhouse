@@ -212,6 +212,10 @@
       "SEARCH": "Search",
       "TARGET_PERSON": "Participant",
       "NOT_AUTHORIZED": "You are not allowed to register for this activity.",
+      "REGISTRATION_NOT_OPEN_YET": "Registration is not open yet for this activity.",
+      "REGISTRATION_CLOSED": "Registration is closed for this activity.",
+      "REGISTRATION_WINDOW": "Registration window",
+      "READONLY_OUTSIDE_WINDOW": "Registration is closed, but your existing participation is displayed in read-only mode.",
       "PARTICIPATION": "Participation",
       "PARTICIPANT_TYPE": "Participant type",
       "DELETE": "Delete registration",
@@ -255,6 +259,9 @@
       "SLOT_HELP": "When a slot is linked, start and end are taken from that slot.",
       "START": "Start",
       "END": "End",
+      "REGISTRATION_REQUIRED": "Registration required",
+      "REGISTRATION_START": "Registration start",
+      "REGISTRATION_END": "Registration end",
       "DESCRIPTION_EN": "Description (English)",
       "DESCRIPTION_FR": "Description (French)",
       "PARTICIPANT_TYPES": "Participant types",
@@ -294,6 +301,7 @@
       "ACTIVITY_DELETED": "Activity deleted successfully",
       "ACTIVITY_DELETE_ERROR": "Error deleting activity",
       "INVALID_DATES": "Start date must be before end date",
+      "INVALID_REGISTRATION_DATES": "Registration start must be before registration end",
       "INVALID_SLOT": "The selected activity slot is invalid."
     },
     "SPONSOR_CONFIG": {

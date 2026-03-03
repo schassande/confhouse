@@ -32,6 +32,10 @@ export interface Activity extends PersistentData {
     /** Per participant type  */
     perParticipantType: { [participantType: string]: number };
   };
+  /** Start date and time of the registration period (ISO 8601 string) */
+  registrationStart?: string;
+  /** End date and time of the registration period (ISO 8601 string) */
+  registrationEnd?: string;
 }
 export type ParticipantType = 'SPEAKER' | 'ATTENDEE' | 'SPONSOR' | 'ORGANIZER';
 /**
