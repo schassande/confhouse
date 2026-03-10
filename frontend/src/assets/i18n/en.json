@@ -122,7 +122,19 @@
         "ABSTRACT": "Abstract",
         "REFERENCE": "Reference",
         "REVIEW": "Review by CFP committee",
-        "READ_FEEDBACKS": "Read feedbacks"
+        "READ_FEEDBACKS": "Read feedbacks",
+        "CANNOT_PRESENT": "I can no longer present",
+        "ACTION_ERROR": "Unable to process your request right now.",
+        "DASHBOARD_REFRESH_WARNING": "The change was saved, but statistics refresh failed.",
+        "ACTION_DIALOG": {
+          "TITLE": "Cancellation confirmation",
+          "INTRO": "You are about to update session \"{{title}}\".",
+          "IRREVERSIBLE": "Any cancellation is definitive.",
+          "SINGLE_SPEAKER": "This session has only one speaker. It will be fully cancelled.",
+          "CANCEL_SESSION": "Cancel the whole session",
+          "REMOVE_SPEAKER_ONLY": "Remove only my participation (other speakers will present without me)",
+          "CONFIRM": "Confirm"
+        }
       }
     },
     "MANAGE": {

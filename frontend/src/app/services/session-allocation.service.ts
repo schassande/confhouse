@@ -87,6 +87,41 @@ export class SessionAllocationService extends FirestoreGenericService<SessionAll
   }
 
   /**
+   * Deallocates every allocation attached to the provided session ids.
+   *
+   * This method resolves matching allocations first, then delegates the actual
+   * status update / allocation deletion workflow to {@link deallocateByAllocations}.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sessionIds Session ids to deallocate.
+   * @param options Optional preloaded data and behavior flags.
+   * @returns Deallocation report with removed allocations and updated sessions.
+   */
+  async deallocateBySessionIds(
+    conferenceId: string,
+    sessionIds: string[],
+    options?: SessionDeallocateOptions
+  ): Promise<SessionDeallocationResult> {
+    if (!conferenceId || !sessionIds?.length) {
+      return { deallocatedAllocations: [], updatedSessions: [] };
+    }
+
+    const allAllocations = options?.allAllocations
+      ?? await firstValueFrom(this.byConferenceId(conferenceId));
+    const sessionIdSet = new Set(
+      sessionIds.map((sessionId) => String(sessionId ?? '').trim()).filter((sessionId) => !!sessionId)
+    );
+    const allocationsToRemove = allAllocations.filter((allocation) =>
+      sessionIdSet.has(String(allocation.sessionId ?? '').trim())
+    );
+
+    return this.deallocateByAllocations(conferenceId, allocationsToRemove, {
+      ...options,
+      allAllocations,
+    });
+  }
+
+  /**
    * Deallocates the provided allocations and updates impacted session statuses when needed.
    *
    * Status transition rule:

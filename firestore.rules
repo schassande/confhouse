@@ -93,7 +93,8 @@ service cloud.firestore {
     }
     match /conference-speaker/{document=**} {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
-      allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+      allow read: if isConferenceOrganizer(resource.data.conferenceId) || isSamePerson(resource.data.personId);
+      allow update, delete: if isConferenceOrganizer(resource.data.conferenceId);
     }
     match /conference-dashboard/{dashboardId} {
       allow read: if isConferenceOrganizer(resource.data.conferenceId);

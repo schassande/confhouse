@@ -12,7 +12,7 @@
   - Billetweb for organiser: Use API to create/delete the ticket of the organiser
   - Billetweb for sponsor: Use API to create/delete the ticket of the sponsor
 - Cancel speaker.
-- Speaker edit: when changing a speaker's unavailability, deallocate sessions from slots where the speaker is unavailable.
+- RGPD
 
 ## Priority 2
 - Default color list for tracks and session types.

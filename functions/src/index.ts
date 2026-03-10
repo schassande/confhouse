@@ -9,6 +9,7 @@ import { refreshVoxxrinSchedule } from './http/refresh-voxxrin-schedule';
 import { refreshVoxxrinOccupation } from './http/refresh-voxxrin-occupation';
 import { fetchBilletweb } from './http/fetch-billetweb';
 import { recomputeConferenceDashboardDaily } from './scheduler/recompute-conference-dashboard-daily';
+import { speakerSessionAction } from './http/speaker-session-action';
 
 setGlobalOptions({ maxInstances: 10 });
 
@@ -22,5 +23,6 @@ export {
   refreshVoxxrinSchedule,
   refreshVoxxrinOccupation,
   fetchBilletweb,
+  speakerSessionAction,
   recomputeConferenceDashboardDaily,
 };

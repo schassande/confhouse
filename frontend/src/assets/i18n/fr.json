@@ -109,7 +109,19 @@
         "ABSTRACT": "Résumé",
         "REFERENCE": "Référence",
         "REVIEW": "Evaluation moyenne du CFP",
-        "READ_FEEDBACKS": "Lire les feedbacks"
+        "READ_FEEDBACKS": "Lire les feedbacks",
+        "CANNOT_PRESENT": "Je ne peux plus présenter",
+        "ACTION_ERROR": "Impossible de traiter votre demande pour le moment.",
+        "DASHBOARD_REFRESH_WARNING": "La modification est enregistrée, mais le rafraîchissement des statistiques a échoué.",
+        "ACTION_DIALOG": {
+          "TITLE": "Confirmation d'annulation",
+          "INTRO": "Vous allez modifier la session \"{{title}}\".",
+          "IRREVERSIBLE": "Toute annulation est définitive.",
+          "SINGLE_SPEAKER": "Cette session n'a qu'un seul speaker. Elle sera annulée complètement.",
+          "CANCEL_SESSION": "Annuler complètement la session",
+          "REMOVE_SPEAKER_ONLY": "Retirer uniquement ma participation (les autres speakers présenteront la session)",
+          "CONFIRM": "Confirmer"
+        }
       }
     },
     "MANAGE": {

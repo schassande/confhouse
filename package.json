@@ -7,6 +7,7 @@
     "build": "npm run build:frontend && npm run build:functions",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
     "deploy:functions": "npm run build && firebase deploy --only functions",
+    "deploy:firestore:rules": "firebase deploy --only firestore:rules",
     "deploy:storage": "npm run build && firebase deploy --only storage",
     "deploy:all": "npm run build && firebase deploy --only hosting,functions,storage"
   }

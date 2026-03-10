@@ -19,6 +19,14 @@ import { SessionStatusBadgeComponent } from '../../../components/session-status-
 import { PersonService } from '../../../services/person.service';
 import { catchError, forkJoin, map, of, take } from 'rxjs';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
+import {
+  SpeakerSessionDecision,
+  SpeakerSessionManagementService,
+} from '../../../services/speaker-session-management.service';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { FormsModule } from '@angular/forms';
+import { RadioButtonModule } from 'primeng/radiobutton';
 
 interface SessionSpeakerView {
   id: string;
@@ -32,9 +40,13 @@ type ActivityResponseState = 'UNKNOWN' | 'YES' | 'NO';
   selector: 'app-conference-view',
   standalone: true,
   imports: [
+    ButtonModule,
     CardModule,
     CommonModule,
+    DialogModule,
     FontAwesomeModule,
+    FormsModule,
+    RadioButtonModule,
     RouterModule,
     TagModule,
     TranslateModule,
@@ -56,6 +68,7 @@ export class ConferenceViewComponent {
   private readonly activityParticipationService = inject(ActivityParticipationService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
+  private readonly speakerSessionManagementService = inject(SpeakerSessionManagementService);
   private readonly personService = inject(PersonService);
   private readonly userSignService = inject(UserSignService);
   private readonly _conference = signal<Conference | undefined>(undefined);
@@ -63,7 +76,14 @@ export class ConferenceViewComponent {
   private readonly _activityResponseByActivityId = signal<Map<string, ActivityResponseState>>(new Map());
   private readonly _speakerSessions = signal<Session[]>([]);
   private readonly _sessionAllocations = signal<SessionAllocation[]>([]);
+  private readonly _isConferenceSpeaker = signal(false);
   private readonly speakerInfoById = signal<Map<string, SessionSpeakerView>>(new Map());
+  readonly sessionActionDialogVisible = signal(false);
+  readonly selectedSessionAction = signal<SpeakerSessionDecision>('CANCEL_SESSION');
+  readonly sessionActionTarget = signal<Session | null>(null);
+  readonly processingSessionActionId = signal('');
+  readonly sessionActionErrorKey = signal('');
+  readonly dashboardRefreshWarning = signal(false);
   private translateService = inject(TranslateService);
   lang = computed(() => (this.translateService.getCurrentLang() ?? 'EN').toUpperCase());
   currentPerson = computed(() => this.userSignService.getCurrentPerson());
@@ -84,10 +104,9 @@ export class ConferenceViewComponent {
         return;
       }
 
-      const sub = this.activityParticipationService.byPersonId(personId).subscribe((participations) => {
+      const sub = this.activityParticipationService.byConferenceAndPersonId(conferenceId, personId).subscribe((participations) => {
         const next = new Map<string, ActivityResponseState>();
         (participations ?? [])
-          .filter((item) => String(item.conferenceId ?? '').trim() === conferenceId)
           .forEach((item) => {
             const activityId = String(item.activityId ?? '').trim();
             if (!activityId) {
@@ -106,8 +125,9 @@ export class ConferenceViewComponent {
       const conferenceId = String(conference?.id ?? '').trim();
       const speakerId = String(person?.id ?? '').trim();
 
-      if (!conferenceId || !speakerId || !person?.isSpeaker) {
+      if (!conferenceId || !speakerId) {
         this._speakerSessions.set([]);
+        this._isConferenceSpeaker.set(false);
         return;
       }
 
@@ -116,6 +136,12 @@ export class ConferenceViewComponent {
           .filter((session) => String(session.conference?.conferenceId ?? '').trim() === conferenceId)
           .sort((a, b) => String(a.title ?? '').localeCompare(String(b.title ?? '')));
         this._speakerSessions.set(feedbackSessions);
+        this._isConferenceSpeaker.set(
+          feedbackSessions.some((session) => {
+            const status = session.conference?.status;
+            return status === 'ACCEPTED' || status === 'PROGRAMMED';
+          })
+        );
       });
 
       onCleanup(() => sub.unsubscribe());
@@ -175,6 +201,14 @@ export class ConferenceViewComponent {
   }
 
   conference = computed(() => this._conference());
+  isConferenceSpeaker = computed(() => this._isConferenceSpeaker());
+
+  /**
+   * Computes conference start/end dates from configured days.
+   *
+   * @param conf Conference source.
+   * @returns Date range when available.
+   */
   conferenceDateRange(conf: Conference): { start?: string; end?: string } {
     const sortedDates = [...(conf.days ?? [])]
       .map((day) => day.date)
@@ -188,6 +222,12 @@ export class ConferenceViewComponent {
     return { start: sortedDates[0], end: sortedDates[sortedDates.length - 1] };
   }
 
+  /**
+   * Computes CFP date range if both bounds are valid dates.
+   *
+   * @param conf Conference source.
+   * @returns CFP date range or `null`.
+   */
   cfpDateRange(conf: Conference): { start: string; end: string } | null {
     const start = String(conf.cfp?.startDate ?? '').trim();
     const end = String(conf.cfp?.endDate ?? '').trim();
@@ -226,7 +266,7 @@ export class ConferenceViewComponent {
       return [];
     }
     const roles = new Set<ParticipantType>(['ATTENDEE']);
-    if (person.isSpeaker) {
+    if (this.isConferenceSpeaker()) {
       roles.add('SPEAKER');
     }
     if (conference.organizerEmails?.includes(person.email)) {
@@ -257,6 +297,12 @@ export class ConferenceViewComponent {
 
   speakerFeedbackSessions = computed(() => this._speakerSessions());
 
+  /**
+   * Resolves the response state for one activity.
+   *
+   * @param activityId Activity identifier.
+   * @returns Current response state.
+   */
   activityResponseState(activityId: string): ActivityResponseState {
     return this._activityResponseByActivityId().get(String(activityId ?? '').trim()) ?? 'UNKNOWN';
   }
@@ -287,14 +333,32 @@ export class ConferenceViewComponent {
     return this.conference()?.sessionTypes?.find((item) => item.id === sessionTypeId);
   }
 
+  /**
+   * Gets the translated session type label fallback.
+   *
+   * @param session Session source.
+   * @returns Session type label.
+   */
   sessionTypeName(session: Session): string {
     return this.sessionType(session)?.name ?? this.translateService.instant('SESSION.LIST.UNKNOWN_SESSION_TYPE');
   }
 
+  /**
+   * Gets the translated track label fallback.
+   *
+   * @param session Session source.
+   * @returns Track label.
+   */
   sessionTrackName(session: Session): string {
     return this.sessionTrack(session)?.name ?? this.translateService.instant('SESSION.LIST.UNKNOWN_TRACK');
   }
 
+  /**
+   * Resolves full speaker view models for a session.
+   *
+   * @param session Session source.
+   * @returns Speaker view list.
+   */
   sessionSpeakers(session: Session): SessionSpeakerView[] {
     const mapById = this.speakerInfoById();
     return [session.speaker1Id, session.speaker2Id, session.speaker3Id]
@@ -307,6 +371,12 @@ export class ConferenceViewComponent {
       });
   }
 
+  /**
+   * Resolves the allocated slot label for a session.
+   *
+   * @param session Session source.
+   * @returns Human-readable slot label, empty when unallocated.
+   */
   sessionSlotLabel(session: Session): string {
     const sessionId = String(session.id ?? '').trim();
     if (!sessionId) {
@@ -331,6 +401,119 @@ export class ConferenceViewComponent {
     return `${day.date} ${slot.startTime} - ${slot.endTime}`;
   }
 
+  /**
+   * Returns whether speaker action is available for this session.
+   *
+   * @param session Session source.
+   * @returns `true` when cancellation/withdrawal is allowed.
+   */
+  canManageSpeakerSession(session: Session): boolean {
+    const status = session.conference?.status;
+    return status === 'ACCEPTED'
+      || status === 'SPEAKER_CONFIRMED'
+      || status === 'SCHEDULED'
+      || status === 'PROGRAMMED';
+  }
+
+  /**
+   * Returns whether "remove speaker only" is available.
+   *
+   * @param session Session source.
+   * @returns `true` when more than one speaker is attached.
+   */
+  canRemoveSpeakerOnly(session: Session): boolean {
+    return this.sessionSpeakers(session).length > 1;
+  }
+
+  /**
+   * Opens the session speaker action dialog for one session.
+   *
+   * @param session Target session.
+   */
+  openSessionActionDialog(session: Session): void {
+    if (!this.canManageSpeakerSession(session)) {
+      return;
+    }
+    this.sessionActionErrorKey.set('');
+    this.dashboardRefreshWarning.set(false);
+    this.sessionActionTarget.set(session);
+    this.selectedSessionAction.set(this.canRemoveSpeakerOnly(session) ? 'REMOVE_SPEAKER_ONLY' : 'CANCEL_SESSION');
+    this.sessionActionDialogVisible.set(true);
+  }
+
+  /**
+   * Closes the session speaker action dialog.
+   */
+  closeSessionActionDialog(): void {
+    this.sessionActionDialogVisible.set(false);
+    this.sessionActionTarget.set(null);
+  }
+
+  /**
+   * Applies the selected speaker action and updates local state.
+   */
+  async confirmSessionAction(): Promise<void> {
+    const session = this.sessionActionTarget();
+    const conferenceId = String(this.conference()?.id ?? '').trim();
+    const speakerId = String(this.currentPerson()?.id ?? '').trim();
+    const sessionId = String(session?.id ?? '').trim();
+    if (!session || !conferenceId || !speakerId || !sessionId) {
+      return;
+    }
+
+    this.processingSessionActionId.set(sessionId);
+    this.sessionActionErrorKey.set('');
+    this.dashboardRefreshWarning.set(false);
+    try {
+      const result = await this.speakerSessionManagementService.processSpeakerSessionDecision({
+        conferenceId,
+        session,
+        speakerId,
+        decision: this.selectedSessionAction(),
+      });
+
+      const updatedSessionById = new Map<string, Session>();
+      updatedSessionById.set(String(result.updatedSession.id ?? '').trim(), result.updatedSession);
+      result.deallocation.updatedSessions.forEach((updatedSession) => {
+        updatedSessionById.set(String(updatedSession.id ?? '').trim(), updatedSession);
+      });
+
+      this._speakerSessions.update((sessions) =>
+        sessions
+          .map((value) => updatedSessionById.get(String(value.id ?? '').trim()) ?? value)
+          .filter((value) => this.sessionContainsSpeaker(value, speakerId))
+      );
+
+      const removedAllocationIdSet = new Set(
+        result.deallocation.deallocatedAllocations
+          .map((allocation) => String(allocation.id ?? '').trim())
+          .filter((allocationId) => !!allocationId)
+      );
+      if (removedAllocationIdSet.size > 0) {
+        this._sessionAllocations.update((allocations) =>
+          allocations.filter((allocation) => !removedAllocationIdSet.has(String(allocation.id ?? '').trim()))
+        );
+      }
+
+      if (result.removedFromConferenceSpeakerIds.includes(speakerId)) {
+        this._isConferenceSpeaker.set(false);
+      }
+      this.dashboardRefreshWarning.set(result.dashboardRefreshFailed);
+      this.closeSessionActionDialog();
+    } catch (error) {
+      console.error('Error while applying speaker session action:', error);
+      this.sessionActionErrorKey.set('CONFERENCE.VIEW.SESSION.ACTION_ERROR');
+    } finally {
+      this.processingSessionActionId.set('');
+    }
+  }
+
+  /**
+   * Computes a readable text color for a solid background color.
+   *
+   * @param backgroundColor Hex color.
+   * @returns Foreground color.
+   */
   computeTextColorForBackground(backgroundColor: string): string {
     const normalized = String(backgroundColor ?? '').trim();
     const shortHexMatch = normalized.match(/^#([0-9a-fA-F]{3})$/);
@@ -356,5 +539,19 @@ export class ConferenceViewComponent {
 
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.6 ? '#111827' : '#FFFFFF';
+  }
+
+  /**
+   * Checks if a session still contains a speaker id.
+   *
+   * @param session Session source.
+   * @param speakerId Speaker identifier.
+   * @returns `true` when attached to speaker slots.
+   */
+  private sessionContainsSpeaker(session: Session, speakerId: string): boolean {
+    const normalizedSpeakerId = String(speakerId ?? '').trim();
+    return [session.speaker1Id, session.speaker2Id, session.speaker3Id]
+      .map((id) => String(id ?? '').trim())
+      .includes(normalizedSpeakerId);
   }
 }

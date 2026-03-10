@@ -1,5 +1,73 @@
 @let conf = conference();
 <div class="conference-view-container">
+  <p-dialog
+    [header]="'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.TITLE' | translate"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="sessionActionDialogVisible()"
+    [style]="{ width: '34rem', 'max-width': '95vw' }"
+    (onHide)="closeSessionActionDialog()"
+  >
+    @let targetSession = sessionActionTarget();
+    @if (targetSession) {
+      <div class="session-action-dialog-content">
+        <p class="session-action-intro">
+          {{ 'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.INTRO' | translate:{ title: targetSession.title } }}
+        </p>
+        <p class="session-action-warning">{{ 'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.IRREVERSIBLE' | translate }}</p>
+
+        @if (canRemoveSpeakerOnly(targetSession)) {
+          <div class="session-action-options">
+            <div class="session-action-option">
+              <p-radiobutton
+                inputId="action-cancel-session"
+                name="sessionAction"
+                value="CANCEL_SESSION"
+                [ngModel]="selectedSessionAction()"
+                (ngModelChange)="selectedSessionAction.set($event)"
+              />
+              <label for="action-cancel-session">
+                {{ 'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.CANCEL_SESSION' | translate }}
+              </label>
+            </div>
+            <div class="session-action-option">
+              <p-radiobutton
+                inputId="action-remove-speaker"
+                name="sessionAction"
+                value="REMOVE_SPEAKER_ONLY"
+                [ngModel]="selectedSessionAction()"
+                (ngModelChange)="selectedSessionAction.set($event)"
+              />
+              <label for="action-remove-speaker">
+                {{ 'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.REMOVE_SPEAKER_ONLY' | translate }}
+              </label>
+            </div>
+          </div>
+        } @else {
+          <p class="session-action-single-option">{{ 'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.SINGLE_SPEAKER' | translate }}</p>
+        }
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <div class="session-action-dialog-footer">
+        <p-button
+          severity="secondary"
+          [label]="'COMMON.CANCEL' | translate"
+          [disabled]="processingSessionActionId().length > 0"
+          (click)="closeSessionActionDialog()"
+        />
+        <p-button
+          severity="danger"
+          [label]="'CONFERENCE.VIEW.SESSION.ACTION_DIALOG.CONFIRM' | translate"
+          [loading]="processingSessionActionId().length > 0"
+          (click)="confirmSessionAction()"
+        />
+      </div>
+    </ng-template>
+  </p-dialog>
+
   @if (!conf) {
     <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
   } @else {
@@ -69,6 +137,12 @@
 
       @if (speakerFeedbackSessions().length > 0) {
         <div class="action-list-name">{{ 'CONFERENCE.VIEW.MY_SESSIONS_FEEDBACK' | translate }}:</div>
+        @if (sessionActionErrorKey()) {
+          <div class="session-action-error">{{ sessionActionErrorKey() | translate }}</div>
+        }
+        @if (dashboardRefreshWarning()) {
+          <div class="session-action-warning-banner">{{ 'CONFERENCE.VIEW.SESSION.DASHBOARD_REFRESH_WARNING' | translate }}</div>
+        }
         <div class="session-list">
           @for (session of speakerFeedbackSessions(); track session.id) {
             <div class="session-row">
@@ -127,9 +201,23 @@
                     {{ session.conference?.review?.average | number: '1.0-2' }}
                   </div>
                 }
-                  <a [href]="session.conference?.feedback?.privateUrl" target="_blank" rel="noopener noreferrer">
-                    <span class="session-feedback-icon fa-solid fa-comments"></span>{{ 'CONFERENCE.VIEW.SESSION.READ_FEEDBACKS' | translate }}
-                  </a>
+                <div class="session-row-actions">
+                  @if (session.conference?.feedback?.privateUrl) {
+                    <a [href]="session.conference?.feedback?.privateUrl" target="_blank" rel="noopener noreferrer">
+                      <span class="session-feedback-icon fa-solid fa-comments"></span>{{ 'CONFERENCE.VIEW.SESSION.READ_FEEDBACKS' | translate }}
+                    </a>
+                  }
+                  @if (canManageSpeakerSession(session)) {
+                    <p-button
+                      severity="danger"
+                      [outlined]="true"
+                      [label]="'CONFERENCE.VIEW.SESSION.CANNOT_PRESENT' | translate"
+                      [loading]="processingSessionActionId() === session.id"
+                      [disabled]="processingSessionActionId().length > 0"
+                      (click)="openSessionActionDialog(session)"
+                    />
+                  }
+                </div>
               </div>
             </div>
           }

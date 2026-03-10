@@ -119,6 +119,69 @@
         margin-top: 20px;
         margin-right: 10px;
       }
+
+      .session-row-actions {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
     }
   }
+
+  .session-action-error {
+    width: 100%;
+    margin-top: 8px;
+    color: #b91c1c;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .session-action-warning-banner {
+    width: 100%;
+    margin-top: 8px;
+    color: #92400e;
+    font-weight: 600;
+    text-align: left;
+  }
+}
+
+.session-action-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.session-action-intro {
+  margin: 0;
+}
+
+.session-action-warning {
+  margin: 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.session-action-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-action-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-action-single-option {
+  margin: 0;
+  font-weight: 500;
+}
+
+.session-action-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }

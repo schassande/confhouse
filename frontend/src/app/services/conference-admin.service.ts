@@ -94,6 +94,24 @@ export interface RefreshVoxxrinOccupationReport {
   refreshedAt: string;
 }
 
+export type SpeakerSessionDecision = 'CANCEL_SESSION' | 'REMOVE_SPEAKER_ONLY';
+
+export interface SpeakerSessionActionPayload {
+  conferenceId: string;
+  sessionId: string;
+  decision: SpeakerSessionDecision;
+}
+
+export interface SpeakerSessionActionReport {
+  updatedSession: Record<string, unknown>;
+  deallocation: {
+    deallocatedAllocations: Record<string, unknown>[];
+    updatedSessions: Record<string, unknown>[];
+  };
+  removedFromConferenceSpeakerIds: string[];
+  dashboardRefreshFailed: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConferenceAdminService {
   private readonly http = inject(HttpClient);
@@ -168,6 +186,22 @@ export class ConferenceAdminService {
       this.http.post<{ report: RefreshVoxxrinOccupationReport }>(
         `${functionBaseUrl}refreshVoxxrinOccupation`,
         { conferenceId },
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      )
+    );
+    return response.report;
+  }
+
+  async speakerSessionAction(payload: SpeakerSessionActionPayload): Promise<SpeakerSessionActionReport> {
+    const idToken = await this.getIdTokenOrThrow();
+    const response = await firstValueFrom(
+      this.http.post<{ report: SpeakerSessionActionReport }>(
+        `${functionBaseUrl}speakerSessionAction`,
+        payload,
         {
           headers: {
             Authorization: `Bearer ${idToken}`,

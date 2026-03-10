@@ -42,6 +42,24 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     );
   }
 
+  /**
+   * Loads a single conference speaker projection for a person in a conference.
+   *
+   * @param conferenceId Conference identifier.
+   * @param personId Person identifier.
+   * @returns The matching conference speaker or `undefined`.
+   */
+  byConferenceAndPersonId(conferenceId: string, personId: string): Observable<ConferenceSpeaker | undefined> {
+    const normalizedPersonId = String(personId ?? '').trim();
+    return this.byConferenceId(conferenceId).pipe(
+      map((conferenceSpeakers) =>
+        (conferenceSpeakers ?? []).find(
+          (conferenceSpeaker) => String(conferenceSpeaker.personId ?? '').trim() === normalizedPersonId
+        )
+      )
+    );
+  }
+
   syncFromSession(session: Session, previousSession?: Session): Observable<void> {
     return from(this.syncFromSessionInternal(session, previousSession));
   }
