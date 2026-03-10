@@ -13,11 +13,13 @@ import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
+import { DialogModule } from 'primeng/dialog';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 import { Conference, Day, Slot } from '../../../model/conference.model';
 import { Person } from '../../../model/person.model';
 import { Session, SessionAllocation } from '../../../model/session.model';
 import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { ConferenceAdminService } from '../../../services/conference-admin.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
@@ -62,6 +64,7 @@ interface SpeakerSessionView {
     CheckboxModule,
     TextareaModule,
     SliderModule,
+    DialogModule,
     SessionStatusBadgeComponent,
   ],
   templateUrl: './conference-speaker-edit.html',
@@ -73,6 +76,7 @@ export class ConferenceSpeakerEdit implements OnInit {
   private readonly conferenceService = inject(ConferenceService);
   private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
   private readonly sessionService = inject(SessionService);
+  private readonly conferenceAdminService = inject(ConferenceAdminService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
   private readonly personService = inject(PersonService);
   private readonly translateService = inject(TranslateService);
@@ -88,6 +92,8 @@ export class ConferenceSpeakerEdit implements OnInit {
   readonly editingConferenceSpeaker = signal<ConferenceSpeaker | null>(null);
   readonly editingPerson = signal<Person | null>(null);
   readonly editingDayAvailabilities = signal<DayAvailabilityEditor[]>([]);
+  readonly deallocationInfoVisible = signal(false);
+  readonly deallocationCount = signal(0);
   readonly languageOptions = signal([
     { label: 'English', value: 'en' },
     { label: 'Français', value: 'fr' },
@@ -291,13 +297,61 @@ export class ConferenceSpeakerEdit implements OnInit {
         source: this.createMode() ? 'MANUAL' : (conferenceSpeaker.source ?? 'MANUAL'),
         sourceId: this.createMode() ? '' : String(conferenceSpeaker.sourceId ?? '').trim(),
       };
-      await firstValueFrom(this.conferenceSpeakerService.save(nextConferenceSpeaker));
+      const savedConferenceSpeaker = await firstValueFrom(this.conferenceSpeakerService.save(nextConferenceSpeaker));
+
+      if (!this.createMode()) {
+        const deallocationResult = await this.sessionAllocationService.deallocateSpeakerAllocationsOutsideAvailability({
+          conferenceId: this.conferenceId(),
+          sessionIds: savedConferenceSpeaker.sessionIds ?? [],
+          unavailableSlotIds: unavailableSlotsId,
+          allAllocations: this.sessionAllocations(),
+          sessions: this.sessions(),
+        });
+
+        if (deallocationResult.updatedSessions.length > 0) {
+          const updatedSessionById = new Map(
+            deallocationResult.updatedSessions
+              .filter((session) => !!session.id)
+              .map((session) => [String(session.id ?? '').trim(), session])
+          );
+          this.sessions.update((values) =>
+            values.map((session) => updatedSessionById.get(String(session.id ?? '').trim()) ?? session)
+          );
+        }
+
+        if (deallocationResult.deallocatedCount > 0) {
+          const removedAllocationIdSet = new Set(
+            deallocationResult.deallocatedAllocations
+              .map((allocation) => String(allocation.id ?? '').trim())
+              .filter((id) => !!id)
+          );
+          this.sessionAllocations.update((values) =>
+            values.filter((allocation) => !removedAllocationIdSet.has(String(allocation.id ?? '').trim()))
+          );
+
+          try {
+            await this.conferenceAdminService.refreshConferenceDashboard(this.conferenceId());
+          } catch (refreshError) {
+            console.error('Error while refreshing conference dashboard after speaker deallocation:', refreshError);
+          }
+
+          this.deallocationCount.set(deallocationResult.deallocatedCount);
+          this.deallocationInfoVisible.set(true);
+          return;
+        }
+      }
+
       this.closeSpeakerEdit();
     } catch (error) {
       console.error('Error while saving speaker:', error);
     } finally {
       this.saving.set(false);
     }
+  }
+
+  closeDeallocationInfoDialog(): void {
+    this.deallocationInfoVisible.set(false);
+    this.closeSpeakerEdit();
   }
 
   formatRange(range: [number, number]): string {

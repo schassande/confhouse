@@ -324,7 +324,10 @@
         "ADD": "Ajouter",
         "CALCULATED_UNAVAILABLE": "Slots indisponibles calculés",
         "SESSIONS_EMPTY": "Aucune session",
-        "SESSION_NOT_ALLOCATED": "Non allouée"
+        "SESSION_NOT_ALLOCATED": "Non allouée",
+        "DEALLOCATION_INFO_TITLE": "Sessions désallouées",
+        "DEALLOCATION_INFO_MESSAGE": "{{count}} session(s) ont été désallouées car elles ne sont plus compatibles avec la disponibilité du speaker.",
+        "DEALLOCATION_INFO_OK": "OK"
       }
     },
     "CONFIG": {

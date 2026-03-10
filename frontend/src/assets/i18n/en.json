@@ -380,7 +380,10 @@
         "ADD": "Add",
         "CALCULATED_UNAVAILABLE": "Calculated unavailable slots",
         "SESSIONS_EMPTY": "No session",
-        "SESSION_NOT_ALLOCATED": "Not allocated"
+        "SESSION_NOT_ALLOCATED": "Not allocated",
+        "DEALLOCATION_INFO_TITLE": "Sessions deallocated",
+        "DEALLOCATION_INFO_MESSAGE": "{{count}} session(s) were deallocated because they are no longer compatible with the speaker availability.",
+        "DEALLOCATION_INFO_OK": "OK"
       }
     },
     "CONFIG": {

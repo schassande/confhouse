@@ -25,7 +25,6 @@ import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
-import { SessionDeallocationService } from '../../../services/session-deallocation.service';
 import { SessionService } from '../../../services/session.service';
 import { SlotTypeService } from '../../../services/slot-type.service';
 
@@ -102,7 +101,6 @@ export class SessionAllocation implements OnInit {
   private readonly personService = inject(PersonService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
-  private readonly sessionDeallocationService = inject(SessionDeallocationService);
   private readonly slotTypeService = inject(SlotTypeService);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
@@ -625,7 +623,7 @@ export class SessionAllocation implements OnInit {
 
     this.saving.set(true);
     try {
-      const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+      const result = await this.sessionAllocationService.deallocateByAllocations(
         this.conferenceId(),
         dayAllocations,
         {
@@ -633,6 +631,7 @@ export class SessionAllocation implements OnInit {
           sessions: this.sessions(),
         }
       );
+      const updatedSessions = result.updatedSessions;
       if (updatedSessions.length > 0) {
         const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
         this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
@@ -736,7 +735,7 @@ export class SessionAllocation implements OnInit {
 
     this.saving.set(true);
     try {
-      const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+      const result = await this.sessionAllocationService.deallocateByAllocations(
         this.conferenceId(),
         allocationsToRemove,
         {
@@ -744,6 +743,7 @@ export class SessionAllocation implements OnInit {
           sessions: this.sessions(),
         }
       );
+      const updatedSessions = result.updatedSessions;
       if (updatedSessions.length > 0) {
         const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
         this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));
@@ -852,7 +852,7 @@ export class SessionAllocation implements OnInit {
     this.saving.set(true);
     try {
       if (replacedSessionId && replacedSessionId !== sessionId) {
-        const updatedSessions = await this.sessionDeallocationService.deallocateByAllocations(
+        const result = await this.sessionAllocationService.deallocateByAllocations(
           conferenceId,
           [currentTargetAllocation!],
           {
@@ -861,6 +861,7 @@ export class SessionAllocation implements OnInit {
             deleteAllocations: false,
           }
         );
+        const updatedSessions = result.updatedSessions;
         if (updatedSessions.length > 0) {
           const updatedById = new Map(updatedSessions.map(session => [session.id, session]));
           this.sessions.update(values => values.map(item => updatedById.get(item.id) ?? item));

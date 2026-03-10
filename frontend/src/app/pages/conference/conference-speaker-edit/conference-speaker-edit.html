@@ -8,6 +8,26 @@
   }}
 </h2>
 
+<p-dialog
+  [modal]="true"
+  [visible]="deallocationInfoVisible()"
+  [header]="'CONFERENCE.SPEAKERS.EDIT.DEALLOCATION_INFO_TITLE' | translate"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeDeallocationInfoDialog()"
+>
+  <p>{{ 'CONFERENCE.SPEAKERS.EDIT.DEALLOCATION_INFO_MESSAGE' | translate: { count: deallocationCount() } }}</p>
+  <div class="dialog-actions">
+    <button
+      pButton
+      type="button"
+      [label]="'CONFERENCE.SPEAKERS.EDIT.DEALLOCATION_INFO_OK' | translate"
+      (click)="closeDeallocationInfoDialog()"
+    ></button>
+  </div>
+</p-dialog>
+
 @if (!loading()) {
   @if (editingPerson(); as person) {
     <div class="edit-page">

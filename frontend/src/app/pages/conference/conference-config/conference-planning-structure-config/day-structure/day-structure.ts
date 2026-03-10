@@ -18,7 +18,6 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SessionAllocation } from '../../../../../model/session.model';
 import { SessionAllocationService } from '../../../../../services/session-allocation.service';
-import { SessionDeallocationService } from '../../../../../services/session-deallocation.service';
 
 @Component({
   selector: 'app-day-structure',
@@ -48,7 +47,6 @@ export class DayStructure implements OnInit {
   private readonly translateService = inject(TranslateService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
-  private readonly sessionDeallocationService = inject(SessionDeallocationService);
   protected readonly defaultLanguage = signal<string>('EN');
 
   conferenceId = input.required<string>();
@@ -406,7 +404,7 @@ export class DayStructure implements OnInit {
     if (!this.conferenceId() || cleanIds.length === 0) {
       return;
     }
-    await this.sessionDeallocationService.deallocateBySlotIds(this.conferenceId(), cleanIds, {
+    await this.sessionAllocationService.deallocateBySlotIds(this.conferenceId(), cleanIds, {
       allAllocations: this.allocations(),
     });
     const removedIds = new Set(cleanIds);
