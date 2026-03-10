@@ -121,20 +121,7 @@ export class UserSignService {
     if (!user.email) return undefined;
 
     // Create a person object from user info of the google account
-    let person: Person|undefined = {
-        id: user.uid,
-        lastUpdated: Date.now().toString(),
-        firstName: user.displayName?.split(' ')[0] ?? '',
-        lastName: user.displayName?.split(' ').slice(1).join(' ') ?? '',
-        email: user.email,
-        search: '',
-        hasAccount: true,
-        isSpeaker: false,
-        preferredLanguage: 'en',
-        isPlatformAdmin: false
-      };
-    // Try to create via Cloud Function first
-    person = await this.createPersonViaFunction(person);
+    const person = await this.createPersonFromGoogleUser(user);
 
     // If successful, set signals
     if (person) {
@@ -142,7 +129,6 @@ export class UserSignService {
     }    
     return person;
   }
-
   /**
    * Login a user with email and password
    * @param email 
@@ -153,12 +139,10 @@ export class UserSignService {
     const cred = await signInWithEmailAndPassword(this.auth, email, password);
     
     // Fetch person from database using email
-    const person = await firstValueFrom(this.personService.findByEmail(email));
-    
+    let person = await firstValueFrom(this.personService.findByEmail(email));
     if (person) {
       this.setAuthenticatedContext(cred.user, person);
     }
-    
     return person;
   }
 
@@ -174,13 +158,32 @@ export class UserSignService {
     if (!user.email) return undefined;
     
     // Fetch person from database using email
-    const person = await firstValueFrom(this.personService.findByEmail(user.email));
-    
+    let person = await firstValueFrom(this.personService.findByEmail(user.email));
+    if (!person) {
+        person = await this.createPersonFromGoogleUser(cred.user);
+    }    
     if (person) {
       this.setAuthenticatedContext(cred.user, person);
     }
-    
     return person;
+  }
+  private async createPersonFromGoogleUser(user: User): Promise<Person|undefined> {
+    const firstName: string = user.displayName?.split(' ')[0] ?? '';
+    const lastName: string = user.displayName?.split(' ').slice(1).join(' ') ?? '';
+    let person: Person = {
+        id: user.uid,
+        lastUpdated: Date.now().toString(),
+        firstName: firstName,
+        lastName: lastName,
+        email: user.email!,
+        search: user.displayName?.toLowerCase() ?? '',
+        hasAccount: true,
+        isSpeaker: false,
+        preferredLanguage: 'en',
+        isPlatformAdmin: false
+      };
+    // Try to create via Cloud Function first
+    return await this.createPersonViaFunction(person);
   }
 
   getCurrentPerson(): Person | null {
