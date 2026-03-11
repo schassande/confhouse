@@ -273,10 +273,10 @@ export class ConferenceViewComponent {
   /**
    * Returns whether the sponsor application action should be visible.
    *
-   * @returns `true` for authenticated users.
+   * @returns `true` when the user is not already identified as a sponsor.
    */
   canApplyAsSponsor(): boolean {
-    return !!this.currentPerson() && !this.isConferenceSponsor();
+    return !this.isConferenceSponsor();
   }
 
   private readonly userRoles = computed<ParticipantType[]>(() => {
