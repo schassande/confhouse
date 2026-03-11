@@ -1,6 +1,8 @@
 # TODO List
 
 ## Priority 1
+- Activity with speaker & organizer : list the speakers and the organizers without answer
+- RGPD
 - BilletWeb integration
   - Billetweb for speaker: Use API to create/delete the ticket of the speaker (https://www.billetweb.fr/bo/api.php#/api/event/:id/add_order)
     - Store billetweb ticket in ConferenceSpeaker
@@ -13,8 +15,6 @@
   - Billetweb for sponsor: Use API to create/delete the ticket of the sponsor
 - Edit Speaker: Cancel speaker by organizer
 - Edit Speaker: s'assurer que la disponibilité est suffisante pour couvrir au moins un slot compatible pour chaque session du speaker.
-- Session allocation : quand on clique sur un slot déjà alloué il faut afficher dans la popup les informations sur la session alloué. 
-- RGPD
 
 ## Priority 2
 - Default color list for tracks and session types.

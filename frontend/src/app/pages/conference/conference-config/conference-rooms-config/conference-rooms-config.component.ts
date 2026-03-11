@@ -70,11 +70,10 @@ export class ConferenceRoomsConfigComponent {
   }
 
   createNewForm(room?: Room) {
-    const defaultLanguage = this.translateService.getCurrentLang() || 'EN';
     const formGroup = this.fb.group({
       name: [room?.name || '', [Validators.required, Validators.minLength(2)]],
       capacity: [room?.capacity || 0, []],
-      isSessionRoom: [room?.isSessionRoom || true, []],
+      isSessionRoom: [room?.isSessionRoom ?? true, []],
       plan: [room?.plan || '', []]
     });
     this.form.set(formGroup);
@@ -143,6 +142,10 @@ export class ConferenceRoomsConfigComponent {
     }
 
     const formValue = currentForm.value;
+    const normalizedFormValue = {
+      ...formValue,
+      isSessionRoom: !!formValue.isSessionRoom,
+    };
     const editId = this.editingId();
 
     let updatedRooms: Room[];
@@ -153,9 +156,9 @@ export class ConferenceRoomsConfigComponent {
         st.id === editId
           ? {
               ...st,
-              ...formValue,
-              plan: formValue.plan || '',
-              capacity: formValue.capacity || 0,
+              ...normalizedFormValue,
+              plan: normalizedFormValue.plan || '',
+              capacity: normalizedFormValue.capacity || 0,
             }
           : st
       );
@@ -163,9 +166,9 @@ export class ConferenceRoomsConfigComponent {
       // Add new
       const newRoom: Room = {
         id: `st_${Date.now()}`,
-        ...formValue,
-        plan: formValue.plan || '',
-        capacity: formValue.capacity || 0,
+        ...normalizedFormValue,
+        plan: normalizedFormValue.plan || '',
+        capacity: normalizedFormValue.capacity || 0,
       };
       updatedRooms = [...this.rooms(), newRoom];
     }
