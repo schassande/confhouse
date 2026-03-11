@@ -142,10 +142,23 @@ export async function generateVoxxrinDescriptorForConference(
   }
 
   const programData = await loadProgramData(db, conferenceId);
-  const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData);
+  const sponsors = await loadSponsors(db, conferenceId);
+  const descriptor = buildEventDescriptor(conferenceData, voxxrinConfig, programData, sponsors);
   const payload = JSON.stringify(descriptor, null, 2);
   const storageResult = await saveVoxxrinDescriptorToStorage(conferenceId, payload);
   return { conferenceData, voxxrinConfig, descriptor, payload, storageResult };
+}
+
+async function loadSponsors(db: admin.firestore.Firestore, conferenceId: string): Promise<any[]> {
+  const snap = await db
+    .collection(FIRESTORE_COLLECTIONS.SPONSOR)
+    .where('conferenceId', '==', conferenceId)
+    .get();
+
+  return snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 }
 
 async function saveVoxxrinDescriptorToStorage(conferenceId: string, payload: string): Promise<VoxxrinDescriptorStorageResult> {
@@ -297,7 +310,7 @@ function buildEventDescriptor(conference: any, config: any, programData: {
   sessionById: Map<string, any>;
   personById: Map<string, any>;
   allocations: any[];
-}): any {
+}, sponsors: any[]): any {
   const title = buildConferenceTitle(conference);
   const description = pickLocalizedText(conference?.description, conference?.languages) ?? null;
   const days = mapDays(conference?.days ?? []);
@@ -320,7 +333,7 @@ function buildEventDescriptor(conference: any, config: any, programData: {
     infos: {
       floorPlans: mapFloorPlans(config?.infos?.floorPlans) ?? [],
       socialMedias: mapSocialMedias(config?.infos?.socialMedias) ?? [],
-      sponsors: mapSponsors(conference?.sponsoring) ?? [],
+      sponsors: mapSponsors(sponsors, conference?.sponsoring?.sponsorTypes) ?? [],
     },
     features: mapFeatures(config?.features),
     formattings: mapFormattings(config?.formattings),
@@ -659,9 +672,17 @@ function mapBreakIcon(slotType: any): 'ticket' | 'restaurant' | 'cafe' | 'beer' 
   return 'cafe';
 }
 
-function mapSponsors(sponsoring: any): any[] | undefined {
-  const sponsors = Array.isArray(sponsoring?.sponsors) ? sponsoring.sponsors : [];
-  if (!sponsors.length) {
+function mapSponsors(sponsors: any[], sponsorTypes: any[]): any[] | undefined {
+  const normalizedSponsors = Array.isArray(sponsors) ? sponsors : [];
+  const normalizedSponsorTypes = Array.isArray(sponsorTypes) ? sponsorTypes : [];
+  const sponsorTypeById = new Map<string, any>();
+  for (const sponsorType of normalizedSponsorTypes) {
+    const id = cleanString(sponsorType?.id);
+    if (id) {
+      sponsorTypeById.set(id, sponsorType);
+    }
+  }
+  if (!normalizedSponsors.length) {
     return undefined;
   }
 
@@ -672,14 +693,15 @@ function mapSponsors(sponsoring: any): any[] | undefined {
     sponsorships: Array<{ name: string; logoUrl: string; href: string }>;
   }>();
 
-  for (const sponsor of sponsors) {
-    const typeName = cleanString(sponsor?.type?.name) ?? 'Sponsors';
-    const typeColor = normalizeHexColor(sponsor?.type?.color) ?? '#D1D5DB';
-    const typeFontColor = normalizeHexColor(sponsor?.type?.fontColor);
+  for (const sponsor of normalizedSponsors) {
+    const sponsorType = sponsorTypeById.get(cleanString(sponsor?.sponsorTypeId) ?? '');
+    const typeName = cleanString(sponsorType?.name) ?? 'Sponsors';
+    const typeColor = normalizeHexColor(sponsorType?.color) ?? '#D1D5DB';
+    const typeFontColor = normalizeHexColor(sponsorType?.fontColor);
     const sponsorship = {
       name: cleanString(sponsor?.name) ?? '',
       logoUrl: cleanString(sponsor?.logo) ?? '',
-      href: cleanString(sponsor?.website) ?? '',
+      href: pickLocalizedText(sponsor?.website, ['en', 'fr']) ?? cleanString(sponsor?.website?.EN) ?? '',
     };
 
     if (!grouped.has(typeName)) {

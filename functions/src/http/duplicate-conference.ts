@@ -157,6 +157,7 @@ export const duplicateConference = onRequest({ cors: true, timeoutSeconds: 120 }
 
     await duplicateConferenceHallConfig(db, context.conferenceId, newConferenceId);
     await duplicateVoxxrinConfig(db, context.conferenceId, newConferenceId);
+    await duplicateSponsors(db, context.conferenceId, newConferenceId, payload.duplicateSponsors);
     await switchSingleConferenceIdIfNeeded(db, context.conferenceId, newConferenceId);
 
     let activitiesCreated = 0;
@@ -643,6 +644,62 @@ async function duplicateVoxxrinConfig(
     targetConferenceId,
     sourceDocId: sourceDoc.id,
     targetDocId: targetConferenceId,
+  });
+}
+
+async function duplicateSponsors(
+  db: admin.firestore.Firestore,
+  sourceConferenceId: string,
+  targetConferenceId: string,
+  shouldDuplicate: boolean
+): Promise<void> {
+  if (!shouldDuplicate) {
+    logger.info('duplicateConference sponsors duplication disabled', {
+      sourceConferenceId,
+      targetConferenceId,
+    });
+    return;
+  }
+
+  const sponsorsSnap = await db
+    .collection(FIRESTORE_COLLECTIONS.SPONSOR)
+    .where('conferenceId', '==', sourceConferenceId)
+    .get();
+
+  if (sponsorsSnap.empty) {
+    logger.info('duplicateConference no sponsors to duplicate', {
+      sourceConferenceId,
+      targetConferenceId,
+    });
+    return;
+  }
+
+  let duplicated = 0;
+  for (let i = 0; i < sponsorsSnap.docs.length; i += FIRESTORE_BATCH_SAFE_LIMIT) {
+    const chunk = sponsorsSnap.docs.slice(i, i + FIRESTORE_BATCH_SAFE_LIMIT);
+    const batch = db.batch();
+
+    for (const sponsorDoc of chunk) {
+      const targetRef = db.collection(FIRESTORE_COLLECTIONS.SPONSOR).doc();
+      batch.set(
+        targetRef,
+        sanitizeUndefined({
+          ...sponsorDoc.data(),
+          id: targetRef.id,
+          conferenceId: targetConferenceId,
+          lastUpdated: new Date().getTime().toString(),
+        })
+      );
+      duplicated += 1;
+    }
+
+    await batch.commit();
+  }
+
+  logger.info('duplicateConference sponsors duplicated', {
+    sourceConferenceId,
+    targetConferenceId,
+    duplicated,
   });
 }
 

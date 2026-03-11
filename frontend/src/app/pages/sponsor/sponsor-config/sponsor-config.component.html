@@ -3,7 +3,8 @@
 
   <div class="header-row">
     <h1>
-      {{ conference()?.name }} {{ conference()?.edition }} - {{ 'CONFERENCE.SPONSOR_CONFIG.TITLE' | translate }}
+      {{ conference()?.name }} {{ conference()?.edition }} -
+      {{ 'CONFERENCE.SPONSOR_CONFIG.TITLE' | translate }}
     </h1>
     <div class="header-actions">
       <button
@@ -47,8 +48,8 @@
       }
 
       <div formArrayName="sponsorTypes" class="sponsor-types-list">
-        @for (group of sponsorTypesArray.controls; track $index) {
-        <article class="sponsor-type-card" [formGroupName]="$index">
+        @for (group of sponsorTypesArray.controls; track $index; let sponsorTypeIndex = $index) {
+        <article class="sponsor-type-card" [formGroupName]="sponsorTypeIndex">
           <div class="card-header">
             <h3>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPE' | translate }} #{{ $index + 1 }}</h3>
             <button
@@ -57,7 +58,7 @@
               icon="pi pi-trash"
               class="p-button-danger p-button-sm"
               [label]="'COMMON.REMOVE' | translate"
-              (click)="removeSponsorType($index)"
+                (click)="removeSponsorType(sponsorTypeIndex)"
             ></button>
           </div>
 
@@ -69,6 +70,10 @@
             <div class="field">
               <label>{{ 'CONFERENCE.SPONSOR_CONFIG.MAX_NUMBER' | translate }}</label>
               <p-inputNumber formControlName="maxNumber" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+            </div>
+            <div class="field">
+              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.PRICE' | translate }}</label>
+              <p-inputNumber formControlName="price" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
             </div>
             <div class="field">
               <label>{{ 'CONFERENCE.SPONSOR_CONFIG.COLOR' | translate }}</label>
@@ -95,6 +100,56 @@
             <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES' | translate }}</label>
             <textarea pTextarea formControlName="boothNamesText" rows="3"></textarea>
             <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>
+          </div>
+
+          <div class="field">
+            <div class="section-header quota-header">
+              <h4>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_QUOTAS' | translate }}</h4>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                class="p-button-secondary p-button-sm"
+                [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_TICKET_QUOTA' | translate"
+                (click)="addConferenceTicketQuota(sponsorTypeIndex)"
+              ></button>
+            </div>
+
+            @if (sponsorTypeQuotaArray(sponsorTypeIndex).controls.length === 0) {
+            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_TICKET_QUOTAS' | translate }}</small>
+            }
+
+            <div formArrayName="conferenceTicketQuotas" class="quota-list">
+              @for (quotaGroup of sponsorTypeQuotaArray(sponsorTypeIndex).controls; track $index; let quotaIndex = $index) {
+              <div class="form-grid quota-row" [formGroupName]="$index">
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_TYPE' | translate }}</label>
+                  <p-select
+                    [options]="ticketTypeOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [placeholder]="'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_TYPE_PLACEHOLDER' | translate"
+                    formControlName="conferenceTicketTypeId"
+                  ></p-select>
+                </div>
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.QUOTA' | translate }}</label>
+                  <p-inputNumber formControlName="quota" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+                </div>
+                <div class="field quota-action">
+                  <label>{{ 'COMMON.REMOVE' | translate }}</label>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-danger p-button-sm"
+                    [label]="'COMMON.REMOVE' | translate"
+                    (click)="removeConferenceTicketQuota(sponsorTypeIndex, quotaIndex)"
+                  ></button>
+                </div>
+              </div>
+              }
+            </div>
           </div>
         </article>
         }

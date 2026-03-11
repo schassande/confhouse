@@ -1,17 +1,42 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, signal } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { MessageService } from 'primeng/api';
+import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { take } from 'rxjs';
-import { Conference, SponsorType } from '../../../model/conference.model';
+import {
+  Conference,
+  ConferenceTicketType,
+  SponsorConferenceTicketQuota,
+  SponsorType,
+} from '../../../model/conference.model';
 import { ConferenceService } from '../../../services/conference.service';
+
+interface SelectOption {
+  label: string;
+  value: string;
+}
 
 @Component({
   selector: 'app-sponsor-config',
@@ -25,6 +50,7 @@ import { ConferenceService } from '../../../services/conference.service';
     InputNumberModule,
     TextareaModule,
     ToastModule,
+    SelectModule,
   ],
   providers: [MessageService],
   templateUrl: './sponsor-config.component.html',
@@ -42,6 +68,12 @@ export class SponsorConfigComponent {
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   readonly conference = signal<Conference | undefined>(undefined);
   readonly loading = signal(true);
+  readonly ticketTypeOptions = computed<SelectOption[]>(() =>
+    (this.conference()?.ticket?.conferenceTicketTypes ?? []).map((ticketType) => ({
+      label: ticketType.ticketTypeName,
+      value: ticketType.id,
+    }))
+  );
 
   readonly form = this.fb.group({
     sponsorTypes: this.fb.array<FormGroup>([]),
@@ -78,12 +110,24 @@ export class SponsorConfigComponent {
     return this.form.get('sponsorBoothMaps') as FormArray<FormControl<string>>;
   }
 
+  sponsorTypeQuotaArray(index: number): FormArray<FormGroup> {
+    return this.sponsorTypesArray.at(index).get('conferenceTicketQuotas') as FormArray<FormGroup>;
+  }
+
   addSponsorType(): void {
     this.sponsorTypesArray.push(this.createSponsorTypeGroup());
   }
 
   removeSponsorType(index: number): void {
     this.sponsorTypesArray.removeAt(index);
+  }
+
+  addConferenceTicketQuota(sponsorTypeIndex: number): void {
+    this.sponsorTypeQuotaArray(sponsorTypeIndex).push(this.createConferenceTicketQuotaGroup());
+  }
+
+  removeConferenceTicketQuota(sponsorTypeIndex: number, quotaIndex: number): void {
+    this.sponsorTypeQuotaArray(sponsorTypeIndex).removeAt(quotaIndex);
   }
 
   addBoothMap(): void {
@@ -123,7 +167,6 @@ export class SponsorConfigComponent {
       ...conference,
       sponsoring: {
         sponsorTypes,
-        sponsors: conference.sponsoring?.sponsors ?? [],
         sponsorBoothMaps,
       },
     };
@@ -155,10 +198,14 @@ export class SponsorConfigComponent {
     this.sponsorBoothMapsArray.clear();
 
     const sponsorTypes = conference?.sponsoring?.sponsorTypes ?? [];
-    sponsorTypes.forEach((sponsorType) => this.sponsorTypesArray.push(this.createSponsorTypeGroup(sponsorType)));
+    sponsorTypes.forEach((sponsorType) =>
+      this.sponsorTypesArray.push(this.createSponsorTypeGroup(sponsorType))
+    );
 
     const boothMaps = conference?.sponsoring?.sponsorBoothMaps ?? [];
-    boothMaps.forEach((boothMap) => this.sponsorBoothMapsArray.push(this.fb.control(String(boothMap ?? ''), { nonNullable: true })));
+    boothMaps.forEach((boothMap) =>
+      this.sponsorBoothMapsArray.push(this.fb.control(String(boothMap ?? ''), { nonNullable: true }))
+    );
   }
 
   private createSponsorTypeGroup(sponsorType?: SponsorType): FormGroup {
@@ -166,11 +213,34 @@ export class SponsorConfigComponent {
       id: [String(sponsorType?.id ?? '').trim()],
       name: [String(sponsorType?.name ?? '').trim(), [Validators.required]],
       maxNumber: [Number(sponsorType?.maxNumber ?? 0)],
+      price: [Number(sponsorType?.price ?? 0)],
       color: [String(sponsorType?.color ?? '#1f77b4').trim()],
       fontColor: [String(sponsorType?.fontColor ?? '#ffffff').trim()],
-      descriptionEn: [String(sponsorType?.description?.['EN'] ?? sponsorType?.description?.['en'] ?? '').trim()],
-      descriptionFr: [String(sponsorType?.description?.['FR'] ?? sponsorType?.description?.['fr'] ?? '').trim()],
+      descriptionEn: [
+        String(sponsorType?.description?.['EN'] ?? sponsorType?.description?.['en'] ?? '').trim(),
+      ],
+      descriptionFr: [
+        String(sponsorType?.description?.['FR'] ?? sponsorType?.description?.['fr'] ?? '').trim(),
+      ],
       boothNamesText: [Array.isArray(sponsorType?.boothNames) ? sponsorType?.boothNames.join('\n') : ''],
+      conferenceTicketQuotas: this.fb.array<FormGroup>(
+        (sponsorType?.conferenceTicketQuotas ?? []).map((quota) =>
+          this.createConferenceTicketQuotaGroup(quota)
+        )
+      ),
+    });
+  }
+
+  private createConferenceTicketQuotaGroup(
+    quota?: SponsorConferenceTicketQuota,
+    conferenceTicketType?: ConferenceTicketType
+  ): FormGroup {
+    return this.fb.group({
+      conferenceTicketTypeId: [
+        String(quota?.conferenceTicketTypeId ?? conferenceTicketType?.id ?? '').trim(),
+        [Validators.required],
+      ],
+      quota: [Number(quota?.quota ?? 0), [Validators.min(0)]],
     });
   }
 
@@ -179,18 +249,32 @@ export class SponsorConfigComponent {
       id?: string;
       name?: string;
       maxNumber?: number;
+      price?: number;
       color?: string;
       fontColor?: string;
       descriptionEn?: string;
       descriptionFr?: string;
       boothNamesText?: string;
+      conferenceTicketQuotas?: Array<{
+        conferenceTicketTypeId?: string;
+        quota?: number;
+      }>;
     };
 
     const parsedMaxNumber = Number(groupValue.maxNumber ?? 0);
+    const parsedPrice = Number(groupValue.price ?? 0);
     const boothNames = String(groupValue.boothNamesText ?? '')
       .split(/\r?\n|,/)
       .map((value) => value.trim())
       .filter((value) => value.length > 0);
+    const conferenceTicketQuotas = Array.isArray(groupValue.conferenceTicketQuotas)
+      ? groupValue.conferenceTicketQuotas
+          .map((quota) => ({
+            conferenceTicketTypeId: String(quota?.conferenceTicketTypeId ?? '').trim(),
+            quota: Math.max(0, Number(quota?.quota ?? 0)),
+          }))
+          .filter((quota) => quota.conferenceTicketTypeId.length > 0)
+      : [];
 
     const id = String(groupValue.id ?? existing?.id ?? '').trim() || this.generateSponsorTypeId();
 
@@ -198,6 +282,7 @@ export class SponsorConfigComponent {
       id,
       name: String(groupValue.name ?? '').trim(),
       maxNumber: Number.isFinite(parsedMaxNumber) ? Math.max(0, parsedMaxNumber) : 0,
+      price: Number.isFinite(parsedPrice) ? Math.max(0, parsedPrice) : 0,
       color: String(groupValue.color ?? '').trim() || '#1f77b4',
       fontColor: String(groupValue.fontColor ?? '').trim() || '#ffffff',
       description: {
@@ -205,6 +290,7 @@ export class SponsorConfigComponent {
         FR: String(groupValue.descriptionFr ?? '').trim(),
       },
       boothNames,
+      conferenceTicketQuotas,
     };
   }
 

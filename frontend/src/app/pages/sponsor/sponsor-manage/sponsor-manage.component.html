@@ -21,7 +21,13 @@
       ></p-select>
       <span class="count">{{ filteredCountLabel() }}</span>
     </div>
-    <button pButton type="button" icon="pi pi-plus" class="p-button-success add-button desktop-add" (click)="onAddNew()"></button>
+    <button
+      pButton
+      type="button"
+      icon="pi pi-plus"
+      class="p-button-success add-button desktop-add"
+      (click)="onAddNew()"
+    ></button>
   </div>
 
   <div class="sponsors-list">
@@ -48,13 +54,20 @@
                 }
                 <div class="sponsor-text">
                   <h3>{{ sponsor.name }}</h3>
-                  @if (sponsor.boothName) {
-                  <div class="sponsor-booth">{{ sponsor.boothName }}</div>
-                  }
+                  <div class="sponsor-meta">
+                    <span>{{ sponsorStatusLabel(sponsor.status) }}</span>
+                    <span>{{ paymentStatusLabel(sponsor.paymentStatus) }}</span>
+                    @if (sponsor.boothName) {
+                    <span>{{ sponsor.boothName }}</span>
+                    }
+                  </div>
                 </div>
               </div>
-              <span class="type-badge" [ngStyle]="typeBadgeStyle(sponsor.type)">
-                {{ sponsor.type?.name || ('CONFERENCE.SPONSOR_MANAGE.UNKNOWN_TYPE' | translate) }}
+              <span class="type-badge" [ngStyle]="typeBadgeStyle(sponsorTypeById(sponsor.sponsorTypeId))">
+                {{
+                  sponsorTypeById(sponsor.sponsorTypeId)?.name
+                    || ('CONFERENCE.SPONSOR_MANAGE.UNKNOWN_TYPE' | translate)
+                }}
               </span>
             </div>
           </article>
@@ -70,13 +83,19 @@
     </p-dataview>
   </div>
 
-  <button pButton type="button" icon="pi pi-plus" class="p-button-success add-button mobile-add" (click)="onAddNew()"></button>
+  <button
+    pButton
+    type="button"
+    icon="pi pi-plus"
+    class="p-button-success add-button mobile-add"
+    (click)="onAddNew()"
+  ></button>
 
   <p-dialog
     [modal]="true"
     [visible]="dialogVisible()"
     [header]="(isEditing() ? 'CONFERENCE.SPONSOR_MANAGE.EDIT' : 'CONFERENCE.SPONSOR_MANAGE.ADD') | translate"
-    [style]="{ width: 'min(920px, 95vw)' }"
+    [style]="{ width: 'min(980px, 96vw)' }"
     [draggable]="false"
     [resizable]="false"
     (onHide)="onDialogHide()"
@@ -94,18 +113,59 @@
           }
         </div>
         <div class="form-section">
-          <label for="typeId" class="form-label">
+          <label for="sponsorTypeId" class="form-label">
             {{ 'CONFERENCE.SPONSOR_MANAGE.TYPE' | translate }} <span class="required">*</span>
           </label>
           <p-select
-            inputId="typeId"
+            inputId="sponsorTypeId"
             [options]="sponsorTypeOptions()"
             optionLabel="label"
             optionValue="value"
             [placeholder]="'CONFERENCE.SPONSOR_MANAGE.TYPE_PLACEHOLDER' | translate"
-            formControlName="typeId"
+            formControlName="sponsorTypeId"
             class="w-full"
           ></p-select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="status" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.STATUS' | translate }}</label>
+          <p-select
+            inputId="status"
+            [options]="sponsorStatusOptions()"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="status"
+            class="w-full"
+          ></p-select>
+        </div>
+        <div class="form-section">
+          <label for="statusDate" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.STATUS_DATE' | translate }}</label>
+          <input id="statusDate" pInputText formControlName="statusDate" type="date" class="w-full" />
+        </div>
+        <div class="form-section">
+          <label for="paymentStatus" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS' | translate }}</label>
+          <p-select
+            inputId="paymentStatus"
+            [options]="paymentStatusOptions()"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="paymentStatus"
+            class="w-full"
+          ></p-select>
+        </div>
+        <div class="form-section">
+          <label for="paymentStatusDate" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS_DATE' | translate }}
+          </label>
+          <input
+            id="paymentStatusDate"
+            pInputText
+            formControlName="paymentStatusDate"
+            type="date"
+            class="w-full"
+          />
         </div>
       </div>
 
@@ -115,34 +175,124 @@
           <input id="logo" pInputText formControlName="logo" type="text" class="w-full" />
         </div>
         <div class="form-section">
-          <label for="website" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.WEBSITE' | translate }}</label>
-          <input id="website" pInputText formControlName="website" type="text" class="w-full" />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-section">
           <label for="boothName" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_NAME' | translate }}</label>
           <input id="boothName" pInputText formControlName="boothName" type="text" class="w-full" />
         </div>
-      </div>
-
-      <div class="form-row">
         <div class="form-section">
-          <label for="descriptionEn" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.DESCRIPTION_EN' | translate }}</label>
-          <textarea id="descriptionEn" pTextarea formControlName="descriptionEn" rows="3" class="w-full"></textarea>
-        </div>
-        <div class="form-section">
-          <label for="descriptionFr" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.DESCRIPTION_FR' | translate }}</label>
-          <textarea id="descriptionFr" pTextarea formControlName="descriptionFr" rows="3" class="w-full"></textarea>
+          <label for="boothWishesDate" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_WISHES_DATE' | translate }}
+          </label>
+          <input id="boothWishesDate" pInputText formControlName="boothWishesDate" type="date" class="w-full" />
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-section">
-          <label for="emailsText" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.EMAILS' | translate }}</label>
-          <textarea id="emailsText" pTextarea formControlName="emailsText" rows="4" class="w-full"></textarea>
+          <label for="boothWishesText" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_WISHES' | translate }}
+          </label>
+          <textarea id="boothWishesText" pTextarea formControlName="boothWishesText" rows="3" class="w-full"></textarea>
+          <small>{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_WISHES_HELP' | translate }}</small>
+        </div>
+        <div class="form-section">
+          <label for="adminEmailsText" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_MANAGE.ADMIN_EMAILS' | translate }}
+          </label>
+          <textarea id="adminEmailsText" pTextarea formControlName="adminEmailsText" rows="3" class="w-full"></textarea>
           <small>{{ 'CONFERENCE.SPONSOR_MANAGE.EMAILS_HELP' | translate }}</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        @for (language of languageCodes(); track language) {
+        <div class="form-section">
+          <label [for]="'website_' + language" class="form-label">
+            {{ localizedFieldLabel('WEBSITE', language) }}
+          </label>
+          <input [id]="'website_' + language" pInputText [formControlName]="'website_' + language" type="text" class="w-full" />
+        </div>
+        }
+      </div>
+
+      <div class="form-row">
+        @for (language of languageCodes(); track language) {
+        <div class="form-section">
+          <label [for]="'description_' + language" class="form-label">
+            {{ localizedFieldLabel('DESCRIPTION', language) }}
+          </label>
+          <textarea
+            [id]="'description_' + language"
+            pTextarea
+            [formControlName]="'description_' + language"
+            rows="3"
+            class="w-full"
+          ></textarea>
+        </div>
+        }
+      </div>
+
+      <div class="tickets-section">
+        <div class="form-actions inline-actions">
+          <h3>{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKETS' | translate }}</h3>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            class="p-button-secondary"
+            [label]="'CONFERENCE.SPONSOR_MANAGE.ADD_CONFERENCE_TICKET' | translate"
+            (click)="addConferenceTicket()"
+          ></button>
+        </div>
+
+        @if (conferenceTicketsArray.controls.length === 0) {
+        <small>{{ 'CONFERENCE.SPONSOR_MANAGE.NO_CONFERENCE_TICKETS' | translate }}</small>
+        }
+
+        <div formArrayName="conferenceTickets" class="tickets-list">
+          @for (ticketGroup of conferenceTicketsArray.controls; track $index) {
+          <div class="form-row ticket-row" [formGroupName]="$index">
+            <div class="form-section">
+              <label>{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKET_TYPE' | translate }}</label>
+              <p-select
+                [options]="conferenceTicketTypeOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKET_TYPE_PLACEHOLDER' | translate"
+                formControlName="conferenceTicketTypeId"
+                class="w-full"
+              ></p-select>
+            </div>
+            <div class="form-section">
+              <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_EMAIL' | translate }}</label>
+              <input pInputText formControlName="email" type="email" class="w-full" />
+            </div>
+            <div class="form-section">
+              <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_ID' | translate }}</label>
+              <input pInputText formControlName="ticketId" type="text" class="w-full" />
+            </div>
+            <div class="form-section">
+              <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_STATUS' | translate }}</label>
+              <p-select
+                [options]="conferenceTicketStatusOptions()"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="status"
+                class="w-full"
+              ></p-select>
+            </div>
+            <div class="form-section ticket-delete">
+              <label>{{ 'COMMON.REMOVE' | translate }}</label>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-danger"
+                [label]="'COMMON.REMOVE' | translate"
+                (click)="removeConferenceTicket($index)"
+              ></button>
+            </div>
+          </div>
+          }
         </div>
       </div>
 

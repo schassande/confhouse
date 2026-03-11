@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
@@ -11,9 +18,17 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { take } from 'rxjs';
-import { Conference, Sponsor, SponsorType } from '../../../model/conference.model';
+import { forkJoin, take } from 'rxjs';
+import {
+  Conference,
+  ConferenceTicket,
+  Sponsor,
+  SponsorPaymentStatus,
+  SponsorStatus,
+  SponsorType,
+} from '../../../model/conference.model';
 import { ConferenceService } from '../../../services/conference.service';
+import { SponsorService } from '../../../services/sponsor.service';
 
 interface SelectOption {
   label: string;
@@ -45,6 +60,7 @@ export class SponsorManageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly sponsorService = inject(SponsorService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -61,6 +77,26 @@ export class SponsorManageComponent {
   readonly editingId = signal<string | null>(null);
   readonly dialogVisible = signal(false);
   readonly isEditing = computed(() => this.editingId() !== null);
+  readonly languageCodes = computed(() => this.conference()?.languages ?? ['EN', 'FR']);
+  readonly sponsorStatusOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_POTENTIAL'), value: 'POTENTIAL' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CANDIDATE'), value: 'CANDIDATE' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CONFIRMED'), value: 'CONFIRMED' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_REJECTED'), value: 'REJECTED' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CANCELED'), value: 'CANCELED' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_WAITING_LIST'), value: 'WAITING_LIST' },
+  ]);
+  readonly paymentStatusOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_PENDING'), value: 'PENDING' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_PAID'), value: 'PAID' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_OVERDUE'), value: 'OVERDUE' },
+  ]);
+  readonly conferenceTicketStatusOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_REQUESTED'), value: 'REQUESTED' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_CREATED'), value: 'CREATED' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_SENT'), value: 'SENT' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_CANCELED'), value: 'CANCELED' },
+  ]);
   readonly currentEditingSponsor = computed(() => {
     const editId = this.editingId();
     if (!editId) {
@@ -78,10 +114,17 @@ export class SponsorManageComponent {
     this.sponsorTypes().map((type) => ({ label: type.name, value: type.id }))
   );
 
+  readonly conferenceTicketTypeOptions = computed<SelectOption[]>(() =>
+    (this.conference()?.ticket?.conferenceTicketTypes ?? []).map((type) => ({
+      label: type.ticketTypeName,
+      value: type.id,
+    }))
+  );
+
   readonly filteredSponsors = computed(() => {
     const selectedType = this.selectedTypeId();
     return [...this.sponsors()]
-      .filter((sponsor) => selectedType === 'ALL' || sponsor.type?.id === selectedType)
+      .filter((sponsor) => selectedType === 'ALL' || sponsor.sponsorTypeId === selectedType)
       .sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
   });
 
@@ -99,20 +142,27 @@ export class SponsorManageComponent {
       return;
     }
 
-    this.conferenceService.byId(conferenceId).pipe(take(1)).subscribe({
-      next: (conference) => {
+    forkJoin({
+      conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      sponsors: this.sponsorService.byConferenceId(conferenceId).pipe(take(1)),
+    }).subscribe({
+      next: ({ conference, sponsors }) => {
         this.conference.set(conference);
         this.sponsorTypes.set(conference?.sponsoring?.sponsorTypes ?? []);
-        this.sponsors.set(conference?.sponsoring?.sponsors ?? []);
+        this.sponsors.set(sponsors);
         this.loading.set(false);
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading conference:', error);
+        console.error('Error loading conference sponsors:', error);
         this.loading.set(false);
         this.cdr.markForCheck();
       },
     });
+  }
+
+  get conferenceTicketsArray(): FormArray<FormGroup> {
+    return (this.form()?.get('conferenceTickets') as FormArray<FormGroup>) ?? this.fb.array<FormGroup>([]);
   }
 
   onFilterTypeChange(value: string): void {
@@ -150,13 +200,32 @@ export class SponsorManageComponent {
       return;
     }
 
-    const updatedSponsors = this.sponsors().filter((item) => item.id !== sponsor.id);
-    this.saveSponsors(updatedSponsors, this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DELETED'));
+    this.sponsorService.delete(sponsor.id).then(
+      () => {
+        this.sponsors.set(this.sponsors().filter((item) => item.id !== sponsor.id));
+        this.onCancel();
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translateService.instant('COMMON.SUCCESS'),
+          detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DELETED'),
+        });
+        this.cdr.markForCheck();
+      },
+      (error) => {
+        console.error('Error deleting sponsor:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translateService.instant('COMMON.ERROR'),
+          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
+        });
+      }
+    );
   }
 
   onSave(): void {
     const form = this.form();
     if (!form || form.invalid) {
+      form?.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: this.translateService.instant('COMMON.ERROR'),
@@ -165,7 +234,7 @@ export class SponsorManageComponent {
       return;
     }
 
-    const sponsorTypeId = String(form.value.typeId ?? '').trim();
+    const sponsorTypeId = String(form.value.sponsorTypeId ?? '').trim();
     const sponsorType = this.sponsorTypes().find((type) => type.id === sponsorTypeId);
     if (!sponsorType) {
       this.messageService.add({
@@ -176,25 +245,70 @@ export class SponsorManageComponent {
       return;
     }
 
+    const editingSponsor = this.currentEditingSponsor();
     const payload: Sponsor = {
-      id: this.editingId() ?? `sponsor_${Date.now()}`,
+      id: this.editingId() ?? '',
+      lastUpdated: editingSponsor?.lastUpdated ?? '',
+      conferenceId: this.conferenceId(),
       name: String(form.value.name ?? '').trim(),
+      status: this.normalizeSponsorStatus(form.value.status),
+      statusDate: this.normalizeDate(form.value.statusDate),
+      paymentStatus: this.normalizePaymentStatus(form.value.paymentStatus),
+      paymentStatusDate: this.normalizeDate(form.value.paymentStatusDate),
+      description: this.extractLocalizedValues(form, 'description'),
+      sponsorTypeId,
       logo: String(form.value.logo ?? '').trim(),
-      website: String(form.value.website ?? '').trim(),
+      website: this.extractLocalizedValues(form, 'website'),
       boothName: String(form.value.boothName ?? '').trim(),
-      type: sponsorType,
-      description: {
-        EN: String(form.value.descriptionEn ?? '').trim(),
-        FR: String(form.value.descriptionFr ?? '').trim(),
-      },
-      emails: this.parseEmails(form.value.emailsText),
+      boothWishes: this.parseList(form.value.boothWishesText),
+      boothWishesDate: this.normalizeDate(form.value.boothWishesDate),
+      adminEmails: this.parseList(form.value.adminEmailsText),
+      conferenceTickets: this.extractConferenceTickets(form),
     };
 
-    const updatedSponsors = this.editingId()
-      ? this.sponsors().map((item) => (item.id === payload.id ? payload : item))
-      : [...this.sponsors(), payload];
+    this.sponsorService.save(payload).subscribe({
+      next: (savedSponsor) => {
+        const nextSponsors = this.editingId()
+          ? this.sponsors().map((item) => (item.id === savedSponsor.id ? savedSponsor : item))
+          : [...this.sponsors(), savedSponsor];
+        this.sponsors.set(nextSponsors);
+        this.onCancel();
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translateService.instant('COMMON.SUCCESS'),
+          detail: this.translateService.instant('CONFERENCE.CONFIG.SAVED'),
+        });
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error saving sponsor:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translateService.instant('COMMON.ERROR'),
+          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
+        });
+      },
+    });
+  }
 
-    this.saveSponsors(updatedSponsors, this.translateService.instant('CONFERENCE.CONFIG.SAVED'));
+  addConferenceTicket(): void {
+    const form = this.form();
+    if (!form) {
+      return;
+    }
+    (form.get('conferenceTickets') as FormArray<FormGroup>).push(this.createConferenceTicketGroup());
+  }
+
+  removeConferenceTicket(index: number): void {
+    const form = this.form();
+    if (!form) {
+      return;
+    }
+    (form.get('conferenceTickets') as FormArray<FormGroup>).removeAt(index);
+  }
+
+  sponsorTypeById(sponsorTypeId: string): SponsorType | undefined {
+    return this.sponsorTypes().find((type) => type.id === sponsorTypeId);
   }
 
   typeBadgeStyle(type: SponsorType | undefined): Record<string, string> {
@@ -204,62 +318,142 @@ export class SponsorManageComponent {
     };
   }
 
-  private createForm(sponsor?: Sponsor): FormGroup {
-    return this.fb.group({
-      name: [String(sponsor?.name ?? '').trim(), [Validators.required, Validators.minLength(2)]],
-      typeId: [String(sponsor?.type?.id ?? '').trim(), [Validators.required]],
-      logo: [String(sponsor?.logo ?? '').trim()],
-      website: [String(sponsor?.website ?? '').trim()],
-      boothName: [String(sponsor?.boothName ?? '').trim()],
-      descriptionEn: [String(sponsor?.description?.['EN'] ?? sponsor?.description?.['en'] ?? '').trim()],
-      descriptionFr: [String(sponsor?.description?.['FR'] ?? sponsor?.description?.['fr'] ?? '').trim()],
-      emailsText: [Array.isArray(sponsor?.emails) ? sponsor?.emails.join('\n') : ''],
+  localizedFieldLabel(prefix: 'DESCRIPTION' | 'WEBSITE', language: string): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.${prefix}`, {
+      language: language.toUpperCase(),
     });
   }
 
-  private parseEmails(raw: string | undefined): string[] {
+  sponsorStatusLabel(status: SponsorStatus): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.STATUS_${status}`);
+  }
+
+  paymentStatusLabel(status: SponsorPaymentStatus): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.PAYMENT_${status}`);
+  }
+
+  conferenceTicketStatusLabel(status: ConferenceTicket['status']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.TICKET_${status}`);
+  }
+
+  private createForm(sponsor?: Sponsor): FormGroup {
+    const controls: Record<string, unknown> = {
+      name: [String(sponsor?.name ?? '').trim(), [Validators.required, Validators.minLength(2)]],
+      sponsorTypeId: [String(sponsor?.sponsorTypeId ?? '').trim(), [Validators.required]],
+      status: [String(sponsor?.status ?? 'POTENTIAL').trim(), [Validators.required]],
+      statusDate: [this.normalizeDate(sponsor?.statusDate)],
+      paymentStatus: [String(sponsor?.paymentStatus ?? 'PENDING').trim(), [Validators.required]],
+      paymentStatusDate: [this.normalizeDate(sponsor?.paymentStatusDate)],
+      logo: [String(sponsor?.logo ?? '').trim()],
+      boothName: [String(sponsor?.boothName ?? '').trim()],
+      boothWishesText: [Array.isArray(sponsor?.boothWishes) ? sponsor?.boothWishes.join('\n') : ''],
+      boothWishesDate: [this.normalizeDate(sponsor?.boothWishesDate)],
+      adminEmailsText: [Array.isArray(sponsor?.adminEmails) ? sponsor?.adminEmails.join('\n') : ''],
+      conferenceTickets: this.fb.array<FormGroup>(
+        (sponsor?.conferenceTickets ?? []).map((ticket) => this.createConferenceTicketGroup(ticket))
+      ),
+    };
+
+    this.languageCodes().forEach((language) => {
+      controls[`description_${language}`] = [
+        String(
+          sponsor?.description?.[language]
+            ?? sponsor?.description?.[language.toUpperCase()]
+            ?? sponsor?.description?.[language.toLowerCase()]
+            ?? ''
+        ).trim(),
+      ];
+      controls[`website_${language}`] = [
+        String(
+          sponsor?.website?.[language]
+            ?? sponsor?.website?.[language.toUpperCase()]
+            ?? sponsor?.website?.[language.toLowerCase()]
+            ?? ''
+        ).trim(),
+      ];
+    });
+
+    return this.fb.group(controls);
+  }
+
+  private createConferenceTicketGroup(ticket?: ConferenceTicket): FormGroup {
+    return this.fb.group({
+      conferenceTicketTypeId: [String(ticket?.conferenceTicketTypeId ?? '').trim(), [Validators.required]],
+      email: [String(ticket?.email ?? '').trim()],
+      ticketId: [String(ticket?.ticketId ?? '').trim()],
+      status: [String(ticket?.status ?? 'REQUESTED').trim(), [Validators.required]],
+    });
+  }
+
+  private extractLocalizedValues(form: FormGroup, fieldPrefix: 'description' | 'website'): Record<string, string> {
+    return this.languageCodes().reduce<Record<string, string>>((acc, language) => {
+      const value = String(form.get(`${fieldPrefix}_${language}`)?.value ?? '').trim();
+      if (value.length > 0) {
+        acc[language.toUpperCase()] = value;
+      }
+      return acc;
+    }, {});
+  }
+
+  private extractConferenceTickets(form: FormGroup): ConferenceTicket[] | undefined {
+    const values = (form.get('conferenceTickets') as FormArray<FormGroup>).getRawValue() as Array<{
+      conferenceTicketTypeId?: string;
+      email?: string;
+      ticketId?: string;
+      status?: ConferenceTicket['status'];
+    }>;
+
+    const tickets = values
+      .map((ticket) => ({
+        conferenceTicketTypeId: String(ticket?.conferenceTicketTypeId ?? '').trim(),
+        email: String(ticket?.email ?? '').trim(),
+        ticketId: String(ticket?.ticketId ?? '').trim(),
+        status: this.normalizeConferenceTicketStatus(ticket?.status),
+      }))
+      .filter((ticket) => ticket.conferenceTicketTypeId.length > 0 || ticket.email.length > 0 || ticket.ticketId.length > 0);
+
+    return tickets.length > 0 ? tickets : undefined;
+  }
+
+  private parseList(raw: string | undefined): string[] {
     return String(raw ?? '')
       .split(/\r?\n|,|;/)
       .map((value) => value.trim())
       .filter((value) => value.length > 0);
   }
 
-  private saveSponsors(updatedSponsors: Sponsor[], successDetail: string): void {
-    const conference = this.conference();
-    if (!conference) {
-      return;
+  private normalizeDate(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    if (normalized.length > 0) {
+      return normalized;
     }
+    return new Date().toISOString().slice(0, 10);
+  }
 
-    const updatedConference: Conference = {
-      ...conference,
-      sponsoring: {
-        sponsorTypes: conference.sponsoring?.sponsorTypes ?? [],
-        sponsors: updatedSponsors,
-        sponsorBoothMaps: conference.sponsoring?.sponsorBoothMaps ?? [],
-      },
-    };
+  private normalizeSponsorStatus(value: unknown): SponsorStatus {
+    const normalized = String(value ?? '').trim();
+    const allowed: SponsorStatus[] = [
+      'POTENTIAL',
+      'CANDIDATE',
+      'CONFIRMED',
+      'REJECTED',
+      'CANCELED',
+      'WAITING_LIST',
+    ];
+    return allowed.includes(normalized as SponsorStatus) ? (normalized as SponsorStatus) : 'POTENTIAL';
+  }
 
-    this.conferenceService.save(updatedConference).subscribe({
-      next: (savedConference) => {
-        this.conference.set(savedConference);
-        this.sponsorTypes.set(savedConference.sponsoring?.sponsorTypes ?? []);
-        this.sponsors.set(savedConference.sponsoring?.sponsors ?? []);
-        this.onCancel();
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translateService.instant('COMMON.SUCCESS'),
-          detail: successDetail,
-        });
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        console.error('Error saving sponsors:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: this.translateService.instant('COMMON.ERROR'),
-          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
-        });
-      },
-    });
+  private normalizePaymentStatus(value: unknown): SponsorPaymentStatus {
+    const normalized = String(value ?? '').trim();
+    const allowed: SponsorPaymentStatus[] = ['PENDING', 'PAID', 'OVERDUE'];
+    return allowed.includes(normalized as SponsorPaymentStatus) ? (normalized as SponsorPaymentStatus) : 'PENDING';
+  }
+
+  private normalizeConferenceTicketStatus(value: unknown): ConferenceTicket['status'] {
+    const normalized = String(value ?? '').trim();
+    const allowed: ConferenceTicket['status'][] = ['REQUESTED', 'CREATED', 'SENT', 'CANCELED'];
+    return allowed.includes(normalized as ConferenceTicket['status'])
+      ? (normalized as ConferenceTicket['status'])
+      : 'REQUESTED';
   }
 }

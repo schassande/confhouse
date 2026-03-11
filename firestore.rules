@@ -155,6 +155,12 @@ service cloud.firestore {
       allow read;
     }
 
+    match /sponsor/{document=**} {
+      allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
+      allow update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+      allow read;
+    }
+
     match /activity-participation/{document=**} {
 		  allow create: if isConferenceOrganizer(request.resource.data.conferenceId)
         || isSamePerson(request.resource.data.personId);
