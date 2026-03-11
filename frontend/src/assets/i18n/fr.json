@@ -41,6 +41,7 @@
   "LOGIN": {
     "TITLE": "Se connecter à votre compte",
     "GOOGLE": "Se connecter avec Google",
+    "GITHUB": "Se connecter avec GitHub",
     "OR": "ou",
     "EMAIL": "E-mail",
     "PASSWORD": "Mot de passe",

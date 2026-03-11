@@ -12,6 +12,9 @@
     <button pButton type="button" class="google-btn" (click)="onGoogleLogin()" [loading]="loading()" [disabled]="loading()">
       <i class="pi pi-google" style="margin-right:8px"></i>{{ 'LOGIN.GOOGLE' | translate }}
     </button>
+    <button pButton type="button" class="github-btn" (click)="onGithubLogin()" [loading]="loading()" [disabled]="loading()">
+      <i class="pi pi-github" style="margin-right:8px"></i>{{ 'LOGIN.GITHUB' | translate }}
+    </button>
     <span class="or-divider">{{ 'LOGIN.OR' | translate }}</span>
   </div>
 

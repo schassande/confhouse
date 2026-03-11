@@ -8,7 +8,6 @@
 - Sponsor : show list of registration
 - Sponsor : add choice of the booth by the sponsor (ordered list of whished booth number)
 - Sponsor : add a status about payment
-- Github authentication
 - RGPD
 - BilletWeb integration
   - Billetweb for speaker: Use API to create/delete the ticket of the speaker (https://www.billetweb.fr/bo/api.php#/api/event/:id/add_order)

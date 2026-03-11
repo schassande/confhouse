@@ -88,6 +88,28 @@ export class LoginComponent {
     }
   }
 
+  async onGithubLogin() {
+    this.loading.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    try {
+      const result = await this.usersignService.loginWithGithub();
+      if (result) {
+        const returnUrl = this.redirectService.get();
+        const target = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/';
+        this.redirectService.clear();
+        await this.router.navigateByUrl(target);
+      } else {
+        this.error.set('User not found in database');
+      }
+    } catch (err: any) {
+      this.error.set(err?.message || 'An error occurred during GitHub login');
+      console.error(err);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   navigateToSignup() {
     this.router.navigate(['/signup']);
   }

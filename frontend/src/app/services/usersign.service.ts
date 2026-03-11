@@ -1,9 +1,14 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
+import { FirebaseError } from 'firebase/app';
 import {
+  AuthProvider,
   browserLocalPersistence,
   createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
+  GithubAuthProvider,
   GoogleAuthProvider,
+  linkWithCredential,
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
@@ -152,21 +157,88 @@ export class UserSignService {
    */
   async loginWithGoogle(): Promise<Person|undefined> {
     const provider = new GoogleAuthProvider();
-    const cred = await signInWithPopup(this.auth, provider);
-    const user = cred.user;
-    
+    return await this.loginWithOAuthProvider(
+      provider,
+      (error) => GoogleAuthProvider.credentialFromError(error),
+      'Google'
+    );
+  }
+
+  /**
+   * Login a user with GitHub authentication
+   * @returns
+   */
+  async loginWithGithub(): Promise<Person|undefined> {
+    const provider = new GithubAuthProvider();
+    provider.addScope('user:email');
+    return await this.loginWithOAuthProvider(
+      provider,
+      (error) => GithubAuthProvider.credentialFromError(error),
+      'GitHub'
+    );
+  }
+
+  private async loginWithOAuthProvider(
+    provider: AuthProvider,
+    credentialFromError: (error: FirebaseError) => ReturnType<typeof GoogleAuthProvider.credentialFromError>,
+    providerLabel: string
+  ): Promise<Person | undefined> {
+    try {
+      const cred = await signInWithPopup(this.auth, provider);
+      return await this.finishOAuthLogin(cred.user);
+    } catch (error: any) {
+      if (error?.code !== 'auth/account-exists-with-different-credential') {
+        throw error;
+      }
+
+      const email = error?.customData?.email;
+      if (!email) {
+        throw new Error(`An account already exists with a different sign-in method. Use the original provider for ${providerLabel}.`);
+      }
+
+      const methods = await fetchSignInMethodsForEmail(this.auth, email);
+      const pendingCredential = credentialFromError(error);
+
+      if (methods.includes(GoogleAuthProvider.PROVIDER_ID) && provider.providerId !== GoogleAuthProvider.PROVIDER_ID) {
+        const googleCred = await signInWithPopup(this.auth, new GoogleAuthProvider());
+        if (this.auth.currentUser && pendingCredential) {
+          await linkWithCredential(this.auth.currentUser, pendingCredential);
+        }
+        return await this.finishOAuthLogin(googleCred.user);
+      }
+
+      if (methods.includes(GithubAuthProvider.PROVIDER_ID) && provider.providerId !== GithubAuthProvider.PROVIDER_ID) {
+        const githubProvider = new GithubAuthProvider();
+        githubProvider.addScope('user:email');
+        const githubCred = await signInWithPopup(this.auth, githubProvider);
+        if (this.auth.currentUser && pendingCredential) {
+          await linkWithCredential(this.auth.currentUser, pendingCredential);
+        }
+        return await this.finishOAuthLogin(githubCred.user);
+      }
+
+      if (methods.includes('password')) {
+        throw new Error(`An account already exists for ${email}. Sign in with email and password first, then retry ${providerLabel} if you want to link it later.`);
+      }
+
+      const methodLabel = methods[0] ?? 'another provider';
+      throw new Error(`An account already exists for ${email} with ${methodLabel}. Use that method to sign in first.`);
+    }
+  }
+
+  private async finishOAuthLogin(user: User): Promise<Person | undefined> {
     if (!user.email) return undefined;
-    
-    // Fetch person from database using email
+
     let person = await firstValueFrom(this.personService.findByEmail(user.email));
     if (!person) {
-        person = await this.createPersonFromGoogleUser(cred.user);
-    }    
+      person = await this.createPersonFromGoogleUser(user);
+    }
     if (person) {
-      this.setAuthenticatedContext(cred.user, person);
+      this.setAuthenticatedContext(user, person);
     }
     return person;
   }
+
   private async createPersonFromGoogleUser(user: User): Promise<Person|undefined> {
     const firstName: string = user.displayName?.split(' ')[0] ?? '';
     const lastName: string = user.displayName?.split(' ').slice(1).join(' ') ?? '';

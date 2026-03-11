@@ -88,6 +88,7 @@
   "LOGIN": {
     "TITLE": "Login to your account",
     "GOOGLE": "Login with Google",
+    "GITHUB": "Login with GitHub",
     "OR": "or",
     "EMAIL": "Email",
     "PASSWORD": "Password",
