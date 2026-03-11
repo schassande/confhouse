@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { UserSignService } from '../../../services/usersign.service';
@@ -24,6 +24,7 @@ export class LoginComponent {
 
   private readonly usersignService = inject(UserSignService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly redirectService = inject(RedirectService);
 
@@ -32,6 +33,11 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl?.startsWith('/')) {
+      this.redirectService.set(returnUrl);
+    }
   }
 
   async onSubmit() {
@@ -111,7 +117,10 @@ export class LoginComponent {
   }
 
   navigateToSignup() {
-    this.router.navigate(['/signup']);
+    const returnUrl = this.redirectService.get();
+    void this.router.navigate(['/signup'], {
+      queryParams: returnUrl && returnUrl.startsWith('/') ? { returnUrl } : undefined
+    });
   }
 
   async onResetPassword() {

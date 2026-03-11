@@ -22,16 +22,12 @@ import { Person } from '../model/person.model';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { functionBaseUrl } from './constantes';
-import { RedirectService } from './redirect.service';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class UserSignService {
   private readonly auth = inject(Auth);
   private readonly personService = inject(PersonService);
-  private readonly redirectService = inject(RedirectService);
-  private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
   private readonly _user = signal<User | null>(null);
@@ -49,12 +45,6 @@ export class UserSignService {
         const person = await firstValueFrom(this.personService.findByEmail(firebaseUser.email));
         if (person) {
           this.setAuthenticatedContext(firebaseUser, person);
-          const url = this.redirectService.get(); 
-          if (url && url.startsWith('/')) {
-            this.redirectService.clear();
-            //console.log('Redirecting to URL:', url);
-            this.router.navigateByUrl(url || '/');
-          }
         }
       } else {
         // No user - clear signals

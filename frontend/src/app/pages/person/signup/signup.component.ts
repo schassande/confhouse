@@ -3,11 +3,12 @@
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { UserSignService } from '../../../services/usersign.service';
 import { Person } from '../../../model/person.model';
+import { RedirectService } from '../../../services/redirect.service';
 
 @Component({
   selector: 'app-signup',
@@ -25,7 +26,9 @@ export class SignupComponent {
 
   private readonly signupService = inject(UserSignService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  private readonly redirectService = inject(RedirectService);
 
   constructor() {
     this.form = this.fb.group({
@@ -35,6 +38,11 @@ export class SignupComponent {
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirm: ['', [Validators.required]]
     });
+
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl?.startsWith('/')) {
+      this.redirectService.set(returnUrl);
+    }
   }
 
   async onSubmit() {
@@ -71,8 +79,10 @@ export class SignupComponent {
         const result = await this.signupService.signupWithEmail(person, formValue.password);
         
         if (result) {
-          // Navigate to home or preference page
-          await this.router.navigate(['/']);
+          const returnUrl = this.redirectService.get();
+          const target = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/';
+          this.redirectService.clear();
+          await this.router.navigateByUrl(target);
         } else {
           this.error.set('Signup failed');
         }
@@ -91,8 +101,10 @@ export class SignupComponent {
     try {
       const result = await this.signupService.signupWithGoogle();
       if (result) {
-        // Navigate to home page
-        await this.router.navigate(['/']);
+        const returnUrl = this.redirectService.get();
+        const target = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/';
+        this.redirectService.clear();
+        await this.router.navigateByUrl(target);
       } else {
         this.error.set('Google signup failed');
       }

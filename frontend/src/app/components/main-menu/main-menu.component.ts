@@ -136,6 +136,16 @@ export class MainMenuComponent {
     await this.setMenuItems();
   }
 
+  loginQueryParams(): { returnUrl: string } | undefined {
+    const returnUrl = this.currentReturnUrl();
+    return returnUrl ? { returnUrl } : undefined;
+  }
+
+  signupQueryParams(): { returnUrl: string } | undefined {
+    const returnUrl = this.currentReturnUrl();
+    return returnUrl ? { returnUrl } : undefined;
+  }
+
   private setLanguage(lang: 'en' | 'fr') {
     void this.signupService.updatePreferredLanguage(lang).then(() => {
       this._currentLang.set(lang);
@@ -144,5 +154,13 @@ export class MainMenuComponent {
       void this.translate.use(lang);
       this._currentLang.set(lang);
     });
+  }
+
+  private currentReturnUrl(): string | undefined {
+    const currentUrl = String(this.router.url ?? '').trim();
+    if (!currentUrl || currentUrl === '/' || currentUrl.startsWith('/login') || currentUrl.startsWith('/signup')) {
+      return undefined;
+    }
+    return currentUrl.startsWith('/') ? currentUrl : undefined;
   }
 }

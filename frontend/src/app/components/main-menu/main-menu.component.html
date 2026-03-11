@@ -42,14 +42,14 @@
       </button>
     } @else {
       <div class="desktop-auth-links">
-        <a routerLink="/signup" class="menu-link">{{ 'MENU.SIGNUP' | translate }}</a>
-        <a routerLink="/login" class="menu-link">{{ 'MENU.LOGIN' | translate }}</a>
+        <a routerLink="/signup" [queryParams]="signupQueryParams()" class="menu-link">{{ 'MENU.SIGNUP' | translate }}</a>
+        <a routerLink="/login" [queryParams]="loginQueryParams()" class="menu-link">{{ 'MENU.LOGIN' | translate }}</a>
       </div>
       <div class="mobile-auth-links">
-        <a routerLink="/signup" class="menu-link menu-link-icon" [attr.aria-label]="'MENU.SIGNUP' | translate">
+        <a routerLink="/signup" [queryParams]="signupQueryParams()" class="menu-link menu-link-icon" [attr.aria-label]="'MENU.SIGNUP' | translate">
           <i class="pi pi-user-plus"></i>
         </a>
-        <a routerLink="/login" class="menu-link menu-link-icon" [attr.aria-label]="'MENU.LOGIN' | translate">
+        <a routerLink="/login" [queryParams]="loginQueryParams()" class="menu-link menu-link-icon" [attr.aria-label]="'MENU.LOGIN' | translate">
           <i class="pi pi-sign-in"></i>
         </a>
       </div>
