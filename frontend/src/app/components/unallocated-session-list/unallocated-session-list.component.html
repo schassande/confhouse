@@ -7,15 +7,17 @@
   (dragleave)="onDragLeave()"
   (drop)="onDrop($event)"
 >
-  <div class="count">
-    {{
-      countKey()
-        | translate
-          : {
-              count: items().length
-            }
-    }}
-  </div>
+  @if (showCount()) {
+    <div class="count">
+      {{
+        countKey()
+          | translate
+            : {
+                count: items().length
+              }
+      }}
+    </div>
+  }
 
   @if (!items().length) {
     <p class="empty-message">{{ emptyKey() | translate }}</p>

@@ -24,6 +24,7 @@ export class UnallocatedSessionListComponent {
   readonly items = input.required<UnallocatedSessionListItem[]>();
   readonly countKey = input('SESSION.ALLOCATION.COUNT');
   readonly emptyKey = input('SESSION.ALLOCATION.NO_UNALLOCATED');
+  readonly showCount = input(true);
   readonly draggable = input(false);
   readonly dropEnabled = input(false);
   readonly enableListScroll = input(true);

@@ -22,8 +22,7 @@
 }
 
 .session-list-wrapper.scroll-enabled {
-  max-height: 800px;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 

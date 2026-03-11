@@ -11,13 +11,15 @@
     - When speaker/session removed/cancelled/... remove the ticket
   - Billetweb for organiser: Use API to create/delete the ticket of the organiser
   - Billetweb for sponsor: Use API to create/delete the ticket of the sponsor
-- Cancel speaker.
+- Edit Speaker: Cancel speaker by organizer
+- Edit Speaker: s'assurer que la disponibilité est suffisante pour couvrir au moins un slot compatible pour chaque session du speaker.
+- Session allocation : quand on clique sur un slot déjà alloué il faut afficher dans la popup les informations sur la session alloué. 
 - RGPD
 
 ## Priority 2
 - Default color list for tracks and session types.
 - Dark theme.
-- Drop Conference Hall dependency
+- Permit session su Conference Hall dependency
   - Session submission by speakers
   - Session evaluation
   - Send emails via Mailjet

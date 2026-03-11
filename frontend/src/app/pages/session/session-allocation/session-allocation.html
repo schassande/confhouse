@@ -177,6 +177,7 @@
     <p-dialog
       [modal]="true"
       [visible]="sessionPickerVisible()"
+      class="session-picker-dialog"
       [style]="{ width: '40rem' }"
       [header]="'SESSION.ALLOCATION.PICKER_TITLE' | translate"
       (onHide)="closeSessionPicker()"
@@ -207,16 +208,28 @@
           ></p-multiselect>
         </div>
 
-        <div class="picker-actions">
-          <button
-            pButton
-            type="button"
-            severity="secondary"
-            [label]="'SESSION.ALLOCATION.CLEAR_SLOT' | translate"
-            [disabled]="!selectedSessionId(slotView)"
-            (click)="onPickerClearSlot()"
-          ></button>
-        </div>
+
+        @if (selectedSessionId(slotView)) {
+          <div class="picker-current-session">
+            <div class="picker-actions">
+              <div>{{ 'SESSION.ALLOCATION.ALLOCATED_SESSION' | translate }}</div>
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                [label]="'SESSION.ALLOCATION.CLEAR_SLOT' | translate"
+                [disabled]="!selectedSessionId(slotView)"
+                (click)="onPickerClearSlot()"
+              ></button>
+            </div>
+            <app-unallocated-session-list
+              [items]="pickerAllocatedSessionItems()"
+              [draggable]="false"
+              [showCount]="false"
+              [enableListScroll]="false"
+            ></app-unallocated-session-list>
+          </div>
+        }
 
         <app-unallocated-session-list
           [items]="pickerSessionItems()"

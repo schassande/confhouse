@@ -1,4 +1,4 @@
-$tick-width: 75px;
+$tick-width: 50px;
 $slot-row-height: 70px;
 $header-height: 40px;
 
@@ -98,8 +98,9 @@ $header-height: 40px;
 }
 
 .slot-card.drop-target {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.22);
+  border-color: #0ea5e9 !important;
+  background-color: #0ea5e9 !important;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.22) !important;
 }
 
 .slot-text {
@@ -150,12 +151,18 @@ $header-height: 40px;
 
 .picker-filters {
   margin-bottom: 0.7rem;
-  display: grid;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 0.6rem;
 }
 
 .picker-actions {
-  margin-bottom: 0.7rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2rem;
 }
 
 .conflict-message {
@@ -188,7 +195,7 @@ $header-height: 40px;
   display: grid;
   width: 100%;
   grid-template-columns: $tick-width repeat(var(--nb-rooms, 1), minmax(0, 1fr));
-  border: 1px solid #cbd5e1;
+  //border: 1px solid #cbd5e1;
   background: #ffffff;
 }
 
@@ -200,8 +207,7 @@ $header-height: 40px;
 }
 
 .header-cell {
-  border-left: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   height: $header-height;
   display: flex;
   align-items: center;
@@ -211,13 +217,14 @@ $header-height: 40px;
 }
 
 .timeline-header-cell {
-  border-left: none;
+  border: none;
+  background: none;
 }
 
 .tick {
   width: $tick-width;
   height: $slot-row-height;
-  border-top: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   display: flex;
   align-items: flex-start;
   justify-content: center;

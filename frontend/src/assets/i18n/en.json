@@ -780,6 +780,7 @@
       "SELECT_PLACEHOLDER": "Select a session",
       "NONE": "No session",
       "PICKER_TITLE": "Choose a session for slot",
+      "ALLOCATED_SESSION": "Currently allocated session",
       "CLEAR_SLOT": "Clear slot",
       "UNAVAILABLE_CONFLICT_TITLE": "Allocation refus",
       "UNAVAILABLE_CONFLICT_INTRO": "One or more speakers are unavailable on this slot. <br>Available time ranges:<br>",

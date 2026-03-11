@@ -326,16 +326,16 @@ export class SessionAllocation implements OnInit {
       ? baseSessions.filter((session) => pickerTrackIds.includes(session.conference?.trackId ?? ''))
       : baseSessions;
     const filteredByKeyword = this.filterSessionsByKeyword(filteredByTrack, this.pickerSearchText());
-    const items = filteredByKeyword.map((session) => ({
-      sessionId: session.id,
-      title: session.title,
-      speakersLabel: this.sessionSpeakersLabel(session),
-      sessionTypeLabel: this.sessionTypeLabel(session),
-      reviewAverage: this.sessionReviewAverage(session),
-      backgroundColor: this.sessionTrackColor(session),
-      textColor: this.sessionTrackTextColor(session),
-    }));
-    return items;
+    return filteredByKeyword.map((session) => this.buildSessionListItem(session));
+  });
+
+  readonly pickerAllocatedSessionItems = computed<UnallocatedSessionListItem[]>(() => {
+    const slotView = this.selectedSlotForPicker();
+    if (!slotView) {
+      return [];
+    }
+    const session = this.selectedSession(slotView);
+    return session ? [this.buildSessionListItem(session)] : [];
   });
 
   ngOnInit(): void {
@@ -465,6 +465,18 @@ export class SessionAllocation implements OnInit {
 
   sessionTrackTextColor(session: Session): string {
     return this.computeTextColorForBackground(this.sessionTrackColor(session));
+  }
+
+  private buildSessionListItem(session: Session): UnallocatedSessionListItem {
+    return {
+      sessionId: session.id,
+      title: session.title,
+      speakersLabel: this.sessionSpeakersLabel(session),
+      sessionTypeLabel: this.sessionTypeLabel(session),
+      reviewAverage: this.sessionReviewAverage(session),
+      backgroundColor: this.sessionTrackColor(session),
+      textColor: this.sessionTrackTextColor(session),
+    };
   }
 
   sessionDisplayColor(session: Session): string {
