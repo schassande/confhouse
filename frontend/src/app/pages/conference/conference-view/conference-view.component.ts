@@ -10,6 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Activity, ParticipantType } from '../../../model/activity.model';
 import { ActivityService } from '../../../services/activity.service';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
+import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
@@ -67,6 +68,7 @@ export class ConferenceViewComponent {
   private readonly conferenceService = inject(ConferenceService);
   private readonly activityService = inject(ActivityService);
   private readonly activityParticipationService = inject(ActivityParticipationService);
+  private readonly sponsorService = inject(SponsorService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
   private readonly speakerSessionManagementService = inject(SpeakerSessionManagementService);
@@ -79,6 +81,7 @@ export class ConferenceViewComponent {
   private readonly _speakerSessions = signal<Session[]>([]);
   private readonly _sessionAllocations = signal<SessionAllocation[]>([]);
   private readonly _isConferenceSpeaker = signal(false);
+  private readonly _currentSponsorId = signal('');
   private readonly speakerInfoById = signal<Map<string, SessionSpeakerView>>(new Map());
   readonly sessionActionDialogVisible = signal(false);
   readonly selectedSessionAction = signal<SpeakerSessionDecision>('CANCEL_SESSION');
@@ -97,6 +100,20 @@ export class ConferenceViewComponent {
       this.activityService.byConferenceId(conferenceId).subscribe((activities) => this._activities.set(activities ?? []));
       this.sessionAllocationService.byConferenceId(conferenceId).subscribe((allocations) => this._sessionAllocations.set(allocations ?? []));
     }
+
+    effect((onCleanup) => {
+      const conferenceId = String(this.conference()?.id ?? '').trim();
+      const email = String(this.currentPerson()?.email ?? '').trim();
+      if (!conferenceId || !email) {
+        this._currentSponsorId.set('');
+        return;
+      }
+
+      const sub = this.sponsorService.byConferenceIdAndAdminEmail(conferenceId, email).subscribe((sponsor) => {
+        this._currentSponsorId.set(String(sponsor?.id ?? '').trim());
+      });
+      onCleanup(() => sub.unsubscribe());
+    });
 
     effect((onCleanup) => {
       const conferenceId = String(this.conference()?.id ?? '').trim();
@@ -204,6 +221,7 @@ export class ConferenceViewComponent {
 
   conference = computed(() => this._conference());
   isConferenceSpeaker = computed(() => this._isConferenceSpeaker());
+  isConferenceSponsor = computed(() => this._currentSponsorId().length > 0);
 
   /**
    * Computes conference start/end dates from configured days.
@@ -251,6 +269,15 @@ export class ConferenceViewComponent {
     const conference = this.conference();
     return this.conferenceOrganizerService.isConferenceOrganizer(conference, person?.email);
   });
+
+  /**
+   * Returns whether the sponsor application action should be visible.
+   *
+   * @returns `true` for authenticated users.
+   */
+  canApplyAsSponsor(): boolean {
+    return !!this.currentPerson() && !this.isConferenceSponsor();
+  }
 
   private readonly userRoles = computed<ParticipantType[]>(() => {
     const person = this.currentPerson();

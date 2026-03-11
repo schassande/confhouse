@@ -1,0 +1,203 @@
+<section class="sponsor-application-container">
+  <p-toast></p-toast>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'CONFERENCE.SPONSOR_APPLICATION.TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'CONFERENCE.SPONSOR_APPLICATION.INTRO' | translate }}</p>
+    </div>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [label]="'CONFERENCE.SPONSOR_APPLICATION.BACK' | translate"
+      (click)="goBack()"
+    ></button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">{{ 'CONFERENCE.LOADING' | translate }}</div>
+  } @else if (!conference()) {
+    <div class="loading-state">{{ 'CONFERENCE.NOT_FOUND' | translate }}</div>
+  } @else if (formGroup(); as form) {
+    <form [formGroup]="form" class="application-form">
+      <div class="form-grid">
+        <div class="form-section">
+          <label for="name" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_APPLICATION.NAME' | translate }}
+            <span class="required">*</span>
+          </label>
+          <input id="name" pInputText formControlName="name" type="text" class="w-full" />
+          @if (form.get('name')?.invalid && form.get('name')?.touched) {
+            <small class="error-message">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+          }
+        </div>
+
+        <div class="form-section">
+          <label for="sponsorTypeId" class="form-label">
+            {{ 'CONFERENCE.SPONSOR_APPLICATION.TYPE' | translate }}
+            <span class="required">*</span>
+          </label>
+          <p-select
+            inputId="sponsorTypeId"
+            [options]="sponsorTypeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [placeholder]="'CONFERENCE.SPONSOR_APPLICATION.TYPE_PLACEHOLDER' | translate"
+            formControlName="sponsorTypeId"
+            class="w-full"
+            (onChange)="onSponsorTypeChange($event.value)"
+          ></p-select>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-section">
+          <label for="logo" class="form-label">{{ 'CONFERENCE.SPONSOR_APPLICATION.LOGO' | translate }}</label>
+          <input id="logo" pInputText formControlName="logo" type="url" class="w-full" />
+        </div>
+
+        <div class="form-section logo-preview-panel">
+          <label class="form-label">{{ 'CONFERENCE.SPONSOR_APPLICATION.LOGO_PREVIEW' | translate }}</label>
+          @if (logoPreviewUrl()) {
+            <img [src]="logoPreviewUrl()" [alt]="'CONFERENCE.SPONSOR_APPLICATION.LOGO_PREVIEW' | translate" class="logo-preview" />
+          } @else {
+            <div class="logo-placeholder">{{ 'CONFERENCE.SPONSOR_APPLICATION.NO_LOGO' | translate }}</div>
+          }
+        </div>
+      </div>
+
+      <div class="form-grid">
+        @for (language of languageCodes(); track language) {
+          <div class="form-section">
+            <label [for]="'website_' + language" class="form-label">
+              {{ localizedFieldLabel('WEBSITE', language) }}
+            </label>
+            <input [id]="'website_' + language" pInputText [formControlName]="'website_' + language" type="url" class="w-full" />
+          </div>
+        }
+      </div>
+
+      <div class="form-grid">
+        @for (language of languageCodes(); track language) {
+          <div class="form-section">
+            <label [for]="'description_' + language" class="form-label">
+              {{ localizedFieldLabel('DESCRIPTION', language) }}
+            </label>
+            <textarea
+              [id]="'description_' + language"
+              pTextarea
+              [formControlName]="'description_' + language"
+              rows="5"
+              class="w-full"
+            ></textarea>
+          </div>
+        }
+      </div>
+
+      <div class="orderlist-layout">
+        <div class="form-section booth-maps-section">
+          <label class="form-label">{{ 'CONFERENCE.SPONSOR_APPLICATION.BOOTH_MAPS' | translate }}</label>
+          @if (boothMapUrls().length > 0) {
+            <div class="booth-maps-list">
+              @for (boothMapUrl of boothMapUrls(); track boothMapUrl; let index = $index) {
+                <a
+                  class="booth-map-card"
+                  [href]="boothMapUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div class="booth-map-title">
+                    {{ 'CONFERENCE.SPONSOR_APPLICATION.BOOTH_MAP' | translate:{ index: index + 1 } }}
+                  </div>
+                  <img
+                    class="booth-map-image"
+                    [src]="boothMapUrl"
+                    [alt]="'CONFERENCE.SPONSOR_APPLICATION.BOOTH_MAP' | translate:{ index: index + 1 }"
+                  />
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">{{ 'CONFERENCE.SPONSOR_APPLICATION.NO_BOOTH_MAPS' | translate }}</div>
+          }
+        </div>
+
+        <div class="form-section orderlist-section">
+          <label class="form-label">{{ 'CONFERENCE.SPONSOR_APPLICATION.BOOTH_WISHES' | translate }}</label>
+          <small class="field-help">{{ 'CONFERENCE.SPONSOR_APPLICATION.BOOTH_WISHES_HELP' | translate }}</small>
+          @if (boothWishItems().length > 0) {
+            <p-orderlist
+              [value]="boothWishItems()"
+              [selection]="selectedBoothWishItems()"
+              [dragdrop]="true"
+              [responsive]="true"
+              [scrollHeight]="'auto'"
+              [dataKey]="'name'"
+              [stripedRows]="true"
+              (selectionChange)="onBoothWishSelectionChange($event)"
+              (onReorder)="onBoothWishesReorder($event)"
+            >
+              <ng-template let-item #item>
+                <div class="booth-item">{{ item.name }}</div>
+              </ng-template>
+            </p-orderlist>
+          } @else {
+            <div class="empty-state">{{ 'CONFERENCE.SPONSOR_APPLICATION.NO_BOOTHS' | translate }}</div>
+          }
+        </div>
+
+      </div>
+
+      <div class="form-grid">
+        <div class="form-section">
+          <label class="form-label">{{ 'CONFERENCE.SPONSOR_APPLICATION.ADMIN_EMAILS' | translate }}</label>
+          <div class="email-input-group">
+            <input pInputText email type="email" class="email-input" #emailInput placeholder="address@email.com" />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-plus"
+              class="p-button-sm"
+              (click)="addAdminEmail(emailInput.value); emailInput.value = ''"
+              [disabled]="!emailInput.checkValidity()"
+            ></button>
+          </div>
+
+          <div class="emails-list">
+            @for (email of adminEmails(); track email) {
+              <div class="email-tag">
+                <span>{{ email }}</span>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-times"
+                  class="p-button-sm p-button-text p-button-danger"
+                  (click)="removeAdminEmail(email)"
+                ></button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [label]="'COMMON.CANCEL' | translate"
+          (click)="goBack()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          [label]="'COMMON.SAVE' | translate"
+          [loading]="saving()"
+          [disabled]="form.invalid || saving()"
+          (click)="onSave()"
+        ></button>
+      </div>
+    </form>
+  }
+</section>

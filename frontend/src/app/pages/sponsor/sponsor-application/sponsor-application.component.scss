@@ -1,0 +1,183 @@
+.sponsor-application-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.page-title {
+  margin: 0;
+}
+
+.page-subtitle {
+  margin: 0.4rem 0 0;
+  color: #475569;
+}
+
+.application-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-label {
+  font-weight: 600;
+}
+
+.required,
+.error-message {
+  color: #b91c1c;
+}
+
+.field-help {
+  color: #64748b;
+}
+
+.logo-preview-panel {
+  min-height: 12rem;
+}
+
+.logo-preview,
+.logo-placeholder {
+  width: 100%;
+  min-height: 10rem;
+  max-height: 12rem;
+  object-fit: contain;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  padding: 1rem;
+}
+
+.orderlist-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.orderlist-section ::ng-deep .p-orderlist {
+  width: 100%;
+}
+
+.booth-item {
+  padding: 0.25rem 0;
+}
+
+.booth-maps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.booth-map-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  text-decoration: none;
+  color: inherit;
+}
+
+.booth-map-title {
+  font-weight: 600;
+}
+
+.booth-map-image {
+  width: 100%;
+  max-height: 24rem;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.email-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.email-input {
+  flex: 1;
+}
+
+.emails-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.email-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.empty-state,
+.loading-state {
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .page-header,
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-grid,
+  .orderlist-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    align-items: stretch;
+  }
+}

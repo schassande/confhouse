@@ -1,13 +1,7 @@
 # TODO List
 
 ## Priority 1
-- Sponsor : show a plan of sponsor
-- Sponsor : on conference view, show a plan of sponsor with the information stand
 - Mailjet integration
-- Sponsor : register as sponsor (sponsor status)
-- Sponsor : show list of registration
-- Sponsor : add choice of the booth by the sponsor (ordered list of whished booth number)
-- Sponsor : add a status about payment
 - RGPD
 - BilletWeb integration
   - Billetweb for speaker: Use API to create/delete the ticket of the speaker (https://www.billetweb.fr/bo/api.php#/api/event/:id/add_order)

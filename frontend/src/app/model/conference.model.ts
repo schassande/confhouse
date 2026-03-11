@@ -45,6 +45,8 @@ export interface Conference extends PersistentData {
     sponsorTypes: SponsorType[];
     /** URLs of the sponsor booth maps */
     sponsorBoothMaps: string[]; 
+    startDate: string; // ISO 8601
+    endDate: string;   // ISO 8601
   };
 }
 

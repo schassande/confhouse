@@ -156,8 +156,39 @@ service cloud.firestore {
     }
 
     match /sponsor/{document=**} {
-      allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
-      allow update, delete: if isConferenceOrganizer(resource.data.conferenceId);
+      allow create: if isConferenceOrganizer(request.resource.data.conferenceId)
+        || (
+          request.auth != null
+          && request.resource.data.adminEmails is list
+          && request.auth.token.email in request.resource.data.adminEmails
+          && request.resource.data.status == 'CANDIDATE'
+          && request.resource.data.paymentStatus == 'PENDING'
+          && request.resource.data.boothName == ''
+        );
+      allow update: if isConferenceOrganizer(resource.data.conferenceId)
+        || (
+          request.auth != null
+          && resource.data.adminEmails is list
+          && request.auth.token.email in resource.data.adminEmails
+          && request.resource.data.adminEmails is list
+          && request.auth.token.email in request.resource.data.adminEmails
+          && request.resource.data.conferenceId == resource.data.conferenceId
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.statusDate == resource.data.statusDate
+          && request.resource.data.paymentStatus == resource.data.paymentStatus
+          && request.resource.data.paymentStatusDate == resource.data.paymentStatusDate
+          && request.resource.data.boothName == resource.data.boothName
+          && request.resource.data.conferenceTickets == resource.data.conferenceTickets
+          && (
+            request.resource.data.boothWishes == resource.data.boothWishes
+            || request.resource.data.boothWishesDate != resource.data.boothWishesDate
+          )
+          && (
+            request.resource.data.boothWishes != resource.data.boothWishes
+            || request.resource.data.boothWishesDate == resource.data.boothWishesDate
+          )
+        );
+      allow delete: if isConferenceOrganizer(resource.data.conferenceId);
       allow read;
     }
 

@@ -112,7 +112,17 @@
       }
     </div>
 
-    @if (currentPerson() && (visibleActivities().length > 0 || canManageConference() || speakerFeedbackSessions().length > 0)) {
+    @if (canApplyAsSponsor()) {
+      <div class="sponsor-cta">
+        <p-button
+          [label]="'CONFERENCE.VIEW.BECOME_SPONSOR' | translate"
+          icon="pi pi-megaphone"
+          [routerLink]="['/conference', conf.id, 'sponsor-application']"
+        />
+      </div>
+    }
+
+    @if (currentPerson() && (visibleActivities().length > 0 || canManageConference() || speakerFeedbackSessions().length > 0 || isConferenceSponsor())) {
       <div class="action-list-name">{{ 'CONFERENCE.VIEW.MY_ACTIVITIES' | translate }}:</div>
       @if (nonRespondedActivityCount() > 0) {
         <div class="non-responded-count">
@@ -131,6 +141,12 @@
             }
             <i class="action-icon {{ activity.icon }}"></i>
             <div class="action-name">{{ activity.name }}</div>
+          </div>
+        }
+        @if (isConferenceSponsor()) {
+          <div class="action" [routerLink]="['/conference', conf.id, 'sponsor-application']">
+            <i class="action-icon fa-solid fa-bullhorn"></i>
+            <div class="action-name">{{ 'CONFERENCE.VIEW.BECOME_SPONSOR' | translate }}</div>
           </div>
         }
       </div>

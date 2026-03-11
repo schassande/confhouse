@@ -99,6 +99,7 @@
     "VIEW": {
       "WEBSITE": "Site web",
       "CFP": "CFP",
+      "BECOME_SPONSOR": "Sponsoring",
       "MY_ACTIVITIES": "Votre participation à la conférence",
       "NON_RESPONDED_COUNT": "Il reste {{count}} participation(s) sans reponse",
       "MY_SESSIONS_FEEDBACK": "Vos sessions en tant qu'orateur et leurs feedbacks",
@@ -663,6 +664,9 @@
       "TITLE": "Configuration des sponsors",
       "BACK_TO_MANAGE": "Retour a la gestion",
       "SPONSOR_TYPES": "Types de sponsor",
+      "REGISTRATION_WINDOW": "Période d'enregistrement du sponsoring",
+      "START_DATE": "Date de début",
+      "END_DATE": "Date de fin",
       "SPONSOR_TYPE": "Type de sponsor",
       "ADD_SPONSOR_TYPE": "Ajouter un type de sponsor",
       "NO_SPONSOR_TYPES": "Aucun type de sponsor configure",
@@ -736,6 +740,30 @@
       "CONFIRM_DELETE": "Confirmez-vous la suppression du sponsor ?",
       "MISSING_TYPE": "Le type de sponsor est obligatoire.",
       "UNKNOWN_TYPE": "Type inconnu"
+    },
+    "SPONSOR_APPLICATION": {
+      "TITLE": "Candidature sponsor",
+      "INTRO": "Déposez ou mettez à jour votre candidature sponsor pour cette conférence.",
+      "BACK": "Retour a la conference",
+      "NAME": "Nom",
+      "TYPE": "Type de sponsor",
+      "TYPE_PLACEHOLDER": "Selectionner un type de sponsor",
+      "LOGO": "URL du logo",
+      "LOGO_PREVIEW": "Prévisualisation du logo",
+      "NO_LOGO": "Aucun logo a afficher",
+      "WEBSITE": "Site web {{language}}",
+      "DESCRIPTION": "Description {{language}}",
+      "BOOTH_WISHES": "Ordre de preference des stands",
+      "BOOTH_WISHES_HELP": "Réorganisez les stands pour indiquer votre ordre de préférence.",
+      "BOOTH_FILTER": "Filtrer les stands",
+      "NO_BOOTHS": "Aucun stand disponible pour ce type de sponsor.",
+      "BOOTH_MAPS": "Plans des stands",
+      "BOOTH_MAP": "Plan des stands {{index}}",
+      "NO_BOOTH_MAPS": "Aucun plan des stands disponible.",
+      "ADMIN_EMAILS": "Emails administrateurs",
+      "SAVE_SUCCESS": "Candidature sponsor enregistrée.",
+      "SAVE_ERROR": "Impossible d'enregistrer la candidature sponsor.",
+      "LOAD_ERROR": "Impossible de charger la candidature sponsor."
     }
   },
   "VALIDATION": {

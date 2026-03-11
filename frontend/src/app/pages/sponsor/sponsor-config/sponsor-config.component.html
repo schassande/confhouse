@@ -32,6 +32,23 @@
   <form [formGroup]="form" class="config-form">
     <section class="config-section">
       <div class="section-header">
+        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.REGISTRATION_WINDOW' | translate }}</h2>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="startDate">{{ 'CONFERENCE.SPONSOR_CONFIG.START_DATE' | translate }}</label>
+          <input id="startDate" pInputText formControlName="startDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="endDate">{{ 'CONFERENCE.SPONSOR_CONFIG.END_DATE' | translate }}</label>
+          <input id="endDate" pInputText formControlName="endDate" type="date" />
+        </div>
+      </div>
+    </section>
+
+    <section class="config-section">
+      <div class="section-header">
         <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPES' | translate }}</h2>
         <button
           pButton
@@ -75,13 +92,16 @@
               <label>{{ 'CONFERENCE.SPONSOR_CONFIG.PRICE' | translate }}</label>
               <p-inputNumber formControlName="price" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
             </div>
+          </div>
+
+          <div class="form-grid two-columns">
             <div class="field">
               <label>{{ 'CONFERENCE.SPONSOR_CONFIG.COLOR' | translate }}</label>
-              <input pInputText formControlName="color" type="text" placeholder="#1f77b4" />
+              <p-colorPicker formControlName="color" appendTo="body" format="hex"></p-colorPicker>
             </div>
             <div class="field">
               <label>{{ 'CONFERENCE.SPONSOR_CONFIG.FONT_COLOR' | translate }}</label>
-              <input pInputText formControlName="fontColor" type="text" placeholder="#ffffff" />
+              <p-colorPicker formControlName="fontColor" appendTo="body" format="hex"></p-colorPicker>
             </div>
           </div>
 

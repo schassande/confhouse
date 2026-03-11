@@ -19,6 +19,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ColorPickerModule } from 'primeng/colorpicker';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -46,6 +47,7 @@ interface SelectOption {
     ReactiveFormsModule,
     TranslateModule,
     ButtonModule,
+    ColorPickerModule,
     InputTextModule,
     InputNumberModule,
     TextareaModule,
@@ -76,6 +78,8 @@ export class SponsorConfigComponent {
   );
 
   readonly form = this.fb.group({
+    startDate: [''],
+    endDate: [''],
     sponsorTypes: this.fb.array<FormGroup>([]),
     sponsorBoothMaps: this.fb.array<FormControl<string>>([]),
   });
@@ -166,6 +170,8 @@ export class SponsorConfigComponent {
     const payload: Conference = {
       ...conference,
       sponsoring: {
+        startDate: this.normalizeDateValue(this.form.get('startDate')?.value),
+        endDate: this.normalizeDateValue(this.form.get('endDate')?.value),
         sponsorTypes,
         sponsorBoothMaps,
       },
@@ -196,6 +202,10 @@ export class SponsorConfigComponent {
   private initForm(conference: Conference | undefined): void {
     this.sponsorTypesArray.clear();
     this.sponsorBoothMapsArray.clear();
+    this.form.patchValue({
+      startDate: this.normalizeDateValue(conference?.sponsoring?.startDate),
+      endDate: this.normalizeDateValue(conference?.sponsoring?.endDate),
+    });
 
     const sponsorTypes = conference?.sponsoring?.sponsorTypes ?? [];
     sponsorTypes.forEach((sponsorType) =>
@@ -296,5 +306,19 @@ export class SponsorConfigComponent {
 
   private generateSponsorTypeId(): string {
     return `sponsor-type-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  /**
+   * Normalizes a date field for HTML date inputs and persistence.
+   *
+   * @param value Raw date value.
+   * @returns ISO date string or empty string.
+   */
+  private normalizeDateValue(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      return '';
+    }
+    return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
   }
 }

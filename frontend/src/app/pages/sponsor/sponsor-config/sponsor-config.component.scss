@@ -88,6 +88,12 @@
   font-weight: 600;
 }
 
+:host ::ng-deep .sponsor-config-container .p-colorpicker-preview {
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
 .field input,
 .field textarea,
 .booth-map-row input {
