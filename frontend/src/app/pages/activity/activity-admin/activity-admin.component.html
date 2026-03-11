@@ -13,6 +13,9 @@
       <p class="registered-count-value">
         {{ 'CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED' | translate }}: {{ noParticipationCount() }}
       </p>
+      <p class="registered-count-value">
+        {{ 'CONFERENCE.ACTIVITY_ADMIN.NON_RESPONDED' | translate }}: {{ nonRespondedCount() }}
+      </p>
     </article>
     @for (attributeStat of attributeStats(); track attributeStat.attributeName) {
     <article class="stat-card">
@@ -33,14 +36,22 @@
   <div class="participants-list">
     <div class="participants-title-line">
       <h2 class="participants-title">{{ 'CONFERENCE.ACTIVITY_ADMIN.PARTICIPANTS_TITLE' | translate }}</h2>
-      <button
-        pButton
-        type="button"
-        icon="pi pi-plus"
-        class="p-button-sm"
-        [label]="'CONFERENCE.ACTIVITY_ADMIN.ADD_PARTICIPATION' | translate"
-        (click)="addParticipation()"
-      ></button>
+      <div class="participants-actions">
+        @if (participantRows().length > 0) {
+          <span (click)="exportParticipantsExcel()">
+            <i class="pi pi-download" style="margin-right: 5px;"></i>
+            <a>{{'CONFERENCE.ACTIVITY_ADMIN.EXPORT_PARTICIPANTS_EXCEL' | translate}}</a>
+          </span>
+        }
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          class="p-button-sm"
+          [label]="'CONFERENCE.ACTIVITY_ADMIN.ADD_PARTICIPATION' | translate"
+          (click)="addParticipation()"
+        ></button>
+      </div>
     </div>
     <div class="participants-filter">
       <input
@@ -67,7 +78,7 @@
     <p-dataview [value]="filteredParticipantRows()" layout="list">
       <ng-template #list let-items>
         <div class="participant-grid">
-          @for (row of items; track row.participation.id) {
+          @for (row of items; track row.rowId) {
           <article
             class="participant-card clickable"
             role="button"
@@ -79,14 +90,18 @@
             <div class="participant-header">
               <div>
                 <h3>{{ row.displayName }}</h3>
-                <p>{{ row.email }}</p>
+                <p>{{ row.email || '-' }}</p>
               </div>
               <p-tag
-                [value]="row.participation.participation ? ('CONFERENCE.ACTIVITY_PARTICIPATION.ACCEPTED' | translate) : ('CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED' | translate)"
-                [severity]="row.participation.participation ? 'success' : 'danger'"
+                [value]="row.status === 'NON_RESPONDED'
+                  ? ('CONFERENCE.ACTIVITY_ADMIN.NON_RESPONDED' | translate)
+                  : (row.status === 'ACCEPTED'
+                    ? ('CONFERENCE.ACTIVITY_PARTICIPATION.ACCEPTED' | translate)
+                    : ('CONFERENCE.ACTIVITY_PARTICIPATION.REFUSED' | translate))"
+                [severity]="row.status === 'NON_RESPONDED' ? 'warn' : (row.status === 'ACCEPTED' ? 'success' : 'danger')"
               ></p-tag>
             </div>
-            @if (row.participation.participation) {
+            @if (row.status === 'ACCEPTED') {
               <div class="attributes">
                 @for (attr of row.attributes; track attr.name) {
                 <div class="attribute-row">
