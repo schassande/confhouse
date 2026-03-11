@@ -423,7 +423,8 @@
         "LOGO": "Logo",
         "LANGUAGES": "Languages",
         "VISIBLE": "Visible",
-        "ORGANIZER_EMAILS": "Organizers"
+        "ORGANIZER_EMAILS": "Organizers",
+        "ORGANIZER_EMAIL_DOMAIN": "Organizer email domain"
       },
       "SESSION_TYPES": {
         "TAB": "Session Types",

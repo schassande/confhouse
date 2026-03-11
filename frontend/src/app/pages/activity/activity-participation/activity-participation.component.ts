@@ -23,6 +23,7 @@ import { ActivityParticipationService } from '../../../services/activity-partici
 import { ActivityService } from '../../../services/activity.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
+import { ConferenceOrganizerService } from '../../../services/conference-organizer.service';
 import { PersonService } from '../../../services/person.service';
 import { UserSignService } from '../../../services/usersign.service';
 
@@ -64,6 +65,7 @@ export class ActivityParticipationComponent {
   private readonly activityService = inject(ActivityService);
   private readonly activityParticipationService = inject(ActivityParticipationService);
   private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
+  private readonly conferenceOrganizerService = inject(ConferenceOrganizerService);
   private readonly personService = inject(PersonService);
   private readonly userSignService = inject(UserSignService);
   private readonly translateService = inject(TranslateService);
@@ -96,8 +98,7 @@ export class ActivityParticipationComponent {
   readonly isOrganizer = computed(() => {
     const person = this.currentUserPerson();
     const conference = this.conference();
-    const email = String(person?.email ?? '').trim();
-    return !!email && !!conference && (conference.organizerEmails ?? []).includes(email);
+    return this.conferenceOrganizerService.isConferenceOrganizer(conference, person?.email);
   });
 
   readonly userRoles = computed<ParticipantType[]>(() => {
@@ -107,7 +108,7 @@ export class ActivityParticipationComponent {
     if (person?.id && this.conferenceSpeakerPersonIds().has(person.id)) {
       roles.add('SPEAKER');
     }
-    if (conference && person?.email && conference.organizerEmails.includes(person.email)) {
+    if (this.conferenceOrganizerService.isConferenceOrganizer(conference, person?.email)) {
       roles.add('ORGANIZER');
     }
     return Array.from(roles.values());
@@ -691,9 +692,8 @@ export class ActivityParticipationComponent {
       return 'ATTENDEE';
     }
     const conference = this.conference();
-    const email = String(person.email ?? '').trim();
     const personId = String(person.id ?? '').trim();
-    if (conference && email && conference.organizerEmails?.includes(email)) {
+    if (this.conferenceOrganizerService.isConferenceOrganizer(conference, person.email)) {
       return 'ORGANIZER';
     }
     if (personId && this.conferenceSpeakerPersonIds().has(personId)) {

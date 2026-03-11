@@ -139,6 +139,7 @@ export class ConferenceExcelExportService {
     add('conference.logo', conference.logo);
     add('conference.languages', conference.languages ?? []);
     add('conference.organizerEmails', conference.organizerEmails ?? []);
+    add('conference.organizerEmailDomain', conference.organizerEmailDomain ?? '');
     add('conference.lastUpdated', conference.lastUpdated);
     add('conference.description', conference.description ?? {});
     add('conference.cfp.startDate', conference.cfp?.startDate ?? '');

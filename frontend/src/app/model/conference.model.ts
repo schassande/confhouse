@@ -20,6 +20,8 @@ export interface Conference extends PersistentData {
   visible: boolean;
   /** List of organizer email */
   organizerEmails: string[];
+  /** Email domain for organizers */
+  organizerEmailDomain?: string;
   /** List of tracks */
   tracks: Track[];
   /** List of rooms */

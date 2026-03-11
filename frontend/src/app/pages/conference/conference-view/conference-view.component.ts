@@ -19,6 +19,7 @@ import { SessionStatusBadgeComponent } from '../../../components/session-status-
 import { PersonService } from '../../../services/person.service';
 import { catchError, forkJoin, map, of, take } from 'rxjs';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
+import { ConferenceOrganizerService } from '../../../services/conference-organizer.service';
 import {
   SpeakerSessionDecision,
   SpeakerSessionManagementService,
@@ -71,6 +72,7 @@ export class ConferenceViewComponent {
   private readonly speakerSessionManagementService = inject(SpeakerSessionManagementService);
   private readonly personService = inject(PersonService);
   private readonly userSignService = inject(UserSignService);
+  private readonly conferenceOrganizerService = inject(ConferenceOrganizerService);
   private readonly _conference = signal<Conference | undefined>(undefined);
   private readonly _activities = signal<Activity[]>([]);
   private readonly _activityResponseByActivityId = signal<Map<string, ActivityResponseState>>(new Map());
@@ -247,16 +249,7 @@ export class ConferenceViewComponent {
   canManageConference = computed(() => {
     const person = this.currentPerson();
     const conference = this.conference();
-    if (!person || !conference) {
-      return false;
-    }
-    const email = String(person.email ?? '').trim().toLowerCase();
-    if (!email) {
-      return false;
-    }
-    return (conference.organizerEmails ?? [])
-      .map((organizerEmail) => String(organizerEmail ?? '').trim().toLowerCase())
-      .includes(email);
+    return this.conferenceOrganizerService.isConferenceOrganizer(conference, person?.email);
   });
 
   private readonly userRoles = computed<ParticipantType[]>(() => {
@@ -269,7 +262,7 @@ export class ConferenceViewComponent {
     if (this.isConferenceSpeaker()) {
       roles.add('SPEAKER');
     }
-    if (conference.organizerEmails?.includes(person.email)) {
+    if (this.conferenceOrganizerService.isConferenceOrganizer(conference, person.email)) {
       roles.add('ORGANIZER');
     }
     return Array.from(roles);

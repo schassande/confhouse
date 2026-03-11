@@ -4,12 +4,17 @@ import { Conference, Day, Room, SessionType, Slot, SlotError } from '../model/co
 import { SlotType } from '../model/slot-type.model';
 import { getDocs, orderBy as fbOrderBy, startAfter as fbStartAfter, limit as fbLimit, query as fbQuery, startAt as fbStartAt, endAt as fbEndAt, where as fbWhere } from 'firebase/firestore';
 import { map, Observable, from } from 'rxjs';
+import { ConferenceOrganizerService } from './conference-organizer.service';
 
 /**
  * Service for Conference persistent documents in Firestore.
  */
 @Injectable({ providedIn: 'root' })
 export class ConferenceService extends FirestoreGenericService<Conference> {
+  constructor(private readonly conferenceOrganizerService: ConferenceOrganizerService) {
+    super();
+  }
+
   protected override getCollectionName(): string {
     return 'conference';
   }
@@ -18,8 +23,22 @@ export class ConferenceService extends FirestoreGenericService<Conference> {
   }
 
   public organizerConferences(email: string): Observable<Conference[]> {
-    return from(getDocs(fbQuery(this.itemsCollection(), fbWhere('organizerEmails', 'array-contains', email)))).pipe(
-      map((qs) => qs.docs.map((qds) => qds.data() as Conference)));
+    const normalizedEmail = this.conferenceOrganizerService.normalizeEmail(email);
+    const domain = this.conferenceOrganizerService.extractDomain(normalizedEmail);
+
+    return from(Promise.all([
+      getDocs(fbQuery(this.itemsCollection(), fbWhere('organizerEmails', 'array-contains', normalizedEmail))),
+      domain
+        ? getDocs(fbQuery(this.itemsCollection(), fbWhere('organizerEmailDomain', '==', domain)))
+        : Promise.resolve(null),
+    ])).pipe(
+      map(([emailMatches, domainMatches]) => {
+        const byId = new Map<string, Conference>();
+        emailMatches.docs.forEach((docSnap) => byId.set(docSnap.id, docSnap.data() as Conference));
+        domainMatches?.docs.forEach((docSnap) => byId.set(docSnap.id, docSnap.data() as Conference));
+        return Array.from(byId.values());
+      })
+    );
   }
 
   public async existsByNameEdition(name: string, edition: number, excludeConferenceId = ''): Promise<boolean> {

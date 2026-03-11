@@ -6,7 +6,16 @@ service cloud.firestore {
       let confPath = /databases/$(database)/documents/conference/$(conferenceId);
       return request.auth != null
         && exists(confPath)
-        && request.auth.token.email in get(confPath).data.organizerEmails;
+        && (
+          request.auth.token.email in get(confPath).data.organizerEmails
+          || (
+            get(confPath).data.organizerEmailDomain is string
+            && get(confPath).data.organizerEmailDomain.size() > 0
+            && request.auth.token.email.matches(
+              '^[^@]+@' + get(confPath).data.organizerEmailDomain.lower() + '$'
+            )
+          )
+        );
     }
 
     function isSamePerson(personId) {
@@ -74,9 +83,27 @@ service cloud.firestore {
     match /conference/{document=**} {
       allow read;
       allow update, delete: if request.auth != null 
-      	&& request.auth.token.email in resource.data.organizerEmails;
+      	&& (
+          request.auth.token.email in resource.data.organizerEmails
+          || (
+            resource.data.organizerEmailDomain is string
+            && resource.data.organizerEmailDomain.size() > 0
+            && request.auth.token.email.matches(
+              '^[^@]+@' + resource.data.organizerEmailDomain.lower() + '$'
+            )
+          )
+        );
       allow create:         if request.auth != null 
-      	&& request.auth.token.email in request.resource.data.organizerEmails
+      	&& (
+          request.auth.token.email in request.resource.data.organizerEmails
+          || (
+            request.resource.data.organizerEmailDomain is string
+            && request.resource.data.organizerEmailDomain.size() > 0
+            && request.auth.token.email.matches(
+              '^[^@]+@' + request.resource.data.organizerEmailDomain.lower() + '$'
+            )
+          )
+        )
         && (!onlyPlatformAdminCanCreateConferenceEnabled() || isPlatformAdmin());
     }
     match /platform-config/{documentId} {

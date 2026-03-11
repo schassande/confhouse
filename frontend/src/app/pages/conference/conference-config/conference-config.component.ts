@@ -186,6 +186,7 @@ export class ConferenceConfigComponent implements OnInit {
       description: { [lang]: 'New conference description' },
       visible: false,
       organizerEmails: currentPerson && currentPerson.email ? [currentPerson.email] : [],
+      organizerEmailDomain: '',
       tracks: [],
       rooms: [],
       sessionTypes: [],

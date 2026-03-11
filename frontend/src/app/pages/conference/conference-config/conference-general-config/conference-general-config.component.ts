@@ -4,6 +4,7 @@ import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ReactiveForm
 import { Conference } from '../../../../model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConferenceService } from '../../../../services/conference.service';
+import { ConferenceOrganizerService } from '../../../../services/conference-organizer.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputGroupModule } from 'primeng/inputgroup';
@@ -43,6 +44,7 @@ export class ConferenceGeneralConfigComponent implements OnInit {
   // Private injects
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly conferenceOrganizerService = inject(ConferenceOrganizerService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
 
@@ -77,6 +79,7 @@ export class ConferenceGeneralConfigComponent implements OnInit {
       languages:       [conf.languages,       [Validators.required]],
       visible:         [conf.visible,         [Validators.required]],
       organizerEmails: [conf.organizerEmails, [Validators.required]],
+      organizerEmailDomain: [conf.organizerEmailDomain ?? '', []],
     }, {
       asyncValidators: [this.uniqueConferenceNameEditionValidator(conf.id)],
     }));
@@ -100,6 +103,7 @@ export class ConferenceGeneralConfigComponent implements OnInit {
       c.languages = values.languages;
       c.visible = values.visible;
       c.organizerEmails = values.organizerEmails;
+      c.organizerEmailDomain = this.conferenceOrganizerService.normalizeDomain(values.organizerEmailDomain) || undefined;
     });
   }
 

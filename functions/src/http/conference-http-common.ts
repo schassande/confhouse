@@ -114,7 +114,7 @@ export async function getRequesterEmailFromAuthorization(
 }
 
 /**
- * Ensures requester email is part of conference organizerEmails.
+ * Ensures requester email is part of conference organizers, either explicitly or by configured domain.
  * Throws HttpError(403) when requester is not organizer.
  */
 export function ensureRequesterIsOrganizer(
@@ -126,7 +126,15 @@ export function ensureRequesterIsOrganizer(
   const organizerEmails = (conferenceData?.organizerEmails ?? [])
     .map((email: any) => String(email ?? '').trim().toLowerCase())
     .filter((email: string) => email.length > 0);
-  const isOrganizer = organizerEmails.includes(requesterEmail);
+  const organizerEmailDomain = String(conferenceData?.organizerEmailDomain ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, '');
+  const requesterDomain = requesterEmail.includes('@')
+    ? requesterEmail.slice(requesterEmail.lastIndexOf('@') + 1)
+    : '';
+  const isOrganizer = organizerEmails.includes(requesterEmail)
+    || (!!organizerEmailDomain && requesterDomain === organizerEmailDomain);
   if (!isOrganizer) {
     throw new HttpError(
       403,
@@ -136,6 +144,7 @@ export function ensureRequesterIsOrganizer(
         conferenceId,
         requesterEmail,
         organizerCount: organizerEmails.length,
+        organizerEmailDomain,
       }
     );
   }

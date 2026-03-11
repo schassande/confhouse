@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router, UrlTree } from '@angular/r
 import { catchError, map, Observable, of, switchMap, take } from 'rxjs';
 import { ConferenceService } from '../services/conference.service';
 import { ConferenceManageContextService } from '../services/conference-manage-context.service';
+import { ConferenceOrganizerService } from '../services/conference-organizer.service';
 import { PlatformConfigService } from '../services/platform-config.service';
 import { UserSignService } from '../services/usersign.service';
 
@@ -10,6 +11,7 @@ import { UserSignService } from '../services/usersign.service';
 export class ConferenceManageContextGuard implements CanActivate {
   private readonly conferenceService = inject(ConferenceService);
   private readonly conferenceManageContextService = inject(ConferenceManageContextService);
+  private readonly conferenceOrganizerService = inject(ConferenceOrganizerService);
   private readonly platformConfigService = inject(PlatformConfigService);
   private readonly userSignService = inject(UserSignService);
   private readonly router = inject(Router);
@@ -44,7 +46,10 @@ export class ConferenceManageContextGuard implements CanActivate {
               this.conferenceManageContextService.clearContext();
               return true;
             }
-            const isOrganizer = this.userSignService.person()?.email !== undefined && conference.organizerEmails.includes(this.userSignService.person()!.email);
+            const isOrganizer = this.conferenceOrganizerService.isConferenceOrganizer(
+              conference,
+              this.userSignService.person()?.email
+            );
             
             // console.log('ConferenceManageContextGuard#canActivate conference found for id', conferenceId, conference);
             this.conferenceManageContextService.setContext(
