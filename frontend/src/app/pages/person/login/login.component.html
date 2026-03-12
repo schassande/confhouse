@@ -1,39 +1,40 @@
 <section class="login-container">
-  <h2>{{ 'LOGIN.TITLE' | translate }}</h2>
-  
-  @if (error()) {
-    <div class="error-message">{{ error() }}</div>
-  }
-  @if (success()) {
-    <div class="success-message">{{ success() }}</div>
-  }
-  
-  <div class="login-options">
-    <button pButton type="button" class="google-btn" (click)="onGoogleLogin()" [loading]="loading()" [disabled]="loading()">
-      <i class="pi pi-google" style="margin-right:8px"></i>{{ 'LOGIN.GOOGLE' | translate }}
-    </button>
-    <button pButton type="button" class="github-btn" (click)="onGithubLogin()" [loading]="loading()" [disabled]="loading()">
-      <i class="pi pi-github" style="margin-right:8px"></i>{{ 'LOGIN.GITHUB' | translate }}
-    </button>
-    <span class="or-divider">{{ 'LOGIN.OR' | translate }}</span>
-  </div>
+  <p-card>
+    <ng-template pTemplate="title">{{ 'LOGIN.TITLE' | translate }}</ng-template>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <label for="email">{{ 'LOGIN.EMAIL' | translate }}</label>
-    <input id="email" type="email" formControlName="email" required />
+    @if (error()) {
+      <p-message severity="error" styleClass="login-message" [text]="error() ?? ''"></p-message>
+    }
+    @if (success()) {
+      <p-message severity="success" styleClass="login-message" [text]="success() ?? ''"></p-message>
+    }
 
-    <label for="password">{{ 'LOGIN.PASSWORD' | translate }}</label>
-    <input id="password" type="password" formControlName="password" required />
-    <div style="text-align: center;">
-      <button pButton type="submit" [disabled]="form.invalid || loading()" [loading]="loading()" [raised]="true">{{ 'LOGIN.SUBMIT' | translate }}</button>
+    <div class="login-options">
+      <button pButton type="button" class="google-btn" (click)="onGoogleLogin()" [loading]="loading()" [disabled]="loading()">
+        <i class="pi pi-google" style="margin-right:8px"></i>{{ 'LOGIN.GOOGLE' | translate }}
+      </button>
+      <button pButton type="button" class="github-btn" (click)="onGithubLogin()" [loading]="loading()" [disabled]="loading()">
+        <i class="pi pi-github" style="margin-right:8px"></i>{{ 'LOGIN.GITHUB' | translate }}
+      </button>
+      <span class="or-divider">{{ 'LOGIN.OR' | translate }}</span>
     </div>
-  </form>
 
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <label for="email">{{ 'LOGIN.EMAIL' | translate }}</label>
+      <input pInputText id="email" type="email" formControlName="email" required />
 
-  <div class="signup-link">
-    <div class="forgot-link">
-      <a (click)="onResetPassword()">{{ 'LOGIN.FORGOT' | translate }}</a>
+      <label for="password">{{ 'LOGIN.PASSWORD' | translate }}</label>
+      <input pInputText id="password" type="password" formControlName="password" required />
+      <div style="text-align: center;">
+        <button pButton type="submit" [disabled]="form.invalid || loading()" [loading]="loading()" [raised]="true">{{ 'LOGIN.SUBMIT' | translate }}</button>
+      </div>
+    </form>
+
+    <div class="signup-link">
+      <div class="forgot-link">
+        <a (click)="onResetPassword()">{{ 'LOGIN.FORGOT' | translate }}</a>
+      </div>
+      <p>{{ 'LOGIN.NO_ACCOUNT' | translate }} <a (click)="navigateToSignup()">{{ 'LOGIN.SIGNUP_LINK' | translate }}</a></p>
     </div>
-    <p>{{ 'LOGIN.NO_ACCOUNT' | translate }} <a (click)="navigateToSignup()">{{ 'LOGIN.SIGNUP_LINK' | translate }}</a></p>
-  </div>
+  </p-card>
 </section>

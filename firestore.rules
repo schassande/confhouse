@@ -2,9 +2,14 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isVerifiedUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true;
+    }
+
     function isConferenceOrganizer(conferenceId) {
       let confPath = /databases/$(database)/documents/conference/$(conferenceId);
-      return request.auth != null
+      return isVerifiedUser()
         && exists(confPath)
         && (
           request.auth.token.email in get(confPath).data.organizerEmails
@@ -20,14 +25,14 @@ service cloud.firestore {
 
     function isSamePerson(personId) {
       let personPath = /databases/$(database)/documents/person/$(personId);
-      return request.auth != null
+      return isVerifiedUser()
         && exists(personPath)
         && request.auth.token.email == get(personPath).data.email;
     }
 
     function isPlatformAdmin() {
       let personPath = /databases/$(database)/documents/person/$(request.auth.uid);
-      return request.auth != null
+      return isVerifiedUser()
         && exists(personPath)
         && get(personPath).data.isPlatformAdmin == true;
     }
@@ -41,7 +46,7 @@ service cloud.firestore {
     // Firestore Rules does not support iterating a dynamic list with loops.
     // We check the first submitted conference ids explicitly (pragmatic bounded check).
     function isOrganizerOfAnySubmittedConferenceIds(submittedConferenceIds) {
-      return request.auth != null
+      return isVerifiedUser()
         && submittedConferenceIds is list
         && (
           (submittedConferenceIds.size() > 0 && isConferenceOrganizer(submittedConferenceIds[0])) ||
@@ -58,17 +63,19 @@ service cloud.firestore {
     }
 
     function canOrganizerEditPersonFromExistingSubmissions() {
-      return request.auth != null
+      return isVerifiedUser()
         && resource.data.speaker is map
         && isOrganizerOfAnySubmittedConferenceIds(resource.data.speaker.submittedConferenceIds);
     }
 
     match /person/{document=**} {
       allow read; 
-      allow update, create: if request.auth != null
+      allow create: if isVerifiedUser()
+        && request.auth.token.email == request.resource.data.email;
+      allow update: if isVerifiedUser()
         && (request.auth.token.email == resource.data.email
           || canOrganizerEditPersonFromExistingSubmissions());
-      allow delete: if request.auth != null
+      allow delete: if isVerifiedUser()
       	&& request.auth.token.email == resource.data.email;
     }
 
@@ -82,7 +89,7 @@ service cloud.firestore {
 
     match /conference/{document=**} {
       allow read;
-      allow update, delete: if request.auth != null 
+      allow update, delete: if isVerifiedUser()
       	&& (
           request.auth.token.email in resource.data.organizerEmails
           || (
@@ -93,7 +100,7 @@ service cloud.firestore {
             )
           )
         );
-      allow create:         if request.auth != null 
+      allow create:         if isVerifiedUser()
       	&& (
           request.auth.token.email in request.resource.data.organizerEmails
           || (
@@ -134,9 +141,9 @@ service cloud.firestore {
 
 
     match /session/{document=**} {
-      allow create: if request.auth != null;
+      allow create: if isVerifiedUser();
       allow update, delete: if isConferenceOrganizer(resource.data.conference.conferenceId)
-      	|| (resource.data.conference == null && request.auth != null 
+      	|| (resource.data.conference == null && isVerifiedUser()
            && (isSamePerson(resource.data.spearker1Id))
       	       || isSamePerson(resource.data.spearker2Id)
       	       || isSamePerson(resource.data.spearker3Id)
@@ -158,7 +165,7 @@ service cloud.firestore {
     match /sponsor/{document=**} {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId)
         || (
-          request.auth != null
+          isVerifiedUser()
           && request.resource.data.adminEmails is list
           && request.auth.token.email in request.resource.data.adminEmails
           && request.resource.data.status == 'CANDIDATE'
@@ -167,7 +174,7 @@ service cloud.firestore {
         );
       allow update: if isConferenceOrganizer(resource.data.conferenceId)
         || (
-          request.auth != null
+          isVerifiedUser()
           && resource.data.adminEmails is list
           && request.auth.token.email in resource.data.adminEmails
           && request.resource.data.adminEmails is list

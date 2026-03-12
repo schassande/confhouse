@@ -1,32 +1,35 @@
 <section class="signup-container">
-  <h2>{{ 'SIGNUP.TITLE' | translate }}</h2>
-  
-  @if (error()) {
-    <div class="error-message">{{ error() }}</div>
-  }
-  
-  <div class="signup-options">
-    <button pButton type="button" class="google-btn" (click)="onGoogleSignup()" [loading]="loading()" [disabled]="loading()">
-      <i class="pi pi-google" style="margin-right:8px"></i>{{ 'SIGNUP.GOOGLE' | translate }}
-    </button>
-    <span class="or-divider">{{ 'SIGNUP.OR' | translate }}</span>
-  </div>
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <label for="firstName">{{ 'SIGNUP.FIRSTNAME' | translate }}</label>
-    <input id="firstName" type="text" formControlName="firstName" required />
+  <p-card>
+    <ng-template pTemplate="title">{{ 'SIGNUP.TITLE' | translate }}</ng-template>
 
-    <label for="lastName">{{ 'SIGNUP.LASTNAME' | translate }}</label>
-    <input id="lastName" type="text" formControlName="lastName" required />
+    @if (error()) {
+      <p-message severity="error" styleClass="signup-message" [text]="error() ?? ''"></p-message>
+    }
 
-    <label for="email">{{ 'SIGNUP.EMAIL' | translate }}</label>
-    <input id="email" type="email" formControlName="email" required />
+    <div class="signup-options">
+      <button pButton type="button" class="google-btn" (click)="onGoogleSignup()" [loading]="loading()" [disabled]="loading()">
+        <i class="pi pi-google" style="margin-right:8px"></i>{{ 'SIGNUP.GOOGLE' | translate }}
+      </button>
+      <span class="or-divider">{{ 'SIGNUP.OR' | translate }}</span>
+    </div>
 
-    <label for="password">{{ 'SIGNUP.PASSWORD' | translate }}</label>
-    <input id="password" type="password" formControlName="password" required />
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <label for="firstName">{{ 'SIGNUP.FIRSTNAME' | translate }}</label>
+      <input pInputText id="firstName" type="text" formControlName="firstName" required />
 
-    <label for="confirm">{{ 'SIGNUP.CONFIRM' | translate }}</label>
-    <input id="confirm" type="password" formControlName="confirm" required />
+      <label for="lastName">{{ 'SIGNUP.LASTNAME' | translate }}</label>
+      <input pInputText id="lastName" type="text" formControlName="lastName" required />
 
-    <button pButton type="submit" [disabled]="form.invalid || loading()" [loading]="loading()" [raised]="true">{{ 'SIGNUP.SUBMIT' | translate }}</button>
-  </form>
+      <label for="email">{{ 'SIGNUP.EMAIL' | translate }}</label>
+      <input pInputText id="email" type="email" formControlName="email" required />
+
+      <label for="password">{{ 'SIGNUP.PASSWORD' | translate }}</label>
+      <input pInputText id="password" type="password" formControlName="password" required />
+
+      <label for="confirm">{{ 'SIGNUP.CONFIRM' | translate }}</label>
+      <input pInputText id="confirm" type="password" formControlName="confirm" required />
+
+      <button pButton type="submit" [disabled]="form.invalid || loading()" [loading]="loading()" [raised]="true">{{ 'SIGNUP.SUBMIT' | translate }}</button>
+    </form>
+  </p-card>
 </section>

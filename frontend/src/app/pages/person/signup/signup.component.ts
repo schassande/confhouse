@@ -4,8 +4,11 @@ import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { UserSignService } from '../../../services/usersign.service';
 import { Person } from '../../../model/person.model';
 import { RedirectService } from '../../../services/redirect.service';
@@ -13,7 +16,7 @@ import { RedirectService } from '../../../services/redirect.service';
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, ButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, ButtonModule, CardModule, InputTextModule, MessageModule],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -29,7 +32,11 @@ export class SignupComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly redirectService = inject(RedirectService);
+  private readonly translate = inject(TranslateService);
 
+  /**
+   * Builds the sign-up form and restores a safe return URL from the current route.
+   */
   constructor() {
     this.form = this.fb.group({
       firstName: ['', [Validators.required]],
@@ -45,6 +52,9 @@ export class SignupComponent {
     }
   }
 
+  /**
+   * Creates an email/password account or redirects the user to the verification flow.
+   */
   async onSubmit() {
     this.submitted.set(true);
     this.error.set(null);
@@ -56,7 +66,7 @@ export class SignupComponent {
         
         // Validate passwords match
         if (formValue.password !== formValue.confirm) {
-          this.error.set('Passwords do not match');
+          this.error.set(this.translate.instant('SIGNUP.ERRORS.PASSWORD_MISMATCH'));
           this.loading.set(false);
           return;
         }
@@ -76,18 +86,16 @@ export class SignupComponent {
         };
 
         // Call signup service
-        const result = await this.signupService.signupWithEmail(person, formValue.password);
+        const result = await this.signupService.signupWithEmail(person, formValue.password, this.redirectService.get());
         
-        if (result) {
+        if (result.person && !result.requiresEmailVerification) {
           const returnUrl = this.redirectService.get();
           const target = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/';
           this.redirectService.clear();
           await this.router.navigateByUrl(target);
-        } else {
-          this.error.set('Signup failed');
         }
       } catch (err: any) {
-        this.error.set(err?.message || 'An error occurred during signup');
+        this.error.set(err?.message || this.translate.instant('SIGNUP.ERRORS.GENERIC'));
         console.error(err);
       } finally {
         this.loading.set(false);
@@ -95,21 +103,24 @@ export class SignupComponent {
     }
   }
 
+  /**
+   * Starts the Google sign-up flow and redirects to the original target when successful.
+   */
   async onGoogleSignup() {
     this.loading.set(true);
     this.error.set(null);
     try {
       const result = await this.signupService.signupWithGoogle();
-      if (result) {
+      if (result.person && !result.requiresEmailVerification) {
         const returnUrl = this.redirectService.get();
         const target = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/';
         this.redirectService.clear();
         await this.router.navigateByUrl(target);
       } else {
-        this.error.set('Google signup failed');
+        this.error.set(this.translate.instant('SIGNUP.ERRORS.GOOGLE_FAILED'));
       }
     } catch (err: any) {
-      this.error.set(err?.message || 'An error occurred during Google signup');
+      this.error.set(err?.message || this.translate.instant('SIGNUP.ERRORS.GOOGLE_FAILED'));
       console.error(err);
     } finally {
       this.loading.set(false);

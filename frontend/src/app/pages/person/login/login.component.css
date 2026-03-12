@@ -1,14 +1,14 @@
 .login-container {
   max-width: 400px;
   margin: 40px auto;
-  padding: 32px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.login-container,
+.login-container ::ng-deep .p-card {
   text-align: left;
 }
 
-.login-container h2 {
+.login-container ::ng-deep .p-card-title {
   color: #1976d2;
   margin-bottom: 16px;
 }
@@ -81,6 +81,11 @@
   margin-bottom: 16px;
   border-left: 4px solid #c33;
   font-size: 0.95rem;
+}
+
+.login-message {
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 .signup-link {

@@ -36,7 +36,12 @@
     "EMAIL": "E-mail",
     "PASSWORD": "Mot de passe",
     "CONFIRM": "Confirmez le mot de passe",
-    "SUBMIT": "Créer le compte"
+    "SUBMIT": "Créer le compte",
+    "ERRORS": {
+      "PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas.",
+      "GENERIC": "Une erreur est survenue pendant la création du compte.",
+      "GOOGLE_FAILED": "L'inscription avec Google a échoué."
+    }
   },
   "LOGIN": {
     "TITLE": "Se connecter à votre compte",
@@ -49,7 +54,33 @@
     "NO_ACCOUNT": "Vous n'avez pas de compte?",
     "SIGNUP_LINK": "Créez-en un ici",
     "FORGOT": "Mot de passe oublié ?",
-    "RESET_SENT": "E-mail de réinitialisation envoyé. Vérifiez votre boite de réception."
+    "RESET_SENT": "E-mail de réinitialisation envoyé. Vérifiez votre boite de réception.",
+    "EMAIL_VERIFIED": "Votre adresse e-mail a été vérifiée. Vous pouvez maintenant vous connecter.",
+    "ERRORS": {
+      "USER_NOT_FOUND": "Utilisateur introuvable dans la base.",
+      "GENERIC": "Une erreur est survenue pendant la connexion.",
+      "RESET_EMAIL_REQUIRED": "Saisissez votre e-mail pour réinitialiser le mot de passe.",
+      "RESET_FAILED": "Impossible d'envoyer l'e-mail de réinitialisation."
+    }
+  },
+  "AUTH": {
+    "EMAIL_NOT_VERIFIED": {
+      "TITLE": "Vérification d'e-mail requise",
+      "DESCRIPTION": "Votre compte n'est pas encore activé. Vérifiez votre boite de réception et cliquez sur le lien envoyé à :",
+      "RESEND": "Renvoyer l'e-mail de vérification",
+      "RESEND_SUCCESS": "Un nouvel e-mail de vérification a été envoyé.",
+      "RESEND_ERROR": "Impossible de renvoyer l'e-mail de vérification pour le moment.",
+      "RESEND_REQUIRES_LOGIN": "Reconnectez-vous avant de demander un nouvel e-mail de vérification.",
+      "BACK_TO_LOGIN": "Retour à la connexion"
+    },
+    "VERIFY_EMAIL": {
+      "TITLE": "Vérification de l'e-mail",
+      "LOADING": "Validation de votre adresse e-mail en cours...",
+      "SUCCESS": "Votre adresse e-mail a bien été vérifiée.",
+      "ERROR": "Ce lien de vérification est invalide ou expiré.",
+      "INVALID_LINK": "Ce lien de vérification est incomplet ou invalide.",
+      "GO_TO_LOGIN": "Aller à la connexion"
+    }
   },
   "PERSON": {
     "LIST": {

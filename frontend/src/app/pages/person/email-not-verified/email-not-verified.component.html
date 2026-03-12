@@ -1,0 +1,42 @@
+<section class="email-not-verified-container">
+  <p-card>
+    <ng-template pTemplate="title">{{ 'AUTH.EMAIL_NOT_VERIFIED.TITLE' | translate }}</ng-template>
+
+    <p-message severity="warn" styleClass="page-message">
+      <ng-template pTemplate="text">
+        <div class="message-content">
+          <div>{{ 'AUTH.EMAIL_NOT_VERIFIED.DESCRIPTION' | translate }}</div>
+          @if (email()) {
+            <strong>{{ email() }}</strong>
+          }
+        </div>
+      </ng-template>
+    </p-message>
+
+    @if (error()) {
+      <p-message severity="error" styleClass="page-message" [text]="error() ?? ''"></p-message>
+    }
+
+    @if (success()) {
+      <p-message severity="success" styleClass="page-message" [text]="success() ?? ''"></p-message>
+    }
+
+    <div class="actions">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-envelope"
+        [label]="'AUTH.EMAIL_NOT_VERIFIED.RESEND' | translate"
+        [loading]="loading()"
+        [disabled]="loading()"
+        (click)="resendVerificationEmail()"></button>
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        icon="pi pi-sign-in"
+        [label]="'AUTH.EMAIL_NOT_VERIFIED.BACK_TO_LOGIN' | translate"
+        (click)="navigateToLogin()"></button>
+    </div>
+  </p-card>
+</section>

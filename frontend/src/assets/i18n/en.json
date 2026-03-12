@@ -83,7 +83,12 @@
     "EMAIL": "Email",
     "PASSWORD": "Password",
     "CONFIRM": "Confirm password",
-    "SUBMIT": "Sign up"
+    "SUBMIT": "Sign up",
+    "ERRORS": {
+      "PASSWORD_MISMATCH": "Passwords do not match.",
+      "GENERIC": "An error occurred during sign up.",
+      "GOOGLE_FAILED": "Google sign up failed."
+    }
   },
   "LOGIN": {
     "TITLE": "Login to your account",
@@ -96,7 +101,33 @@
     "NO_ACCOUNT": "Don't have an account?",
     "SIGNUP_LINK": "Sign up here",
     "FORGOT": "Forgot password?",
-    "RESET_SENT": "Password reset email sent. Check your inbox."
+    "RESET_SENT": "Password reset email sent. Check your inbox.",
+    "EMAIL_VERIFIED": "Your email has been verified. You can now sign in.",
+    "ERRORS": {
+      "USER_NOT_FOUND": "User not found in database.",
+      "GENERIC": "An error occurred during login.",
+      "RESET_EMAIL_REQUIRED": "Please enter your email to reset your password.",
+      "RESET_FAILED": "Failed to send password reset email."
+    }
+  },
+  "AUTH": {
+    "EMAIL_NOT_VERIFIED": {
+      "TITLE": "Email verification required",
+      "DESCRIPTION": "Your account is not active yet. Check your inbox and click the verification link sent to:",
+      "RESEND": "Resend verification email",
+      "RESEND_SUCCESS": "A new verification email has been sent.",
+      "RESEND_ERROR": "Unable to resend the verification email right now.",
+      "RESEND_REQUIRES_LOGIN": "You need to sign in again before requesting a new verification email.",
+      "BACK_TO_LOGIN": "Back to login"
+    },
+    "VERIFY_EMAIL": {
+      "TITLE": "Verify your email",
+      "LOADING": "We are validating your email address...",
+      "SUCCESS": "Your email address has been verified.",
+      "ERROR": "This verification link is invalid or has expired.",
+      "INVALID_LINK": "This verification link is incomplete or invalid.",
+      "GO_TO_LOGIN": "Go to login"
+    }
   },
   "COMMON": {
     "SAVE": "Save",

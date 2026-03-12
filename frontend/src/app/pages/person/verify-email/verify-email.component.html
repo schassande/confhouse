@@ -1,0 +1,29 @@
+<section class="verify-email-container">
+  <p-card>
+    <ng-template pTemplate="title">{{ 'AUTH.VERIFY_EMAIL.TITLE' | translate }}</ng-template>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p-progressSpinner strokeWidth="4" ariaLabel="Loading"></p-progressSpinner>
+        <p>{{ 'AUTH.VERIFY_EMAIL.LOADING' | translate }}</p>
+      </div>
+    } @else {
+      @if (success()) {
+        <p-message severity="success" styleClass="page-message" [text]="success() ?? ''"></p-message>
+      }
+
+      @if (error()) {
+        <p-message severity="error" styleClass="page-message" [text]="error() ?? ''"></p-message>
+      }
+
+      <div class="actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-sign-in"
+          [label]="'AUTH.VERIFY_EMAIL.GO_TO_LOGIN' | translate"
+          (click)="navigateToLogin()"></button>
+      </div>
+    }
+  </p-card>
+</section>

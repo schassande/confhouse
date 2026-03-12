@@ -1,0 +1,22 @@
+.email-not-verified-container {
+  max-width: 42rem;
+  margin: 3rem auto;
+}
+
+.page-message {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
