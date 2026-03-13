@@ -8,6 +8,7 @@ Main collections:
 - `platform-config`
 - `slot-type`
 - `conference`
+- `sponsor`
 - `conference-hall-config`
 - `voxxrin-config`
 - `conferenceSecret`
@@ -20,7 +21,7 @@ Main collections:
 - `activityParticipation`
 - `conference-dashboard` (+ `history` subcollection)
 
-Embedded entities (stored inside `conference`): `Track`, `Room`, `SessionType`, `Day`, `Slot`, `SponsorType`, `Sponsor`.
+Embedded entities (stored inside `conference`): `Track`, `Room`, `SessionType`, `Day`, `Slot`, `SponsorType`.
 
 ## ER Diagram (ID-based Relations)
 
@@ -71,6 +72,14 @@ erDiagram
         number duration
     }
 
+    SPONSOR_TYPE {
+        string conferenceId PK
+        string id PK
+        string name
+        number maxNumber
+        number price
+    }
+
     DAY {
         string conferenceId PK
         string id PK
@@ -92,6 +101,27 @@ erDiagram
         string conferenceName
         SessionTypeMapping[] sessionTypeMappings
         string lastCommunication
+    }
+
+    SPONSOR {
+        string id PK
+        string conferenceId FK
+        string name
+        string status
+        string statusDate
+        string paymentStatus
+        string paymentStatusDate
+        string sponsorTypeId FK
+        string logo
+        string boothName
+        string[] boothWishes
+        string boothWishesDate
+        string[] adminEmails
+        SponsorBusinessEvent[] businessEvents
+        SponsorDocuments documents
+        SponsorLogistics logistics
+        ConferenceTicket[] conferenceTickets
+        string lastUpdated
     }
 
     VOXXRIN_CONFIG {
@@ -196,6 +226,7 @@ erDiagram
     CONFERENCE ||--o{ TRACK : "tracks[].id"
     CONFERENCE ||--o{ ROOM : "rooms[].id"
     CONFERENCE ||--o{ SESSION_TYPE : "sessionTypes[].id"
+    CONFERENCE ||--o{ SPONSOR_TYPE : "sponsoring.sponsorTypes[].id"
     CONFERENCE ||--o{ DAY : "days[].id"
     DAY ||--o{ SLOT : "slots[].id"
 
@@ -206,6 +237,7 @@ erDiagram
     CONFERENCE ||--o{ CONFERENCE_HALL_CONFIG : "conferenceId"
     CONFERENCE ||--o{ VOXXRIN_CONFIG : "conferenceId"
     CONFERENCE ||--o{ CONFERENCE_SECRET : "conferenceId"
+    CONFERENCE ||--o{ SPONSOR : "conferenceId"
     CONFERENCE ||--o{ SESSION : "conference.conferenceId"
     CONFERENCE ||--o{ CONFERENCE_SPEAKER : "conferenceId"
     CONFERENCE ||--o{ SESSION_ALLOCATION : "conferenceId"
@@ -220,6 +252,7 @@ erDiagram
 
     SESSION_TYPE ||--o{ SESSION : "conference.sessionTypeId"
     TRACK ||--o{ SESSION : "conference.trackId"
+    SPONSOR_TYPE ||--o{ SPONSOR : "sponsorTypeId"
 
     SESSION ||--o{ SESSION_ALLOCATION : "sessionId"
     SLOT ||--o{ SESSION_ALLOCATION : "slotId (+ dayId, roomId)"
@@ -240,6 +273,14 @@ Global catalog of slot semantics (for example, talk slot vs break slot). Confere
 ### Conference (`conference`)
 Root aggregate for event setup and planning. It contains embedded lists for tracks, rooms, session types, planning days and slots, sponsorship setup, and organizer identities.
 
+Sponsorship setup stored in `conference.sponsoring` contains:
+- `sponsorTypes`
+- `sponsorBoothMaps`
+- `startDate`
+- `endDate`
+
+Actual sponsor applications and confirmed sponsors are stored separately in the `sponsor` collection and linked back through `conferenceId`.
+
 ### ConferenceHallConfig (`conference-hall-config`)
 Per-conference integration settings for Conference Hall import, including `sessionTypeMappings` and `lastCommunication`.
 
@@ -248,6 +289,36 @@ Per-conference publication settings used to generate/export Voxxrin-compatible e
 
 ### ConferenceSecret (`conferenceSecret`)
 Per-conference secret store (token-like values), keyed by `secretName` and linked by `conferenceId`.
+
+### Sponsor (`sponsor`)
+Persistent sponsor entity linked to one conference through `conferenceId`.
+
+It stores:
+- sponsor identity and public data (`name`, `logo`, localized `description`, localized `website`)
+- workflow state (`status`, `statusDate`)
+- financial state (`paymentStatus`, `paymentStatusDate`)
+- commercial selection (`sponsorTypeId`)
+- booth allocation data (`boothName`, `boothWishes`, `boothWishesDate`)
+- sponsor administrators (`adminEmails`)
+- business history (`businessEvents`)
+- optional read projections for UI and filters (`documents`, `logistics`)
+- allocated conference tickets (`conferenceTickets`)
+
+This entity is not embedded in `Conference`.
+`Conference` stores sponsorship configuration, while `Sponsor` stores each actual sponsor application or sponsorship record.
+
+Sponsor business operations use the following extension fields:
+- `businessEvents` stores dated business facts such as `ORDER_FORM_SENT`, `INVOICE_SENT`, `PAYMENT_REMINDER_SENT`, `BOOTH_ASSIGNED`, `BOOTH_CHANGED`, `TICKETS_ALLOCATED`
+- `documents` stores lightweight summary projections such as `orderFormSentAt`, `invoiceSentAt`, `lastReminderSentAt`
+- `logistics` stores lightweight summary projections such as `boothAssignedAt` and `ticketsAllocatedAt`
+
+Rules:
+- `status` remains the sponsor lifecycle state
+- `paymentStatus` remains the financial state
+- `businessEvents` captures non-exclusive dated actions
+- `documents` and `logistics` remain derived summary projections when present
+
+This avoids turning document sending, stand assignment, and ticket allocation into extra lifecycle statuses.
 
 ### Person (`person`)
 Represents a user/speaker identity. Contains account flags, speaker profile details, and search/index fields.

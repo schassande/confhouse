@@ -1,0 +1,305 @@
+# Mailjet Specification
+
+This document specifies the general behavior of transactional email sending from the application, with or without attachments.
+
+Domain-specific rules, such as sponsor rules, must be defined in their own dedicated specifications.
+
+## Scope
+
+This specification covers:
+
+- transactional email sending
+- email sending with attachments
+- trigger rules
+- security rules
+- traceability rules
+- idempotence rules
+- retry and error-handling rules
+
+This specification does not cover:
+
+- sponsor-specific business rules
+- speaker-specific business rules
+- the detailed content of templates for a given functional domain
+
+## Role of Mailjet
+
+Mailjet is the transactional email delivery service used by the application.
+
+Mailjet is used to:
+
+- send a simple transactional message
+- send a transactional message with one or more attachments
+- track the technical result of a send
+
+Mailjet is not the business source of truth.
+Business state remains owned by the application and its functional specifications.
+
+## General Architecture
+
+The reference flow is the following:
+
+1. an application action requests an email send
+2. the backend verifies permissions and loads the required data
+3. the backend builds the message payload
+4. the backend generates any required attachments
+5. the backend sends the email through Mailjet
+6. the backend stores a send trace
+7. the backend optionally notifies the calling business domain of the result
+
+The following rules are mandatory:
+
+- Mailjet is never called directly from the frontend
+- Mailjet API keys are never exposed to the browser
+- official attachments are never generated only in the browser
+
+## Send Types
+
+The system must support the following two send forms:
+
+- email without attachment
+- email with attachment
+
+### Email Without Attachment
+
+An email without attachment contains:
+
+- recipients
+- a subject
+- a template or structured content
+- rendering variables
+- traceability metadata
+
+### Email With Attachment
+
+An email with attachment contains, in addition:
+
+- one or more attachments
+- a filename
+- a MIME type
+- binary or encoded content
+
+Rules:
+
+- an attachment must be built by the backend before the Mailjet call
+- an attachment must be linked to an explicit business context
+- an attachment must have a stable and understandable filename
+
+## Trigger Rules
+
+Every email send must be triggered by an explicit application action.
+
+This action can come from:
+
+- an authenticated user
+- a controlled or scheduled backend process
+- an explicit business workflow
+
+Rules:
+
+- no send must rely on an untracked implicit side effect
+- the business context that caused the send must be identifiable
+- the backend must be able to associate the send with a message type
+
+## Message Construction
+
+Each transactional email is based on three layers:
+
+- a source business payload
+- email content rendering
+- optional attachments
+
+### Source Business Payload
+
+The backend must build a stable source payload before sending.
+
+Depending on the use case, this payload contains:
+
+- business data required by the message
+- recipients
+- rendering variables
+- send identification data
+
+The source payload must remain independent from the delivery provider.
+
+### Email Content Rendering
+
+Email content must be generated from a transactional template.
+
+The template carries:
+
+- the body of the message
+- the subject or related variables
+- wording and user-facing context
+
+The template must not carry the business logic itself.
+
+### Attachments
+
+Attachments are prepared by the backend before sending.
+
+They can be:
+
+- PDFs
+- summaries
+- administrative documents
+- any other controlled transactional document
+
+## Attachment Generation Rules
+
+Official attachments are generated on the backend.
+
+Rules:
+
+- the frontend does not generate an official attachment by itself
+- the output format must be controlled by the application
+- the attached content must be reproducible from business data
+
+When the output format is PDF, the final rendering is generated on the backend.
+
+## Expected Functional Components
+
+The backend must separate the following responsibilities:
+
+- Mailjet sending service
+- message payload builder
+- attachment generator
+- application action entry point
+- send history persistence
+
+### Sending Service
+
+The sending service is responsible for:
+
+- loading Mailjet secrets
+- preparing the send request
+- passing recipients
+- passing attachments
+- retrieving the technical result from Mailjet
+
+### Payload Builder
+
+The payload builder transforms application context into stable send data.
+
+It must produce:
+
+- the message type
+- recipients
+- rendering variables
+- attachments to generate or already generated attachments
+- traceability metadata
+
+### Attachment Generator
+
+The attachment generator transforms a source payload into a final document.
+
+It never depends on the frontend.
+
+### Application Entry Point
+
+Each send must go through an explicit backend entry point.
+
+This entry point is responsible for:
+
+- verifying permissions
+- loading data
+- orchestrating rendering
+- calling Mailjet
+- persisting send traces
+
+## Security Rules
+
+The following rules are mandatory:
+
+- Mailjet secrets are stored only on the backend
+- every send must be linked to a valid authorization context
+- the identity of the actor must be traceable when the send is triggered by a user
+- attachments must not be generated or sent from an anonymous call
+
+## Traceability Rules
+
+Every send must leave an exploitable trace.
+
+The minimum trace must contain:
+
+- `messageType`
+- `recipientEmails`
+- `status`
+- `mailjetMessageId` when available
+- `createdAt`
+- `sentAt` when sending succeeds
+- `triggeredBy` when the send is triggered by a user
+- `error` when sending fails
+- business identifiers required by the calling domain
+
+The trace can be stored in a dedicated collection, for example:
+
+- `mail_history`
+- `document_history`
+- `document_jobs`
+
+or in any equivalent schema providing the same level of readability.
+
+## Idempotence Rules
+
+The application must prevent accidental duplicate sends when the same logical message must not be sent several times.
+
+The idempotence key depends on the calling business domain.
+
+Rules:
+
+- the idempotence key must be computable from business context
+- the same logical send must not be duplicated by mistake
+- an intentional resend must remain possible
+- the system must distinguish an initial send from a resend
+
+## Retry and Error Rules
+
+In case of failure:
+
+- the error must be traced
+- the calling business domain must receive an exploitable failure result
+- no functional success must be recorded by mistake
+
+In case of retry:
+
+- the new attempt must be traceable
+- the system must be able to distinguish attempts
+
+## Mailjet Webhooks
+
+Mailjet webhooks can be used to enrich technical delivery tracking.
+
+They can add information such as:
+
+- bounce
+- blocked
+- spam
+- delivered
+
+These details complement the technical send history.
+They do not replace business rules owned by the calling domain.
+
+## Contract with Business Domains
+
+Each business domain using Mailjet must define in its own specification:
+
+- which messages exist
+- when they can be sent
+- who can trigger them
+- which attachments must be produced
+- which business event must be written after success
+- which idempotence key must be applied
+
+`doc/sponsor.md` defines those rules for the sponsor domain.
+
+## Behavior Summary
+
+The general behavior is the following:
+
+1. a business domain requests an explicit send
+2. the backend verifies permissions and builds the payload
+3. the backend generates attachments when needed
+4. the backend calls Mailjet
+5. the backend stores a technical send trace
+6. the business domain updates its own functional history according to the result
