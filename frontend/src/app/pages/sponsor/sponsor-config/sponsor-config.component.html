@@ -45,6 +45,13 @@
           <input id="endDate" pInputText formControlName="endDate" type="date" />
         </div>
       </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
+          <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+        </div>
+      </div>
     </section>
 
     <section class="config-section">
@@ -78,6 +85,21 @@
         <div class="field">
           <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
           <input id="entityId" pInputText formControlName="entityId" type="text" />
+        </div>
+        <div class="field">
+          <label for="ccEmail">{{ 'CONFERENCE.SPONSOR_CONFIG.CC_EMAIL' | translate }}</label>
+          <input id="ccEmail" pInputText formControlName="ccEmail" type="email" />
+        </div>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="bankIban">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_IBAN' | translate }}</label>
+          <input id="bankIban" pInputText formControlName="bankIban" type="text" />
+        </div>
+        <div class="field">
+          <label for="bankBic">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_BIC' | translate }}</label>
+          <input id="bankBic" pInputText formControlName="bankBic" type="text" />
         </div>
       </div>
     </section>

@@ -34,11 +34,17 @@ export interface SponsorDocumentConferenceSource {
   logo: string;
   days: Day[];
   sponsoring?: {
+    counter?: number;
     legalEntity?: string;
     address?: string;
     email?: string;
+    ccEmail?: string;
     vat?: string;
     entityId?: string;
+    bankDetails?: {
+      iban?: string;
+      bic?: string;
+    };
     sponsorTypes?: SponsorDocumentSponsorTypeSource[];
   };
 }
@@ -55,6 +61,9 @@ export interface SponsorDocumentSponsorSource {
   name: string;
   sponsorTypeId: string;
   adminEmails?: string[];
+  communicationLanguage?: SponsorDocumentLocale;
+  purchaseOrder?: string;
+  acceptedNumber?: number;
 }
 
 /**
@@ -74,6 +83,15 @@ export interface SponsorDocumentIssuer {
 export interface SponsorDocumentRecipient {
   name: string;
   email?: string;
+  purchaseOrder?: string;
+}
+
+/**
+ * Optional bank details rendered on generated documents when configured.
+ */
+export interface SponsorDocumentBankDetails {
+  iban?: string;
+  bic?: string;
 }
 
 /**
@@ -117,6 +135,7 @@ export interface SponsorDocumentPayload {
   documentNumber?: string;
   currency: 'EUR';
   legalNotes: string[];
+  bankDetails?: SponsorDocumentBankDetails;
 }
 
 /**

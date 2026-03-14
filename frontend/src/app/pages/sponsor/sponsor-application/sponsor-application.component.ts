@@ -12,7 +12,7 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { Conference } from '../../../model/conference.model';
-import { Sponsor, SponsorType } from '../../../model/sponsor.model';
+import { Sponsor, SponsorCommunicationLanguage, SponsorType } from '../../../model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
@@ -69,8 +69,13 @@ export class SponsorApplicationComponent {
   readonly sponsorTypeOptions = computed<SelectOption[]>(() =>
     this.sponsorTypes().map((type) => ({ label: type.name, value: type.id }))
   );
+  readonly communicationLanguageOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('LANGUAGE.FR'), value: 'fr' },
+    { label: this.translateService.instant('LANGUAGE.EN'), value: 'en' },
+  ]);
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly documentAction = signal<'order-form' | 'invoice' | null>(null);
   readonly adminEmailsVersion = signal(0);
   readonly boothWishItemsState = signal<BoothWishItem[]>([]);
   readonly selectedBoothWishItems = signal<BoothWishItem[]>([]);
@@ -143,6 +148,8 @@ export class SponsorApplicationComponent {
     const controls: Record<string, unknown> = {
       name: [String(sponsor?.name ?? '').trim(), [Validators.required, Validators.minLength(2)]],
       sponsorTypeId: [String(sponsor?.sponsorTypeId ?? '').trim(), [Validators.required]],
+      communicationLanguage: [this.normalizeCommunicationLanguage(sponsor?.communicationLanguage)],
+      purchaseOrder: [String(sponsor?.purchaseOrder ?? '').trim()],
       logo: [String(sponsor?.logo ?? '').trim()],
       adminEmails: [this.computeInitialAdminEmails(sponsor?.adminEmails)],
     };
@@ -393,6 +400,9 @@ export class SponsorApplicationComponent {
       paymentStatusDate: editingSponsor?.paymentStatusDate ?? today,
       description: this.extractLocalizedValues('description'),
       sponsorTypeId,
+      communicationLanguage: this.normalizeCommunicationLanguage(form.get('communicationLanguage')?.value),
+      purchaseOrder: String(form.get('purchaseOrder')?.value ?? '').trim() || undefined,
+      acceptedNumber: editingSponsor?.acceptedNumber,
       logo: String(form.get('logo')?.value ?? '').trim(),
       website: this.extractLocalizedValues('website'),
       boothName: editingSponsor?.boothName ?? '',
@@ -477,6 +487,32 @@ export class SponsorApplicationComponent {
   }
 
   /**
+   * Downloads the regenerated sponsor order form when it was previously sent.
+   */
+  async onDownloadOrderForm(): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.orderFormSentAt) {
+      return;
+    }
+    await this.downloadSponsorDocument('order-form', () =>
+      this.sponsorService.downloadSponsorOrderForm(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
+   * Downloads the regenerated sponsor invoice when it was previously sent.
+   */
+  async onDownloadInvoice(): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.invoiceSentAt) {
+      return;
+    }
+    await this.downloadSponsorDocument('invoice', () =>
+      this.sponsorService.downloadSponsorInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
    * Returns whether sponsor self-service is currently allowed for the conference.
    *
    * @param conference Loaded conference.
@@ -526,6 +562,49 @@ export class SponsorApplicationComponent {
       return 'CANDIDATE';
     }
     return sponsor?.status ?? 'CANDIDATE';
+  }
+
+  /**
+   * Normalizes one sponsor communication language to the supported set.
+   *
+   * @param value Raw language value.
+   * @returns Supported communication language.
+   */
+  private normalizeCommunicationLanguage(value: unknown): SponsorCommunicationLanguage {
+    return String(value ?? '').trim().toLowerCase() === 'fr' ? 'fr' : 'en';
+  }
+
+  /**
+   * Downloads one sponsor document through the backend and saves it locally.
+   *
+   * @param action Current document action key.
+   * @param callback Backend callback.
+   */
+  private async downloadSponsorDocument(
+    action: 'order-form' | 'invoice',
+    callback: () => Promise<{ sponsor: Sponsor; document: { filename: string; contentType: string; base64Content: string } }>
+  ): Promise<void> {
+    this.documentAction.set(action);
+    try {
+      const response = await callback();
+      this.existingSponsor.set(response.sponsor);
+      this.sponsorService.saveDownloadedDocument(response.document);
+    } catch (error) {
+      console.error('Error downloading sponsor document:', error);
+      this.showError('CONFERENCE.SPONSOR_APPLICATION.DOCUMENT_DOWNLOAD_ERROR');
+    } finally {
+      this.documentAction.set(null);
+    }
+  }
+
+  /**
+   * Returns whether one document action is currently running.
+   *
+   * @param action Document action key.
+   * @returns `true` when the action is running.
+   */
+  isDocumentActionPending(action: 'order-form' | 'invoice'): boolean {
+    return this.documentAction() === action;
   }
 
   /**

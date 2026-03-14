@@ -26,6 +26,7 @@ import {
   ConferenceTicket,
   Sponsor,
   SponsorBusinessEvent,
+  SponsorCommunicationLanguage,
   SponsorPaymentStatus,
   SponsorStatus,
   SponsorType,
@@ -127,6 +128,10 @@ export class SponsorManageComponent {
       value: type.id,
     }))
   );
+  readonly communicationLanguageOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('LANGUAGE.FR'), value: 'fr' },
+    { label: this.translateService.instant('LANGUAGE.EN'), value: 'en' },
+  ]);
 
   readonly filteredSponsors = computed(() => {
     const selectedType = this.selectedTypeId();
@@ -265,6 +270,9 @@ export class SponsorManageComponent {
       paymentStatusDate: editingSponsor?.paymentStatusDate ?? this.normalizeDate(form.value.paymentStatusDate),
       description: this.extractLocalizedValues(form, 'description'),
       sponsorTypeId,
+      communicationLanguage: this.normalizeCommunicationLanguage(form.value.communicationLanguage),
+      purchaseOrder: String(form.value.purchaseOrder ?? '').trim() || undefined,
+      acceptedNumber: editingSponsor?.acceptedNumber,
       logo: String(form.value.logo ?? '').trim(),
       website: this.extractLocalizedValues(form, 'website'),
       boothName: editingSponsor?.boothName ?? String(form.value.boothName ?? '').trim(),
@@ -385,7 +393,7 @@ export class SponsorManageComponent {
       return;
     }
     await this.runSponsorAction('mail-order-form', async () =>
-      await this.sponsorService.sendSponsorOrderForm(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+      await this.sponsorService.sendSponsorOrderForm(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -398,7 +406,7 @@ export class SponsorManageComponent {
       return;
     }
     await this.runSponsorAction('mail-invoice', async () =>
-      await this.sponsorService.sendSponsorInvoice(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+      await this.sponsorService.sendSponsorInvoice(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -411,7 +419,7 @@ export class SponsorManageComponent {
       return;
     }
     await this.runSponsorAction('mail-reminder', async () =>
-      await this.sponsorService.sendSponsorPaymentReminder(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+      await this.sponsorService.sendSponsorPaymentReminder(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -424,11 +432,7 @@ export class SponsorManageComponent {
       return;
     }
     await this.runSponsorAction('mail-confirmation', async () =>
-      await this.sponsorService.sendSponsorApplicationConfirmation(
-        this.conferenceId(),
-        sponsor.id,
-        this.currentDocumentLocale()
-      )
+      await this.sponsorService.sendSponsorApplicationConfirmation(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -441,11 +445,7 @@ export class SponsorManageComponent {
       return;
     }
     await this.runSponsorAction('mail-summary', async () =>
-      await this.sponsorService.sendSponsorAdministrativeSummary(
-        this.conferenceId(),
-        sponsor.id,
-        this.currentDocumentLocale()
-      )
+      await this.sponsorService.sendSponsorAdministrativeSummary(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -522,6 +522,8 @@ export class SponsorManageComponent {
       statusDate: [this.normalizeDate(sponsor?.statusDate)],
       paymentStatus: [String(sponsor?.paymentStatus ?? 'PENDING').trim(), [Validators.required]],
       paymentStatusDate: [this.normalizeDate(sponsor?.paymentStatusDate)],
+      communicationLanguage: [this.normalizeCommunicationLanguage(sponsor?.communicationLanguage)],
+      purchaseOrder: [String(sponsor?.purchaseOrder ?? '').trim()],
       logo: [String(sponsor?.logo ?? '').trim()],
       boothName: [String(sponsor?.boothName ?? '').trim()],
       boothWishesText: [Array.isArray(sponsor?.boothWishes) ? sponsor?.boothWishes.join('\n') : ''],
@@ -636,6 +638,16 @@ export class SponsorManageComponent {
   }
 
   /**
+   * Normalizes one sponsor communication language to the supported set.
+   *
+   * @param value Raw language value.
+   * @returns Supported communication language.
+   */
+  private normalizeCommunicationLanguage(value: unknown): SponsorCommunicationLanguage {
+    return String(value ?? '').trim().toLowerCase() === 'fr' ? 'fr' : 'en';
+  }
+
+  /**
    * Executes one backend sponsor action and reconciles the returned sponsor in the UI.
    *
    * @param actionKey UI action key.
@@ -677,12 +689,4 @@ export class SponsorManageComponent {
     }
   }
 
-  /**
-   * Resolves the current document locale from the active UI language.
-   *
-   * @returns Supported document locale.
-   */
-  private currentDocumentLocale(): 'en' | 'fr' {
-    return this.translateService.currentLang === 'fr' ? 'fr' : 'en';
-  }
 }

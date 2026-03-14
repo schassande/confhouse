@@ -7,6 +7,7 @@ export interface SponsorDocumentLabels {
   documentType: Record<SponsorDocumentPayload['documentType'], string>;
   issuer: string;
   recipient: string;
+  purchaseOrder: string;
   issueDate: string;
   dueDate: string;
   documentNumber: string;
@@ -19,6 +20,9 @@ export interface SponsorDocumentLabels {
   grandTotal: string;
   conference: string;
   sponsorType: string;
+  bankDetails: string;
+  iban: string;
+  bic: string;
   notes: string;
 }
 
@@ -30,6 +34,7 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     },
     issuer: 'Issuer',
     recipient: 'Recipient',
+    purchaseOrder: 'Purchase order',
     issueDate: 'Issue date',
     dueDate: 'Due date',
     documentNumber: 'Document number',
@@ -42,6 +47,9 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     grandTotal: 'Total incl. VAT',
     conference: 'Conference',
     sponsorType: 'Sponsor type',
+    bankDetails: 'Bank details',
+    iban: 'IBAN',
+    bic: 'BIC',
     notes: 'Notes',
   },
   fr: {
@@ -51,6 +59,7 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     },
     issuer: 'Emetteur',
     recipient: 'Destinataire',
+    purchaseOrder: 'Bon de commande client',
     issueDate: "Date d'emission",
     dueDate: "Date d'echeance",
     documentNumber: 'Numero de document',
@@ -63,6 +72,9 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     grandTotal: 'Total TTC',
     conference: 'Conference',
     sponsorType: 'Type de sponsoring',
+    bankDetails: 'Coordonnees bancaires',
+    iban: 'IBAN',
+    bic: 'BIC',
     notes: 'Notes',
   },
 };

@@ -48,16 +48,25 @@ export interface Conference extends PersistentData {
     sponsorBoothMaps: string[];
     startDate: string; // ISO 8601
     endDate: string;   // ISO 8601
+    /** Last allocated sponsor acceptance number. */
+    counter?: number;
     /** Legal entity name used as the issuer on generated sponsor documents. */
     legalEntity?: string;
     /** Postal address used as the issuer address on generated sponsor documents. */
     address?: string;
     /** Contact email used as the issuer email on generated sponsor documents. */
     email?: string;
+    /** Optional email copied on all sponsor communications. */
+    ccEmail?: string;
     /** VAT number used on generated sponsor documents when applicable. */
     vat?: string;
     /** Legal entity identifier used on generated sponsor documents, for example SIRET. */
     entityId?: string;
+    /** Optional bank details rendered on sponsor order forms. */
+    bankDetails?: {
+      iban?: string;
+      bic?: string;
+    };
   };
 }
 

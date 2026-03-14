@@ -22,6 +22,7 @@ export interface TransactionalEmailPayload {
   messageType: string;
   subject: string;
   recipients: MailRecipient[];
+  ccRecipients?: MailRecipient[];
   templateId?: number;
   textPart?: string;
   htmlPart?: string;

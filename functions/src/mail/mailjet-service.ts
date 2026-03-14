@@ -13,6 +13,10 @@ interface MailjetMessagePayload {
     Email: string;
     Name?: string;
   }>;
+  Cc?: Array<{
+    Email: string;
+    Name?: string;
+  }>;
   Subject: string;
   Variables?: Record<string, unknown>;
   TextPart?: string;
@@ -143,6 +147,13 @@ export class MailjetService {
         ContentType: attachment.contentType,
         Filename: attachment.filename,
         Base64Content: attachment.base64Content,
+      }));
+    }
+
+    if (payload.ccRecipients && payload.ccRecipients.length > 0) {
+      message.Cc = payload.ccRecipients.map((recipient) => ({
+        Email: recipient.email,
+        Name: recipient.name,
       }));
     }
 

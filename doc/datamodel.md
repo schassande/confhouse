@@ -278,6 +278,10 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 - `sponsorBoothMaps`
 - `startDate`
 - `endDate`
+- `counter`
+- optional `ccEmail`
+- optional `bankDetails.iban`
+- optional `bankDetails.bic`
 
 Actual sponsor applications and confirmed sponsors are stored separately in the `sponsor` collection and linked back through `conferenceId`.
 
@@ -298,6 +302,8 @@ It stores:
 - workflow state (`status`, `statusDate`)
 - financial state (`paymentStatus`, `paymentStatusDate`)
 - commercial selection (`sponsorTypeId`)
+- sponsor communication settings (`communicationLanguage`, optional `purchaseOrder`)
+- immutable acceptance numbering (`acceptedNumber`)
 - booth allocation data (`boothName`, `boothWishes`, `boothWishesDate`)
 - sponsor administrators (`adminEmails`)
 - business history (`businessEvents`)

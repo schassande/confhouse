@@ -7,6 +7,7 @@ import {
   ConferenceTicket,
   Sponsor,
   SponsorBusinessEvent,
+  SponsorCommunicationLanguage,
   SponsorPaymentStatus,
   SponsorStatus,
 } from '../model/sponsor.model';
@@ -20,6 +21,15 @@ export interface SponsorActionReport {
     ok: boolean;
     messageId?: string;
     error?: string;
+  };
+}
+
+export interface SponsorDocumentDownload {
+  sponsor: Sponsor;
+  document: {
+    filename: string;
+    contentType: string;
+    base64Content: string;
   };
 }
 
@@ -206,18 +216,15 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param locale Requested email/document locale.
    * @returns Backend sponsor action report.
    */
   async sendSponsorOrderForm(
     conferenceId: string,
-    sponsorId: string,
-    locale: 'en' | 'fr'
+    sponsorId: string
   ): Promise<SponsorActionReport> {
     return await this.postSponsorOrganizerAction('sendSponsorOrderForm', {
       conferenceId,
       sponsorId,
-      locale,
       issueDate: this.getTodayIsoDate(),
     });
   }
@@ -227,18 +234,15 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param locale Requested email/document locale.
    * @returns Backend sponsor action report.
    */
   async sendSponsorInvoice(
     conferenceId: string,
-    sponsorId: string,
-    locale: 'en' | 'fr'
+    sponsorId: string
   ): Promise<SponsorActionReport> {
     return await this.postSponsorOrganizerAction('sendSponsorInvoice', {
       conferenceId,
       sponsorId,
-      locale,
       issueDate: this.getTodayIsoDate(),
     });
   }
@@ -248,19 +252,15 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param locale Requested email locale.
    * @returns Backend sponsor action report.
    */
   async sendSponsorPaymentReminder(
     conferenceId: string,
-    sponsorId: string,
-    locale: 'en' | 'fr'
+    sponsorId: string
   ): Promise<SponsorActionReport> {
     return await this.postSponsorOrganizerAction('sendSponsorPaymentReminder', {
       conferenceId,
       sponsorId,
-      locale,
-      textPart: this.buildDefaultReminderText(locale),
     });
   }
 
@@ -269,19 +269,15 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param locale Requested email locale.
    * @returns Backend sponsor action report.
    */
   async sendSponsorApplicationConfirmation(
     conferenceId: string,
-    sponsorId: string,
-    locale: 'en' | 'fr'
+    sponsorId: string
   ): Promise<SponsorActionReport> {
     return await this.postSponsorOrganizerAction('sendSponsorApplicationConfirmation', {
       conferenceId,
       sponsorId,
-      locale,
-      textPart: this.buildDefaultApplicationConfirmationText(locale),
     });
   }
 
@@ -290,19 +286,43 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param locale Requested email locale.
    * @returns Backend sponsor action report.
    */
   async sendSponsorAdministrativeSummary(
     conferenceId: string,
-    sponsorId: string,
-    locale: 'en' | 'fr'
+    sponsorId: string
   ): Promise<SponsorActionReport> {
     return await this.postSponsorOrganizerAction('sendSponsorAdministrativeSummary', {
       conferenceId,
       sponsorId,
-      locale,
-      textPart: this.buildDefaultAdministrativeSummaryText(locale),
+    });
+  }
+
+  /**
+   * Downloads a regenerated sponsor order form for one sponsor admin.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @returns Regenerated PDF payload.
+   */
+  async downloadSponsorOrderForm(conferenceId: string, sponsorId: string): Promise<SponsorDocumentDownload> {
+    return await this.postSponsorDocumentDownload('downloadSponsorOrderForm', {
+      conferenceId,
+      sponsorId,
+    });
+  }
+
+  /**
+   * Downloads a regenerated sponsor invoice for one sponsor admin.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @returns Regenerated PDF payload.
+   */
+  async downloadSponsorInvoice(conferenceId: string, sponsorId: string): Promise<SponsorDocumentDownload> {
+    return await this.postSponsorDocumentDownload('downloadSponsorInvoice', {
+      conferenceId,
+      sponsorId,
     });
   }
 
@@ -340,6 +360,31 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
       )
     );
     return response.report;
+  }
+
+  /**
+   * Posts one sponsor-side document download request to the backend function layer.
+   *
+   * @param actionName Function action name.
+   * @param payload Action payload.
+   * @returns Regenerated sponsor document payload.
+   */
+  private async postSponsorDocumentDownload<T extends SponsorOrganizerActionPayload>(
+    actionName: string,
+    payload: T
+  ): Promise<SponsorDocumentDownload> {
+    const idToken = await this.getIdTokenOrThrow();
+    return await firstValueFrom(
+      this.http.post<SponsorDocumentDownload>(
+        `${functionBaseUrl}${actionName}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      )
+    );
   }
 
   /**
@@ -398,5 +443,32 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
     return locale === 'fr'
       ? 'Voici votre recapitulatif administratif sponsor.'
       : 'Here is your sponsor administrative summary.';
+  }
+
+  /**
+   * Normalizes one sponsor communication language.
+   *
+   * @param language Raw sponsor language.
+   * @returns Supported communication language.
+   */
+  normalizeCommunicationLanguage(language: SponsorCommunicationLanguage | string | undefined): 'en' | 'fr' {
+    return String(language ?? '').trim().toLowerCase() === 'fr' ? 'fr' : 'en';
+  }
+
+  /**
+   * Saves one base64-encoded PDF payload to the browser download flow.
+   *
+   * @param document Download payload returned by the backend.
+   */
+  saveDownloadedDocument(document: SponsorDocumentDownload['document']): void {
+    const byteCharacters = atob(document.base64Content);
+    const byteNumbers = Array.from(byteCharacters, (character) => character.charCodeAt(0));
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: document.contentType });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = window.document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = document.filename;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
   }
 }

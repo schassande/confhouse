@@ -13,6 +13,8 @@ import { speakerSessionAction } from './http/speaker-session-action';
 import {
   allocateSponsorTickets,
   assignSponsorBooth,
+  downloadSponsorInvoice,
+  downloadSponsorOrderForm,
   sendSponsorAdministrativeSummary,
   sendSponsorApplicationConfirmation,
   sendSponsorInvoice,
@@ -39,6 +41,8 @@ export {
   updateSponsorPaymentStatus,
   assignSponsorBooth,
   allocateSponsorTickets,
+  downloadSponsorOrderForm,
+  downloadSponsorInvoice,
   sendSponsorOrderForm,
   sendSponsorInvoice,
   sendSponsorPaymentReminder,

@@ -14,7 +14,6 @@ test('buildSponsorOrderFormPayload builds the normalized order form payload', ()
     {
       locale: 'en',
       issueDate: '2026-03-13',
-      documentNumber: 'OF-2026-001',
       vatRate: 0.2,
       legalNotes: ['Payment due in 30 days.'],
     }
@@ -24,6 +23,9 @@ test('buildSponsorOrderFormPayload builds the normalized order form payload', ()
   assert.equal(payload.sponsorTypeName, 'Etoile');
   assert.equal(payload.issuer.legalEntity, 'Snowcamp');
   assert.equal(payload.conferenceLogo, 'https://snowcamp.io/img/logo/snowcamp.svg');
+  assert.equal(payload.documentNumber, '2026-07');
+  assert.equal(payload.recipient.purchaseOrder, 'PO-42');
+  assert.equal(payload.bankDetails?.iban, 'FR76 1234 5678 9012 3456 7890 123');
   assert.equal(payload.lineItems.length, 1);
   assert.equal(payload.lineItems[0].unitPrice, 3000);
   assert.equal(payload.totals.subtotal, 3000);
@@ -39,7 +41,6 @@ test('buildSponsorInvoicePayload keeps due date and localized description fallba
       locale: 'fr',
       issueDate: '2026-03-13',
       dueDate: '2026-04-13',
-      documentNumber: 'INV-2026-001',
       vatRate: 0.2,
       legalNotes: [],
     }
@@ -47,6 +48,7 @@ test('buildSponsorInvoicePayload keeps due date and localized description fallba
 
   assert.equal(payload.documentType, 'INVOICE');
   assert.equal(payload.dueDate, '2026-04-13');
+  assert.equal(payload.documentNumber, '2026-07');
   assert.equal(payload.lineItems[0].description, 'Offre sponsor premium avec stand et visibilité conference.');
 });
 
@@ -77,7 +79,6 @@ test('getSponsorDocumentDefinition exposes expected core sections', () => {
     {
       locale: 'en',
       issueDate: '2026-03-13',
-      documentNumber: 'INV-2026-001',
       vatRate: 0.2,
       legalNotes: ['Wire transfer only.'],
     }

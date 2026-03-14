@@ -16,6 +16,11 @@ export type SponsorPaymentStatus = 'PENDING' | 'PAID' | 'OVERDUE';
 export type ConferenceTicketStatus = 'REQUESTED' | 'CREATED' | 'SENT' | 'CANCELED';
 
 /**
+ * Supported sponsor communication languages.
+ */
+export type SponsorCommunicationLanguage = 'fr' | 'en';
+
+/**
  * Supported sponsor business event types.
  */
 export type SponsorBusinessEventType =
@@ -124,6 +129,12 @@ export interface Sponsor extends PersistentData {
   boothWishes: string[];
   /** Date when the booth wishes were last updated, ISO 8601. */
   boothWishesDate: string;
+  /** Preferred communication language used for emails and generated documents. */
+  communicationLanguage?: SponsorCommunicationLanguage;
+  /** Sponsor-side purchase order reference. */
+  purchaseOrder?: string;
+  /** Immutable acceptance number assigned when the sponsor is first confirmed. */
+  acceptedNumber?: number;
   /** List of sponsor administrator emails. */
   adminEmails: string[];
   /** Business history of significant sponsor actions. */

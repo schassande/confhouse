@@ -13,11 +13,17 @@ export const SAMPLE_SPONSOR_DOCUMENT_CONFERENCE: SponsorDocumentConferenceSource
     { dayIndex: 3, date: '2026-01-17' },
   ],
   sponsoring: {
+    counter: 12,
     legalEntity: 'Snowcamp',
     address: '1 Place de la Conference, 38000 Grenoble, France',
     email: 'team@snowcamp.io',
+    ccEmail: 'orga@snowcamp.io',
     vat: '',
     entityId: 'SIRET 123 456 789 00012',
+    bankDetails: {
+      iban: 'FR76 1234 5678 9012 3456 7890 123',
+      bic: 'AGRIFRPP',
+    },
     sponsorTypes: [
       {
         id: 'etoile',
@@ -48,4 +54,7 @@ export const SAMPLE_SPONSOR_DOCUMENT_SPONSOR: SponsorDocumentSponsorSource = {
   name: 'Example Corp',
   sponsorTypeId: 'etoile',
   adminEmails: ['contact@example-corp.test'],
+  communicationLanguage: 'fr',
+  purchaseOrder: 'PO-42',
+  acceptedNumber: 7,
 };

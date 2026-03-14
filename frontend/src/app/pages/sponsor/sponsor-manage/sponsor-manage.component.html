@@ -57,8 +57,12 @@
                   <div class="sponsor-meta">
                     <span>{{ sponsorStatusLabel(sponsor.status) }}</span>
                     <span>{{ paymentStatusLabel(sponsor.paymentStatus) }}</span>
+                    <span>{{ sponsor.communicationLanguage || 'en' | uppercase }}</span>
                     @if (sponsor.boothName) {
                     <span>{{ sponsor.boothName }}</span>
+                    }
+                    @if (sponsor.acceptedNumber) {
+                    <span>#{{ sponsor.acceptedNumber }}</span>
                     }
                   </div>
                 </div>
@@ -186,6 +190,28 @@
             type="date"
             class="w-full"
           />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label for="communicationLanguage" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.COMMUNICATION_LANGUAGE' | translate }}</label>
+          <p-select
+            inputId="communicationLanguage"
+            [options]="communicationLanguageOptions()"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="communicationLanguage"
+            class="w-full"
+          ></p-select>
+        </div>
+        <div class="form-section">
+          <label for="purchaseOrder" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PURCHASE_ORDER' | translate }}</label>
+          <input id="purchaseOrder" pInputText formControlName="purchaseOrder" type="text" class="w-full" />
+        </div>
+        <div class="form-section">
+          <label class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.ACCEPTED_NUMBER' | translate }}</label>
+          <input pInputText [value]="currentEditingSponsor()?.acceptedNumber || ''" type="text" class="w-full" readonly />
         </div>
       </div>
 

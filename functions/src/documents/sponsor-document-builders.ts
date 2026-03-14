@@ -8,6 +8,7 @@ import {
   SponsorDocumentSponsorSource,
   SponsorDocumentSponsorTypeSource,
 } from './sponsor-document-model';
+import { buildSponsorAccountingDocumentNumber } from '../sponsor/sponsor-communication';
 
 /**
  * Resolves one localized text with locale fallback.
@@ -55,6 +56,24 @@ function extractIssuer(conference: SponsorDocumentConferenceSource) {
     email,
     vat: vat || undefined,
     entityId: entityId || undefined,
+  };
+}
+
+/**
+ * Resolves optional bank details configured for sponsor wire transfers.
+ *
+ * @param conference Conference source data.
+ * @returns Normalized bank details or `undefined` when absent.
+ */
+function extractBankDetails(conference: SponsorDocumentConferenceSource) {
+  const iban = String(conference.sponsoring?.bankDetails?.iban ?? '').trim();
+  const bic = String(conference.sponsoring?.bankDetails?.bic ?? '').trim();
+  if (!iban && !bic) {
+    return undefined;
+  }
+  return {
+    iban: iban || undefined,
+    bic: bic || undefined,
   };
 }
 
@@ -149,14 +168,16 @@ function buildBaseSponsorDocumentPayload(
     recipient: {
       name: String(sponsor.name ?? '').trim(),
       email: Array.isArray(sponsor.adminEmails) ? String(sponsor.adminEmails[0] ?? '').trim() || undefined : undefined,
+      purchaseOrder: String(sponsor.purchaseOrder ?? '').trim() || undefined,
     },
     lineItems,
     totals: computeTotals(lineItems, vatRate),
     issueDate: options.issueDate,
     dueDate: options.dueDate,
-    documentNumber: options.documentNumber,
+    documentNumber: options.documentNumber || buildSponsorAccountingDocumentNumber(conference, sponsor),
     currency: 'EUR',
     legalNotes: options.legalNotes ?? [],
+    bankDetails: extractBankDetails(conference),
   };
 }
 

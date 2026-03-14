@@ -42,6 +42,9 @@ It contains:
 - `sponsorBoothMaps`
 - `startDate`
 - `endDate`
+- `counter`
+- optional communication CC email
+- optional bank details for wire transfer
 
 ### `sponsorTypes`
 
@@ -192,12 +195,35 @@ The sponsor contains:
 - `boothName`: assigned booth
 - `boothWishes`: booth preferences
 - `boothWishesDate`: booth preference update date
+- `communicationLanguage`: preferred communication language (`fr` or `en`)
+- `purchaseOrder`: optional sponsor-side PO reference
+- `acceptedNumber`: immutable number assigned on first confirmation
 
 Rules:
 
 - `boothWishes` must contain only booth names compatible with `sponsorTypeId`
 - `boothWishesDate` must be updated when preferences change
 - `boothName` is set only when the organization actually assigns a booth
+- `communicationLanguage` is chosen by the sponsor from the registration/configuration page
+- all sponsor emails and generated attachments use `communicationLanguage`
+- `purchaseOrder` is optional and can be updated by the sponsor
+- `acceptedNumber` is assigned only on the first transition to `CONFIRMED`
+- once assigned, `acceptedNumber` is immutable and cannot be reused for another sponsor
+
+## Acceptance Numbering
+
+When a sponsor is first moved to `CONFIRMED`, the application must:
+
+1. read `Conference.sponsoring.counter`
+2. increment it atomically
+3. assign the new value to `Sponsor.acceptedNumber`
+4. persist the incremented counter back to `Conference.sponsoring.counter`
+
+Rules:
+
+- numbering happens only on the first transition to `CONFIRMED`
+- reopening or canceling a sponsor does not change the assigned number
+- document numbering uses `<edition>-<acceptedNumber>` with the sponsor number left-padded to 2 digits
 
 ## Sponsor Administrators
 
@@ -356,6 +382,8 @@ General rules:
 - sponsor emails are sent according to the general specification in `doc/mailjet.md`
 - the business rules below define when a sponsor email exists and which document it carries
 - a successful sponsor email must produce the corresponding business event in `Sponsor.businessEvents`
+- if `Conference.sponsoring.ccEmail` is configured, every sponsor email includes this address in CC
+- the language of the email and any generated attachment is taken from `Sponsor.communicationLanguage`
 
 ## Sponsor Email Types
 
@@ -398,6 +426,11 @@ Attachment:
 
 - order form PDF
 
+Content rules:
+
+- if `Sponsor.purchaseOrder` is present, it must appear in the order form
+- if `Conference.sponsoring.bankDetails` is configured, the order form must show IBAN/BIC at the bottom
+
 History:
 
 - adds the `ORDER_FORM_SENT` event
@@ -416,6 +449,10 @@ Rules:
 Attachment:
 
 - invoice PDF
+
+Content rules:
+
+- if `Sponsor.purchaseOrder` is present, it must appear in the invoice
 
 History:
 
@@ -486,6 +523,19 @@ The officially retained attachments at this stage are:
 
 - order form PDF
 - invoice PDF
+
+## Sponsor Self-service Document Download
+
+Sponsors can download again the official documents that were already sent to them.
+
+Rules:
+
+- download is available from the sponsor self-service configuration page
+- authorization is based on `Sponsor.adminEmails`
+- documents are regenerated on demand from current data
+- generated files are not stored
+- regeneration uses the current `Sponsor.communicationLanguage`
+- only documents already sent before are available for download
 
 ## Email and Sponsor Consistency Rules
 

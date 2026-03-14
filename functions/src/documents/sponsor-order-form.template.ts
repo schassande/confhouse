@@ -59,6 +59,9 @@ export function buildSponsorOrderFormDefinition(payload: SponsorDocumentPayload)
             stack: [
               { text: `${labels.conference}: ${payload.conferenceName}`, margin: [0, 0, 0, 4] },
               { text: `${labels.sponsorType}: ${payload.sponsorTypeName}` },
+              ...(payload.recipient.purchaseOrder
+                ? [{ text: `${labels.purchaseOrder}: ${payload.recipient.purchaseOrder}`, margin: [0, 4, 0, 0] }]
+                : []),
             ],
           },
           {
@@ -131,6 +134,13 @@ export function buildSponsorOrderFormDefinition(payload: SponsorDocumentPayload)
         ? [
           { text: labels.notes, bold: true, margin: [0, 0, 0, 6] },
           ...payload.legalNotes.map((note) => ({ text: `- ${note}`, margin: [0, 0, 0, 4] })),
+        ]
+        : []),
+      ...(payload.bankDetails?.iban || payload.bankDetails?.bic
+        ? [
+          { text: labels.bankDetails, bold: true, margin: [0, 20, 0, 6] },
+          ...(payload.bankDetails.iban ? [{ text: `${labels.iban}: ${payload.bankDetails.iban}` }] : []),
+          ...(payload.bankDetails.bic ? [{ text: `${labels.bic}: ${payload.bankDetails.bic}` }] : []),
         ]
         : []),
     ],

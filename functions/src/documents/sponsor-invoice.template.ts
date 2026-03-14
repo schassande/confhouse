@@ -67,6 +67,9 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
             stack: [
               { text: `${labels.conference}: ${payload.conferenceName}`, margin: [0, 0, 0, 4] },
               { text: `${labels.sponsorType}: ${payload.sponsorTypeName}` },
+              ...(payload.recipient.purchaseOrder
+                ? [{ text: `${labels.purchaseOrder}: ${payload.recipient.purchaseOrder}`, margin: [0, 4, 0, 0] }]
+                : []),
             ],
           },
           {

@@ -15,6 +15,11 @@ export type SponsorStatus =
 export type SponsorPaymentStatus = 'PENDING' | 'PAID' | 'OVERDUE';
 
 /**
+ * Supported sponsor communication languages on the backend.
+ */
+export type SponsorCommunicationLanguage = 'fr' | 'en';
+
+/**
  * Supported sponsor business event types on the backend.
  */
 export type SponsorBusinessEventType =
@@ -60,6 +65,9 @@ export interface SponsorRecord {
   statusDate: string;
   paymentStatus: SponsorPaymentStatus;
   paymentStatusDate: string;
+  communicationLanguage?: SponsorCommunicationLanguage;
+  purchaseOrder?: string;
+  acceptedNumber?: number;
   businessEvents?: SponsorBusinessEvent[];
   documents?: SponsorDocuments;
   logistics?: SponsorLogistics;
