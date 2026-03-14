@@ -7,6 +7,9 @@ import {
   SAMPLE_SPONSOR_DOCUMENT_SPONSOR,
 } from './fixtures/sponsor-document-fixtures';
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+console.warn('preview-sponsor-order-form: TLS certificate verification disabled for local preview image fetching');
+
 /**
  * Generates one local sponsor order form PDF for developer preview.
  */

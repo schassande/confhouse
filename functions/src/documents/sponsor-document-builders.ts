@@ -142,6 +142,7 @@ function buildBaseSponsorDocumentPayload(
     locale: options.locale,
     conferenceName: String(conference.name ?? '').trim(),
     conferenceEdition: conference.edition,
+    conferenceLogo: String(conference.logo ?? '').trim() || undefined,
     sponsorName: String(sponsor.name ?? '').trim(),
     sponsorTypeName: sponsorType.name,
     issuer,

@@ -31,6 +31,8 @@ export interface SponsorDocumentSponsorTypeSource {
 export interface SponsorDocumentConferenceSource {
   name: string;
   edition?: number;
+  logo: string;
+  days: Day[];
   sponsoring?: {
     legalEntity?: string;
     address?: string;
@@ -39,6 +41,11 @@ export interface SponsorDocumentConferenceSource {
     entityId?: string;
     sponsorTypes?: SponsorDocumentSponsorTypeSource[];
   };
+}
+/** A day in the conference schedule. */
+export interface Day  {
+  dayIndex: number;
+  date: string; // ISO 8601
 }
 
 /**
@@ -98,6 +105,7 @@ export interface SponsorDocumentPayload {
   locale: SponsorDocumentLocale;
   conferenceName: string;
   conferenceEdition?: number;
+  conferenceLogo?: string;
   sponsorName: string;
   sponsorTypeName: string;
   issuer: SponsorDocumentIssuer;

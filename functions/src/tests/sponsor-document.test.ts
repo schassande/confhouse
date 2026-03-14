@@ -21,13 +21,14 @@ test('buildSponsorOrderFormPayload builds the normalized order form payload', ()
   );
 
   assert.equal(payload.documentType, 'ORDER_FORM');
-  assert.equal(payload.sponsorTypeName, 'Gold Sponsorship');
-  assert.equal(payload.issuer.legalEntity, 'Snowcamp Association');
+  assert.equal(payload.sponsorTypeName, 'Etoile');
+  assert.equal(payload.issuer.legalEntity, 'Snowcamp');
+  assert.equal(payload.conferenceLogo, 'https://snowcamp.io/img/logo/snowcamp.svg');
   assert.equal(payload.lineItems.length, 1);
-  assert.equal(payload.lineItems[0].unitPrice, 5000);
-  assert.equal(payload.totals.subtotal, 5000);
-  assert.equal(payload.totals.vatAmount, 1000);
-  assert.equal(payload.totals.total, 6000);
+  assert.equal(payload.lineItems[0].unitPrice, 3000);
+  assert.equal(payload.totals.subtotal, 3000);
+  assert.equal(payload.totals.vatAmount, 600);
+  assert.equal(payload.totals.total, 3600);
 });
 
 test('buildSponsorInvoicePayload keeps due date and localized description fallback', () => {
@@ -46,7 +47,7 @@ test('buildSponsorInvoicePayload keeps due date and localized description fallba
 
   assert.equal(payload.documentType, 'INVOICE');
   assert.equal(payload.dueDate, '2026-04-13');
-  assert.equal(payload.lineItems[0].description, 'Offre sponsor premium avec stand et visibilite conference.');
+  assert.equal(payload.lineItems[0].description, 'Offre sponsor premium avec stand et visibilité conference.');
 });
 
 test('buildSponsorOrderFormPayload rejects missing issuer fields', () => {
@@ -84,9 +85,10 @@ test('getSponsorDocumentDefinition exposes expected core sections', () => {
 
   const definition = getSponsorDocumentDefinition(payload);
   assert.equal(definition.pageSize, 'A4');
-  assert.equal(definition.content[0].text, 'Invoice');
-  assert.equal(definition.content[3].table.body[1][0].stack[0].text, 'Gold Sponsorship');
-  assert.equal(definition.content[4].columns[1].table.body[2][0].text, 'Total incl. VAT');
+  assert.equal(definition.content[0].image, 'https://snowcamp.io/img/logo/snowcamp.svg');
+  assert.equal(definition.content[1].text, 'Invoice');
+  assert.equal(definition.content[4].table.body[1][0].stack[0].text, 'Etoile');
+  assert.equal(definition.content[5].columns[1].table.body[2][0].text, 'Total incl. VAT');
 });
 
 test('renderSponsorDocumentPdf returns a non-empty PDF buffer', async () => {

@@ -2,74 +2,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import PdfPrinter from 'pdfmake/js/Printer';
 import URLResolver from 'pdfmake/js/URLResolver';
-import { SponsorDocumentLocale, SponsorDocumentPayload } from './sponsor-document-model';
-
-/**
- * Runtime labels used by generated sponsor documents.
- */
-interface SponsorDocumentLabels {
-  documentType: Record<SponsorDocumentPayload['documentType'], string>;
-  issuer: string;
-  recipient: string;
-  issueDate: string;
-  dueDate: string;
-  documentNumber: string;
-  lineItem: string;
-  quantity: string;
-  unitPrice: string;
-  total: string;
-  subtotal: string;
-  vat: string;
-  grandTotal: string;
-  conference: string;
-  sponsorType: string;
-  notes: string;
-}
-
-const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabels> = {
-  en: {
-    documentType: {
-      ORDER_FORM: 'Order Form',
-      INVOICE: 'Invoice',
-    },
-    issuer: 'Issuer',
-    recipient: 'Recipient',
-    issueDate: 'Issue date',
-    dueDate: 'Due date',
-    documentNumber: 'Document number',
-    lineItem: 'Item',
-    quantity: 'Qty',
-    unitPrice: 'Unit price',
-    total: 'Total',
-    subtotal: 'Subtotal',
-    vat: 'VAT',
-    grandTotal: 'Total incl. VAT',
-    conference: 'Conference',
-    sponsorType: 'Sponsor type',
-    notes: 'Notes',
-  },
-  fr: {
-    documentType: {
-      ORDER_FORM: 'Bon de commande',
-      INVOICE: 'Facture',
-    },
-    issuer: 'Emetteur',
-    recipient: 'Destinataire',
-    issueDate: "Date d'emission",
-    dueDate: "Date d'echeance",
-    documentNumber: 'Numero de document',
-    lineItem: 'Ligne',
-    quantity: 'Qte',
-    unitPrice: 'Prix unitaire',
-    total: 'Total',
-    subtotal: 'Sous-total',
-    vat: 'TVA',
-    grandTotal: 'Total TTC',
-    conference: 'Conference',
-    sponsorType: 'Type de sponsoring',
-    notes: 'Notes',
-  },
-};
+import { SponsorDocumentPayload } from './sponsor-document-model';
+import { buildSponsorInvoiceDefinition } from './sponsor-invoice.template';
+import { buildSponsorOrderFormDefinition } from './sponsor-order-form.template';
 
 const ROBOTO_FONT_DIR = path.join(process.cwd(), 'node_modules', 'pdfmake', 'fonts', 'Roboto');
 
@@ -83,156 +18,20 @@ const PRINTER = new PdfPrinter({
 }, undefined, new URLResolver(fs));
 
 /**
- * Formats one amount in EUR for the requested locale.
- *
- * @param amount Numeric amount to format.
- * @param locale Requested locale.
- * @returns Formatted amount string.
- */
-function formatAmount(amount: number, locale: SponsorDocumentLocale): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(amount);
-}
-
-/**
  * Builds the pdfmake document definition for one sponsor document payload.
  *
  * @param payload Normalized sponsor document payload.
  * @returns pdfmake document definition.
  */
 function buildDocumentDefinition(payload: SponsorDocumentPayload): any {
-  const labels = DOCUMENT_LABELS[payload.locale];
-  const legalLines = [
-    payload.issuer.vat ? `VAT: ${payload.issuer.vat}` : '',
-    payload.issuer.entityId ? `ID: ${payload.issuer.entityId}` : '',
-  ].filter((value) => value.length > 0);
-
-  return {
-    pageSize: 'A4',
-    pageMargins: [40, 50, 40, 50],
-    defaultStyle: {
-      font: 'Roboto',
-      fontSize: 10,
-    },
-    content: [
-      {
-        text: labels.documentType[payload.documentType],
-        fontSize: 20,
-        bold: true,
-        margin: [0, 0, 0, 20],
-      },
-      {
-        columns: [
-          {
-            width: '*',
-            stack: [
-              { text: labels.issuer, bold: true, margin: [0, 0, 0, 6] },
-              { text: payload.issuer.legalEntity },
-              { text: payload.issuer.address },
-              { text: payload.issuer.email },
-              ...legalLines.map((line) => ({ text: line })),
-            ],
-          },
-          {
-            width: '*',
-            stack: [
-              { text: labels.recipient, bold: true, margin: [0, 0, 0, 6] },
-              { text: payload.recipient.name },
-              ...(payload.recipient.email ? [{ text: payload.recipient.email }] : []),
-            ],
-          },
-        ],
-        columnGap: 24,
-        margin: [0, 0, 0, 20],
-      },
-      {
-        columns: [
-          {
-            width: '*',
-            stack: [
-              { text: `${labels.conference}: ${payload.conferenceName}`, margin: [0, 0, 0, 4] },
-              { text: `${labels.sponsorType}: ${payload.sponsorTypeName}` },
-            ],
-          },
-          {
-            width: 'auto',
-            stack: [
-              { text: `${labels.issueDate}: ${payload.issueDate}`, alignment: 'right', margin: [0, 0, 0, 4] },
-              ...(payload.dueDate
-                ? [{ text: `${labels.dueDate}: ${payload.dueDate}`, alignment: 'right', margin: [0, 0, 0, 4] }]
-                : []),
-              ...(payload.documentNumber
-                ? [{ text: `${labels.documentNumber}: ${payload.documentNumber}`, alignment: 'right' }]
-                : []),
-            ],
-          },
-        ],
-        margin: [0, 0, 0, 20],
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 50, 90, 90],
-          body: [
-            [
-              { text: labels.lineItem, bold: true },
-              { text: labels.quantity, bold: true, alignment: 'right' },
-              { text: labels.unitPrice, bold: true, alignment: 'right' },
-              { text: labels.total, bold: true, alignment: 'right' },
-            ],
-            ...payload.lineItems.map((item) => [
-              {
-                stack: [
-                  { text: item.label },
-                  ...(item.description ? [{ text: item.description, italics: true, color: '#555555' }] : []),
-                ],
-              },
-              { text: String(item.quantity), alignment: 'right' },
-              { text: formatAmount(item.unitPrice, payload.locale), alignment: 'right' },
-              { text: formatAmount(item.totalPrice, payload.locale), alignment: 'right' },
-            ]),
-          ],
-        },
-        layout: 'lightHorizontalLines',
-        margin: [0, 0, 0, 20],
-      },
-      {
-        columns: [
-          { width: '*', text: '' },
-          {
-            width: 220,
-            table: {
-              widths: ['*', 90],
-              body: [
-                [
-                  { text: labels.subtotal },
-                  { text: formatAmount(payload.totals.subtotal, payload.locale), alignment: 'right' },
-                ],
-                [
-                  { text: `${labels.vat} (${Math.round(payload.totals.vatRate * 100)}%)` },
-                  { text: formatAmount(payload.totals.vatAmount, payload.locale), alignment: 'right' },
-                ],
-                [
-                  { text: labels.grandTotal, bold: true },
-                  { text: formatAmount(payload.totals.total, payload.locale), alignment: 'right', bold: true },
-                ],
-              ],
-            },
-            layout: 'noBorders',
-          },
-        ],
-        margin: [0, 0, 0, 20],
-      },
-      ...(payload.legalNotes.length > 0
-        ? [
-          { text: labels.notes, bold: true, margin: [0, 0, 0, 6] },
-          ...payload.legalNotes.map((note) => ({ text: `- ${note}`, margin: [0, 0, 0, 4] })),
-        ]
-        : []),
-    ],
-  };
+  switch (payload.documentType) {
+  case 'ORDER_FORM':
+    return buildSponsorOrderFormDefinition(payload);
+  case 'INVOICE':
+    return buildSponsorInvoiceDefinition(payload);
+  default:
+    throw new Error(`Unsupported sponsor document type: ${String(payload.documentType ?? '')}`);
+  }
 }
 
 /**
@@ -242,7 +41,7 @@ function buildDocumentDefinition(payload: SponsorDocumentPayload): any {
  * @returns Generated PDF buffer.
  */
 export async function renderSponsorDocumentPdf(payload: SponsorDocumentPayload): Promise<Buffer> {
-  const documentDefinition = buildDocumentDefinition(payload);
+  const documentDefinition = await resolveDocumentDefinitionAssets(buildDocumentDefinition(payload));
   const pdfDocument = await PRINTER.createPdfKitDocument(documentDefinition);
 
   return await new Promise<Buffer>((resolve, reject) => {
@@ -263,4 +62,68 @@ export async function renderSponsorDocumentPdf(payload: SponsorDocumentPayload):
  */
 export function getSponsorDocumentDefinition(payload: SponsorDocumentPayload): any {
   return buildDocumentDefinition(payload);
+}
+
+/**
+ * Resolves remote image URLs in a pdfmake document definition to data URLs.
+ *
+ * @param value Raw document definition value.
+ * @returns Asset-resolved document definition.
+ */
+async function resolveDocumentDefinitionAssets<T>(value: T): Promise<T> {
+  if (Array.isArray(value)) {
+    return await Promise.all(value.map(async (item) => await resolveDocumentDefinitionAssets(item))) as T;
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const imageUrl = typeof (value as Record<string, unknown>).image === 'string'
+    ? String((value as Record<string, unknown>).image ?? '').trim()
+    : '';
+  if (imageUrl && /^https?:\/\//i.test(imageUrl)) {
+    return await resolveRemoteImageNode(value as Record<string, unknown>) as T;
+  }
+
+  const entries = await Promise.all(Object.entries(value as Record<string, unknown>).map(async ([key, entryValue]) =>
+    [key, await resolveDocumentDefinitionAssets(entryValue)] as const
+  ));
+
+  return Object.fromEntries(entries) as T;
+}
+
+/**
+ * Resolves one remote image node to a pdfmake-compatible image or svg node.
+ *
+ * @param node Raw node containing a remote `image` URL.
+ * @returns Node compatible with pdfmake rendering.
+ */
+async function resolveRemoteImageNode(node: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const imageUrl = String(node.image ?? '').trim();
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Unable to fetch remote image: ${imageUrl} (${response.status})`);
+  }
+
+  const contentType = (response.headers.get('content-type') || 'image/png').toLowerCase();
+  if (contentType.includes('image/svg+xml')) {
+    const svgMarkup = await response.text();
+    const { image, fit, ...rest } = node;
+    const width = Array.isArray(fit) && typeof fit[0] === 'number' ? fit[0] : undefined;
+    return {
+      ...rest,
+      svg: svgMarkup,
+      ...(width ? { width } : {}),
+    };
+  }
+
+  if (!contentType.startsWith('image/')) {
+    throw new Error(`Remote asset is not an image: ${imageUrl} (${contentType})`);
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return {
+    ...node,
+    image: `data:${contentType};base64,${buffer.toString('base64')}`,
+  };
 }
