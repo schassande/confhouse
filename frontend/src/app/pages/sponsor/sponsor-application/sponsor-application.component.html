@@ -21,6 +21,12 @@
     <div class="loading-state">{{ 'CONFERENCE.NOT_FOUND' | translate }}</div>
   } @else if (formGroup(); as form) {
     <form [formGroup]="form" class="application-form">
+      @if (!isSponsoringPeriodOpen()) {
+        <div class="warning-state">
+          {{ 'CONFERENCE.SPONSOR_APPLICATION.PERIOD_CLOSED' | translate }}
+        </div>
+      }
+
       <div class="form-grid">
         <div class="form-section">
           <label for="name" class="form-label">
@@ -160,7 +166,7 @@
               icon="pi pi-plus"
               class="p-button-sm"
               (click)="addAdminEmail(emailInput.value); emailInput.value = ''"
-              [disabled]="!emailInput.checkValidity()"
+              [disabled]="!emailInput.checkValidity() || !isSponsoringPeriodOpen()"
             ></button>
           </div>
 
@@ -174,6 +180,7 @@
                   icon="pi pi-times"
                   class="p-button-sm p-button-text p-button-danger"
                   (click)="removeAdminEmail(email)"
+                  [disabled]="!isSponsoringPeriodOpen()"
                 ></button>
               </div>
             }
@@ -194,7 +201,7 @@
           type="button"
           [label]="'COMMON.SAVE' | translate"
           [loading]="saving()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="form.invalid || saving() || !isSponsoringPeriodOpen()"
           (click)="onSave()"
         ></button>
       </div>

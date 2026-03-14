@@ -10,6 +10,17 @@ import { refreshVoxxrinOccupation } from './http/refresh-voxxrin-occupation';
 import { fetchBilletweb } from './http/fetch-billetweb';
 import { recomputeConferenceDashboardDaily } from './scheduler/recompute-conference-dashboard-daily';
 import { speakerSessionAction } from './http/speaker-session-action';
+import {
+  allocateSponsorTickets,
+  assignSponsorBooth,
+  sendSponsorAdministrativeSummary,
+  sendSponsorApplicationConfirmation,
+  sendSponsorInvoice,
+  sendSponsorOrderForm,
+  sendSponsorPaymentReminder,
+  updateSponsorPaymentStatus,
+  updateSponsorStatus,
+} from './http/sponsor-actions';
 
 setGlobalOptions({ maxInstances: 10 });
 
@@ -24,5 +35,14 @@ export {
   refreshVoxxrinOccupation,
   fetchBilletweb,
   speakerSessionAction,
+  updateSponsorStatus,
+  updateSponsorPaymentStatus,
+  assignSponsorBooth,
+  allocateSponsorTickets,
+  sendSponsorOrderForm,
+  sendSponsorInvoice,
+  sendSponsorPaymentReminder,
+  sendSponsorApplicationConfirmation,
+  sendSponsorAdministrativeSummary,
   recomputeConferenceDashboardDaily,
 };

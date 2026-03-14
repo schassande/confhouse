@@ -139,6 +139,16 @@
             formControlName="status"
             class="w-full"
           ></p-select>
+          @if (isEditing()) {
+          <button
+            pButton
+            type="button"
+            class="p-button-secondary"
+            [label]="'CONFERENCE.SPONSOR_MANAGE.APPLY_STATUS' | translate"
+            [loading]="isActionPending('status')"
+            (click)="onApplyStatus()"
+          ></button>
+          }
         </div>
         <div class="form-section">
           <label for="statusDate" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.STATUS_DATE' | translate }}</label>
@@ -154,6 +164,16 @@
             formControlName="paymentStatus"
             class="w-full"
           ></p-select>
+          @if (isEditing()) {
+          <button
+            pButton
+            type="button"
+            class="p-button-secondary"
+            [label]="'CONFERENCE.SPONSOR_MANAGE.APPLY_PAYMENT_STATUS' | translate"
+            [loading]="isActionPending('payment')"
+            (click)="onApplyPaymentStatus()"
+          ></button>
+          }
         </div>
         <div class="form-section">
           <label for="paymentStatusDate" class="form-label">
@@ -177,6 +197,16 @@
         <div class="form-section">
           <label for="boothName" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_NAME' | translate }}</label>
           <input id="boothName" pInputText formControlName="boothName" type="text" class="w-full" />
+          @if (isEditing()) {
+          <button
+            pButton
+            type="button"
+            class="p-button-secondary"
+            [label]="'CONFERENCE.SPONSOR_MANAGE.ASSIGN_BOOTH' | translate"
+            [loading]="isActionPending('booth')"
+            (click)="onAssignBooth()"
+          ></button>
+          }
         </div>
         <div class="form-section">
           <label for="boothWishesDate" class="form-label">
@@ -234,14 +264,26 @@
       <div class="tickets-section">
         <div class="form-actions inline-actions">
           <h3>{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKETS' | translate }}</h3>
-          <button
-            pButton
-            type="button"
-            icon="pi pi-plus"
-            class="p-button-secondary"
-            [label]="'CONFERENCE.SPONSOR_MANAGE.ADD_CONFERENCE_TICKET' | translate"
-            (click)="addConferenceTicket()"
-          ></button>
+          <div class="inline-actions-buttons">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-plus"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.ADD_CONFERENCE_TICKET' | translate"
+              (click)="addConferenceTicket()"
+            ></button>
+            @if (isEditing()) {
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.ALLOCATE_TICKETS' | translate"
+              [loading]="isActionPending('tickets')"
+              (click)="onAllocateTickets()"
+            ></button>
+            }
+          </div>
         </div>
 
         @if (conferenceTicketsArray.controls.length === 0) {
@@ -295,6 +337,98 @@
           }
         </div>
       </div>
+
+      @if (currentEditingSponsor(); as editingSponsor) {
+      <div class="action-panels">
+        <section class="panel-section">
+          <h3>{{ 'CONFERENCE.SPONSOR_MANAGE.EMAIL_ACTIONS' | translate }}</h3>
+          <div class="action-button-grid">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_APPLICATION_CONFIRMATION' | translate"
+              [loading]="isActionPending('mail-confirmation')"
+              (click)="onSendApplicationConfirmation()"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_ORDER_FORM' | translate"
+              [loading]="isActionPending('mail-order-form')"
+              (click)="onSendOrderForm()"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_INVOICE' | translate"
+              [loading]="isActionPending('mail-invoice')"
+              (click)="onSendInvoice()"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_PAYMENT_REMINDER' | translate"
+              [loading]="isActionPending('mail-reminder')"
+              (click)="onSendPaymentReminder()"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_ADMINISTRATIVE_SUMMARY' | translate"
+              [loading]="isActionPending('mail-summary')"
+              (click)="onSendAdministrativeSummary()"
+            ></button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>{{ 'CONFERENCE.SPONSOR_MANAGE.PROJECTIONS' | translate }}</h3>
+          <div class="projection-grid">
+            <div class="projection-card">
+              <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_SENT_AT' | translate }}</strong>
+              <span>{{ editingSponsor.documents?.orderFormSentAt || '-' }}</span>
+            </div>
+            <div class="projection-card">
+              <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_SENT_AT' | translate }}</strong>
+              <span>{{ editingSponsor.documents?.invoiceSentAt || '-' }}</span>
+            </div>
+            <div class="projection-card">
+              <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.LAST_REMINDER_SENT_AT' | translate }}</strong>
+              <span>{{ editingSponsor.documents?.lastReminderSentAt || '-' }}</span>
+            </div>
+            <div class="projection-card">
+              <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH_ASSIGNED_AT' | translate }}</strong>
+              <span>{{ editingSponsor.logistics?.boothAssignedAt || '-' }}</span>
+            </div>
+            <div class="projection-card">
+              <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKETS_ALLOCATED_AT' | translate }}</strong>
+              <span>{{ editingSponsor.logistics?.ticketsAllocatedAt || '-' }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>{{ 'CONFERENCE.SPONSOR_MANAGE.BUSINESS_HISTORY' | translate }}</h3>
+          @if (currentBusinessEvents().length === 0) {
+          <small>{{ 'CONFERENCE.SPONSOR_MANAGE.NO_BUSINESS_HISTORY' | translate }}</small>
+          } @else {
+          <div class="history-list">
+            @for (event of currentBusinessEvents(); track event.at + event.type) {
+            <div class="history-item">
+              <div class="history-title">{{ businessEventLabel(event.type) }}</div>
+              <div class="history-meta">{{ event.at }} · {{ event.by }}</div>
+            </div>
+            }
+          </div>
+          }
+        </section>
+      </div>
+      }
 
       <div class="form-actions">
         @if (currentEditingSponsor(); as editingSponsor) {

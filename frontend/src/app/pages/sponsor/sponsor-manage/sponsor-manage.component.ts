@@ -21,12 +21,15 @@ import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
 import {
   Conference,
+} from '../../../model/conference.model';
+import {
   ConferenceTicket,
   Sponsor,
+  SponsorBusinessEvent,
   SponsorPaymentStatus,
   SponsorStatus,
   SponsorType,
-} from '../../../model/conference.model';
+} from '../../../model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 
@@ -76,6 +79,7 @@ export class SponsorManageComponent {
   readonly form = signal<FormGroup | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly dialogVisible = signal(false);
+  readonly actionInProgress = signal<string | null>(null);
   readonly isEditing = computed(() => this.editingId() !== null);
   readonly languageCodes = computed(() => this.conference()?.languages ?? ['EN', 'FR']);
   readonly sponsorStatusOptions = computed<SelectOption[]>(() => [
@@ -104,6 +108,9 @@ export class SponsorManageComponent {
     }
     return this.sponsors().find((sponsor) => sponsor.id === editId);
   });
+  readonly currentBusinessEvents = computed<SponsorBusinessEvent[]>(() =>
+    this.sponsorService.getSortedBusinessEvents(this.currentEditingSponsor())
+  );
 
   readonly typeFilterOptions = computed<SelectOption[]>(() => [
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_ALL'), value: 'ALL' },
@@ -189,6 +196,7 @@ export class SponsorManageComponent {
     this.dialogVisible.set(false);
     this.form.set(null);
     this.editingId.set(null);
+    this.actionInProgress.set(null);
   }
 
   onDialogHide(): void {
@@ -251,19 +259,22 @@ export class SponsorManageComponent {
       lastUpdated: editingSponsor?.lastUpdated ?? '',
       conferenceId: this.conferenceId(),
       name: String(form.value.name ?? '').trim(),
-      status: this.normalizeSponsorStatus(form.value.status),
-      statusDate: this.normalizeDate(form.value.statusDate),
-      paymentStatus: this.normalizePaymentStatus(form.value.paymentStatus),
-      paymentStatusDate: this.normalizeDate(form.value.paymentStatusDate),
+      status: editingSponsor?.status ?? this.normalizeSponsorStatus(form.value.status),
+      statusDate: editingSponsor?.statusDate ?? this.normalizeDate(form.value.statusDate),
+      paymentStatus: editingSponsor?.paymentStatus ?? this.normalizePaymentStatus(form.value.paymentStatus),
+      paymentStatusDate: editingSponsor?.paymentStatusDate ?? this.normalizeDate(form.value.paymentStatusDate),
       description: this.extractLocalizedValues(form, 'description'),
       sponsorTypeId,
       logo: String(form.value.logo ?? '').trim(),
       website: this.extractLocalizedValues(form, 'website'),
-      boothName: String(form.value.boothName ?? '').trim(),
+      boothName: editingSponsor?.boothName ?? String(form.value.boothName ?? '').trim(),
       boothWishes: this.parseList(form.value.boothWishesText),
       boothWishesDate: this.normalizeDate(form.value.boothWishesDate),
       adminEmails: this.parseList(form.value.adminEmailsText),
-      conferenceTickets: this.extractConferenceTickets(form),
+      conferenceTickets: editingSponsor?.conferenceTickets ?? this.extractConferenceTickets(form),
+      businessEvents: editingSponsor?.businessEvents,
+      documents: editingSponsor?.documents,
+      logistics: editingSponsor?.logistics,
     };
 
     this.sponsorService.save(payload).subscribe({
@@ -289,6 +300,163 @@ export class SponsorManageComponent {
         });
       },
     });
+  }
+
+  /**
+   * Applies one explicit sponsor status update through the backend action layer.
+   */
+  async onApplyStatus(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    const form = this.form();
+    if (!sponsor || !form) {
+      return;
+    }
+    await this.runSponsorAction('status', async () =>
+      await this.sponsorService.updateSponsorStatus(
+        this.conferenceId(),
+        sponsor.id,
+        this.normalizeSponsorStatus(form.value.status),
+        this.normalizeDate(form.value.statusDate)
+      )
+    );
+  }
+
+  /**
+   * Applies one explicit sponsor payment status update through the backend action layer.
+   */
+  async onApplyPaymentStatus(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    const form = this.form();
+    if (!sponsor || !form) {
+      return;
+    }
+    await this.runSponsorAction('payment', async () =>
+      await this.sponsorService.updateSponsorPaymentStatus(
+        this.conferenceId(),
+        sponsor.id,
+        this.normalizePaymentStatus(form.value.paymentStatus),
+        this.normalizeDate(form.value.paymentStatusDate)
+      )
+    );
+  }
+
+  /**
+   * Applies one explicit booth assignment through the backend action layer.
+   */
+  async onAssignBooth(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    const form = this.form();
+    if (!sponsor || !form) {
+      return;
+    }
+    await this.runSponsorAction('booth', async () =>
+      await this.sponsorService.assignSponsorBooth(
+        this.conferenceId(),
+        sponsor.id,
+        String(form.value.boothName ?? '').trim()
+      )
+    );
+  }
+
+  /**
+   * Applies one explicit sponsor ticket allocation through the backend action layer.
+   */
+  async onAllocateTickets(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    const form = this.form();
+    if (!sponsor || !form) {
+      return;
+    }
+    await this.runSponsorAction('tickets', async () =>
+      await this.sponsorService.allocateSponsorTickets(
+        this.conferenceId(),
+        sponsor.id,
+        this.extractConferenceTickets(form) ?? []
+      )
+    );
+  }
+
+  /**
+   * Sends the sponsor order form email through the backend action layer.
+   */
+  async onSendOrderForm(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-order-form', async () =>
+      await this.sponsorService.sendSponsorOrderForm(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+    );
+  }
+
+  /**
+   * Sends the sponsor invoice email through the backend action layer.
+   */
+  async onSendInvoice(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-invoice', async () =>
+      await this.sponsorService.sendSponsorInvoice(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+    );
+  }
+
+  /**
+   * Sends the sponsor payment reminder email through the backend action layer.
+   */
+  async onSendPaymentReminder(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-reminder', async () =>
+      await this.sponsorService.sendSponsorPaymentReminder(this.conferenceId(), sponsor.id, this.currentDocumentLocale())
+    );
+  }
+
+  /**
+   * Sends the sponsor application confirmation email through the backend action layer.
+   */
+  async onSendApplicationConfirmation(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-confirmation', async () =>
+      await this.sponsorService.sendSponsorApplicationConfirmation(
+        this.conferenceId(),
+        sponsor.id,
+        this.currentDocumentLocale()
+      )
+    );
+  }
+
+  /**
+   * Sends the sponsor administrative summary email through the backend action layer.
+   */
+  async onSendAdministrativeSummary(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-summary', async () =>
+      await this.sponsorService.sendSponsorAdministrativeSummary(
+        this.conferenceId(),
+        sponsor.id,
+        this.currentDocumentLocale()
+      )
+    );
+  }
+
+  /**
+   * Returns whether a given action key is currently running.
+   *
+   * @param actionKey UI action key.
+   * @returns `true` when the action is running.
+   */
+  isActionPending(actionKey: string): boolean {
+    return this.actionInProgress() === actionKey;
   }
 
   addConferenceTicket(): void {
@@ -334,6 +502,16 @@ export class SponsorManageComponent {
 
   conferenceTicketStatusLabel(status: ConferenceTicket['status']): string {
     return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.TICKET_${status}`);
+  }
+
+  /**
+   * Returns a translated label for one business event type.
+   *
+   * @param eventType Business event type.
+   * @returns Translated label.
+   */
+  businessEventLabel(eventType: SponsorBusinessEvent['type']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.EVENT_${eventType}`);
   }
 
   private createForm(sponsor?: Sponsor): FormGroup {
@@ -455,5 +633,56 @@ export class SponsorManageComponent {
     return allowed.includes(normalized as ConferenceTicket['status'])
       ? (normalized as ConferenceTicket['status'])
       : 'REQUESTED';
+  }
+
+  /**
+   * Executes one backend sponsor action and reconciles the returned sponsor in the UI.
+   *
+   * @param actionKey UI action key.
+   * @param action Backend action callback.
+   */
+  private async runSponsorAction(actionKey: string, action: () => Promise<{ sponsor: Sponsor }>): Promise<void> {
+    this.actionInProgress.set(actionKey);
+    try {
+      const report = await action();
+      this.applyUpdatedSponsor(report.sponsor);
+      this.messageService.add({
+        severity: 'success',
+        summary: this.translateService.instant('COMMON.SUCCESS'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.ACTION_SUCCESS'),
+      });
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error running sponsor action:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translateService.instant('COMMON.ERROR'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.ACTION_ERROR'),
+      });
+    } finally {
+      this.actionInProgress.set(null);
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * Reconciles one updated sponsor payload in component state and form state.
+   *
+   * @param sponsor Updated sponsor.
+   */
+  private applyUpdatedSponsor(sponsor: Sponsor): void {
+    this.sponsors.set(this.sponsors().map((item) => (item.id === sponsor.id ? sponsor : item)));
+    if (this.editingId() === sponsor.id) {
+      this.form.set(this.createForm(sponsor));
+    }
+  }
+
+  /**
+   * Resolves the current document locale from the active UI language.
+   *
+   * @returns Supported document locale.
+   */
+  private currentDocumentLocale(): 'en' | 'fr' {
+    return this.translateService.currentLang === 'fr' ? 'fr' : 'en';
   }
 }

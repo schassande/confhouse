@@ -29,9 +29,11 @@ import { take } from 'rxjs';
 import {
   Conference,
   ConferenceTicketType,
+} from '../../../model/conference.model';
+import {
   SponsorConferenceTicketQuota,
   SponsorType,
-} from '../../../model/conference.model';
+} from '../../../model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 
 interface SelectOption {
@@ -80,6 +82,11 @@ export class SponsorConfigComponent {
   readonly form = this.fb.group({
     startDate: [''],
     endDate: [''],
+    legalEntity: [''],
+    address: [''],
+    email: [''],
+    vat: [''],
+    entityId: [''],
     sponsorTypes: this.fb.array<FormGroup>([]),
     sponsorBoothMaps: this.fb.array<FormControl<string>>([]),
   });
@@ -172,6 +179,11 @@ export class SponsorConfigComponent {
       sponsoring: {
         startDate: this.normalizeDateValue(this.form.get('startDate')?.value),
         endDate: this.normalizeDateValue(this.form.get('endDate')?.value),
+        legalEntity: String(this.form.get('legalEntity')?.value ?? '').trim() || undefined,
+        address: String(this.form.get('address')?.value ?? '').trim() || undefined,
+        email: String(this.form.get('email')?.value ?? '').trim() || undefined,
+        vat: String(this.form.get('vat')?.value ?? '').trim() || undefined,
+        entityId: String(this.form.get('entityId')?.value ?? '').trim() || undefined,
         sponsorTypes,
         sponsorBoothMaps,
       },
@@ -205,6 +217,11 @@ export class SponsorConfigComponent {
     this.form.patchValue({
       startDate: this.normalizeDateValue(conference?.sponsoring?.startDate),
       endDate: this.normalizeDateValue(conference?.sponsoring?.endDate),
+      legalEntity: String(conference?.sponsoring?.legalEntity ?? '').trim(),
+      address: String(conference?.sponsoring?.address ?? '').trim(),
+      email: String(conference?.sponsoring?.email ?? '').trim(),
+      vat: String(conference?.sponsoring?.vat ?? '').trim(),
+      entityId: String(conference?.sponsoring?.entityId ?? '').trim(),
     });
 
     const sponsorTypes = conference?.sponsoring?.sponsorTypes ?? [];

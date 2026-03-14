@@ -11,7 +11,8 @@ import { OrderListModule } from 'primeng/orderlist';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { Conference, Sponsor, SponsorType } from '../../../model/conference.model';
+import { Conference } from '../../../model/conference.model';
+import { Sponsor, SponsorType } from '../../../model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
@@ -76,6 +77,7 @@ export class SponsorApplicationComponent {
   readonly form = signal<FormGroup | null>(null);
   readonly formGroup = computed(() => this.form());
   readonly isEditing = computed(() => !!this.existingSponsor()?.id);
+  readonly isSponsoringPeriodOpen = computed(() => this.isWithinSponsoringPeriod(this.conference()));
   readonly logoPreviewUrl = computed(() => String(this.formGroup()?.get('logo')?.value ?? '').trim());
   readonly boothWishItems = computed(() => this.boothWishItemsState());
   readonly adminEmails = computed(() => {
@@ -109,12 +111,16 @@ export class SponsorApplicationComponent {
         this.sponsorService.byConferenceIdAndAdminEmail(conferenceId, email).pipe(take(1)).subscribe({
           next: (sponsor) => {
             this.existingSponsor.set(sponsor);
-            this.form.set(this.createForm(sponsor));
+            const form = this.createForm(sponsor);
+            this.applyFormInteractivity(form);
+            this.form.set(form);
             this.loading.set(false);
           },
           error: (error) => {
             console.error('Error loading sponsor application:', error);
-            this.form.set(this.createForm());
+            const form = this.createForm();
+            this.applyFormInteractivity(form);
+            this.form.set(form);
             this.loading.set(false);
           },
         });
@@ -315,6 +321,9 @@ export class SponsorApplicationComponent {
    * @param email Email to add.
    */
   addAdminEmail(email: string): void {
+    if (!this.isSponsoringPeriodOpen()) {
+      return;
+    }
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     if (!normalizedEmail) {
       return;
@@ -331,6 +340,9 @@ export class SponsorApplicationComponent {
    * @param email Email to remove.
    */
   removeAdminEmail(email: string): void {
+    if (!this.isSponsoringPeriodOpen()) {
+      return;
+    }
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     const nextEmails = this.adminEmailsControlValue().filter((value) => value !== normalizedEmail);
     this.formGroup()?.get('adminEmails')?.setValue(nextEmails);
@@ -344,6 +356,11 @@ export class SponsorApplicationComponent {
     const form = this.formGroup();
     const conference = this.conference();
     if (!form || !conference) {
+      return;
+    }
+
+    if (!this.isSponsoringPeriodOpen()) {
+      this.showError('CONFERENCE.SPONSOR_APPLICATION.PERIOD_CLOSED');
       return;
     }
 
@@ -370,7 +387,7 @@ export class SponsorApplicationComponent {
       lastUpdated: String(editingSponsor?.lastUpdated ?? '').trim(),
       conferenceId: conference.id,
       name: String(form.get('name')?.value ?? '').trim(),
-      status: editingSponsor?.status ?? 'CANDIDATE',
+      status: this.resolveSelfServiceStatus(editingSponsor),
       statusDate: editingSponsor?.statusDate ?? today,
       paymentStatus: editingSponsor?.paymentStatus ?? 'PENDING',
       paymentStatusDate: editingSponsor?.paymentStatusDate ?? today,
@@ -383,13 +400,18 @@ export class SponsorApplicationComponent {
       boothWishesDate,
       adminEmails,
       conferenceTickets: editingSponsor?.conferenceTickets,
+      businessEvents: editingSponsor?.businessEvents,
+      documents: editingSponsor?.documents,
+      logistics: editingSponsor?.logistics,
     };
 
     this.saving.set(true);
     this.sponsorService.save(payload).pipe(take(1)).subscribe({
       next: (savedSponsor) => {
         this.existingSponsor.set(savedSponsor);
-        this.form.set(this.createForm(savedSponsor));
+        const nextForm = this.createForm(savedSponsor);
+        this.applyFormInteractivity(nextForm);
+        this.form.set(nextForm);
         this.saving.set(false);
         this.messageService.add({
           severity: 'success',
@@ -452,6 +474,58 @@ export class SponsorApplicationComponent {
    */
   private todayIsoDate(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  /**
+   * Returns whether sponsor self-service is currently allowed for the conference.
+   *
+   * @param conference Loaded conference.
+   * @returns `true` when create/update is inside the sponsoring period.
+   */
+  private isWithinSponsoringPeriod(conference: Conference | undefined): boolean {
+    const startDate = String(conference?.sponsoring?.startDate ?? '').trim();
+    const endDate = String(conference?.sponsoring?.endDate ?? '').trim();
+    const today = this.todayIsoDate();
+    if (!startDate && !endDate) {
+      return true;
+    }
+    if (startDate && today < startDate) {
+      return false;
+    }
+    if (endDate && today > endDate) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Applies the correct read-only state to the self-service form.
+   *
+   * @param form Sponsor self-service form.
+   */
+  private applyFormInteractivity(form: FormGroup): void {
+    if (this.isWithinSponsoringPeriod(this.conference())) {
+      form.enable({ emitEvent: false });
+      return;
+    }
+    form.disable({ emitEvent: false });
+  }
+
+  /**
+   * Resolves the persisted sponsor status for sponsor-side self-service saves.
+   *
+   * @param sponsor Existing sponsor.
+   * @returns Status to persist.
+   */
+  private resolveSelfServiceStatus(sponsor: Sponsor | undefined): Sponsor['status'] {
+    const currentStatus = String(sponsor?.status ?? '').trim();
+    if (!currentStatus) {
+      return 'CANDIDATE';
+    }
+    if (currentStatus === 'POTENTIAL' || currentStatus === 'CANDIDATE') {
+      return 'CANDIDATE';
+    }
+    return sponsor?.status ?? 'CANDIDATE';
   }
 
   /**

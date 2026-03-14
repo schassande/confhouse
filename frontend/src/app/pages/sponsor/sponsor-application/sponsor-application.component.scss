@@ -160,6 +160,14 @@
   text-align: center;
 }
 
+.warning-state {
+  padding: 1rem;
+  border: 1px solid #f59e0b;
+  border-radius: 0.75rem;
+  background: #fffbeb;
+  color: #92400e;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

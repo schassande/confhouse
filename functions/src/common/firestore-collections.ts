@@ -6,6 +6,7 @@ export const FIRESTORE_COLLECTIONS = {
   VOXXRIN_CONFIG: 'voxxrin-config',
   BILLETWEB_CONFIG: 'billetweb-config',
   CONFERENCE_SECRET: 'conferenceSecret',
+  MAIL_HISTORY: 'mail_history',
   SESSION: 'session',
   PERSON: 'person',
   PERSON_EMAILS: 'person_emails',

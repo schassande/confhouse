@@ -49,6 +49,41 @@
 
     <section class="config-section">
       <div class="section-header">
+        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER' | translate }}</h2>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="legalEntity">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_ENTITY' | translate }}</label>
+          <input id="legalEntity" pInputText formControlName="legalEntity" type="text" />
+        </div>
+        <div class="field">
+          <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
+          <input id="email" pInputText formControlName="email" type="email" />
+        </div>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="address">{{ 'CONFERENCE.SPONSOR_CONFIG.ADDRESS' | translate }}</label>
+          <textarea id="address" pTextarea formControlName="address" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label for="vat">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT' | translate }}</label>
+          <input id="vat" pInputText formControlName="vat" type="text" />
+        </div>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
+          <input id="entityId" pInputText formControlName="entityId" type="text" />
+        </div>
+      </div>
+    </section>
+
+    <section class="config-section">
+      <div class="section-header">
         <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPES' | translate }}</h2>
         <button
           pButton
