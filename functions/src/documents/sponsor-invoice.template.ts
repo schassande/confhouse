@@ -10,7 +10,6 @@ import { DOCUMENT_LABELS, formatAmount } from './sponsor-document-template-commo
 export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): any {
   const labels = DOCUMENT_LABELS[payload.locale];
   const legalLines = [
-    payload.issuer.vat ? `VAT: ${payload.issuer.vat}` : '',
     payload.issuer.entityId ? `ID: ${payload.issuer.entityId}` : '',
   ].filter((value) => value.length > 0);
 
@@ -53,6 +52,7 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
             stack: [
               { text: labels.recipient, bold: true, margin: [0, 0, 0, 6] },
               { text: payload.recipient.name },
+              ...(payload.recipient.address ? [{ text: payload.recipient.address }] : []),
               ...(payload.recipient.email ? [{ text: payload.recipient.email }] : []),
             ],
           },
@@ -65,7 +65,7 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
           {
             width: '*',
             stack: [
-              { text: `${labels.conference}: ${payload.conferenceName}`, margin: [0, 0, 0, 4] },
+              { text: `${labels.conference}: ${payload.conferenceName} ${payload.conferenceEdition}`, margin: [0, 0, 0, 4] },
               { text: `${labels.sponsorType}: ${payload.sponsorTypeName}` },
               ...(payload.recipient.purchaseOrder
                 ? [{ text: `${labels.purchaseOrder}: ${payload.recipient.purchaseOrder}`, margin: [0, 4, 0, 0] }]
@@ -101,8 +101,7 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
             ...payload.lineItems.map((item) => [
               {
                 stack: [
-                  { text: item.label },
-                  ...(item.description ? [{ text: item.description, italics: true, color: '#555555' }] : []),
+                  { text: item.label }
                 ],
               },
               { text: String(item.quantity), alignment: 'right' },

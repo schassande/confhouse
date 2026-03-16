@@ -31,7 +31,6 @@ import { MailAttachment, MailRecipient, TransactionalEmailPayload } from '../mai
 import { MAILJET_SECRETS } from '../mail/mailjet-secrets';
 import {
   allocateNextSponsorAcceptedNumber,
-  buildSponsorAccountingDocumentNumber,
   buildSponsorCommunicationRecipients,
   resolveSponsorCommunicationLanguage,
 } from '../sponsor/sponsor-communication';
@@ -82,12 +81,12 @@ interface SendSponsorNotificationOptions {
 interface SendSponsorDocumentOptions {
   messageType: string;
   eventType: SponsorBusinessEventType;
-  buildPayload: (locale: SponsorDocumentLocale) => SponsorDocumentPayload;
+  buildPayload: () => SponsorDocumentPayload;
   buildEmailPayload: (
     attachment: MailAttachment,
     locale: SponsorDocumentLocale
   ) => Omit<TransactionalEmailPayload, 'recipients' | 'ccRecipients'>;
-  buildIdempotenceKey: () => string;
+  buildIdempotenceKey: (payload: SponsorDocumentPayload) => string;
 }
 
 interface ExistingMailHistoryMatch {
@@ -115,7 +114,7 @@ type SponsorMailMessageType =
 export const updateSponsorStatus = onRequest({ cors: true, timeoutSeconds: 60 }, async (req, res) => {
   await handleSponsorAction(req, res, 'UPDATE_STATUS', async (context) => {
     const nextStatus = parseSponsorStatus(req.body?.status);
-    const statusDate = parseOptionalIsoDate(req.body?.statusDate) ?? new Date().toISOString().slice(0, 10);
+    const statusDate = parseOptionalIsoDate(req.body?.statusDate) ?? new Date().toISOString();
     const nextSponsor = await updateSponsorStatusWithAcceptanceNumber(context, nextStatus, statusDate);
     return { sponsor: nextSponsor };
   });
@@ -127,7 +126,7 @@ export const updateSponsorStatus = onRequest({ cors: true, timeoutSeconds: 60 },
 export const updateSponsorPaymentStatus = onRequest({ cors: true, timeoutSeconds: 60 }, async (req, res) => {
   await handleSponsorAction(req, res, 'UPDATE_PAYMENT_STATUS', async (context) => {
     const nextPaymentStatus = parseSponsorPaymentStatus(req.body?.paymentStatus);
-    const paymentStatusDate = parseOptionalIsoDate(req.body?.paymentStatusDate) ?? new Date().toISOString().slice(0, 10);
+    const paymentStatusDate = parseOptionalIsoDate(req.body?.paymentStatusDate) ?? new Date().toISOString();
     const nextSponsor = applySponsorPaymentStatusTransition(
       context.sponsorData as unknown as SponsorRecord,
       nextPaymentStatus,
@@ -239,22 +238,13 @@ export const sendSponsorOrderForm = onRequest({ cors: true, timeoutSeconds: 120,
     await sendSponsorDocumentEmail(context, {
       messageType: 'SPONSOR_ORDER_FORM',
       eventType: 'ORDER_FORM_SENT',
-      buildIdempotenceKey: () => buildSponsorDocumentIdempotenceKey(
+      buildIdempotenceKey: (payload) => buildSponsorDocumentIdempotenceKey(
         'SPONSOR_ORDER_FORM',
         context.conferenceId,
         context.sponsorId,
-        buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData)
-          ?? parseOptionalIsoDate(req.body?.issueDate)
-          ?? 'latest'
+        `${payload.documentNumber ?? 'latest'}:${payload.issueDate}`
       ),
-      buildPayload: (locale) => buildSponsorOrderFormPayload(context.conferenceData as any, context.sponsorData as any, {
-        locale,
-        issueDate: parseOptionalIsoDate(req.body?.issueDate) ?? new Date().toISOString().slice(0, 10),
-        documentNumber: parseOptionalString(req.body?.documentNumber)
-          ?? buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData),
-        vatRate: parseOptionalNumber(req.body?.vatRate) ?? 0,
-        legalNotes: parseStringArray(req.body?.legalNotes),
-      }),
+      buildPayload: () => buildSponsorOrderFormPayload(context.conferenceData as any, context.sponsorData as any),
       buildEmailPayload: (attachment, locale) => ({
         messageType: 'SPONSOR_ORDER_FORM',
         subject: buildLocalizedSponsorMailSubject('SPONSOR_ORDER_FORM', locale, context.conferenceData),
@@ -278,24 +268,13 @@ export const sendSponsorInvoice = onRequest({ cors: true, timeoutSeconds: 120, s
     await sendSponsorDocumentEmail(context, {
       messageType: 'SPONSOR_INVOICE',
       eventType: 'INVOICE_SENT',
-      buildIdempotenceKey: () => buildSponsorDocumentIdempotenceKey(
+      buildIdempotenceKey: (payload) => buildSponsorDocumentIdempotenceKey(
         'SPONSOR_INVOICE',
         context.conferenceId,
         context.sponsorId,
-        buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData)
-          ?? parseOptionalIsoDate(req.body?.dueDate)
-          ?? parseOptionalIsoDate(req.body?.issueDate)
-          ?? 'latest'
+        `${payload.documentNumber ?? 'latest'}:${payload.issueDate}:${payload.dueDate ?? ''}`
       ),
-      buildPayload: (locale) => buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any, {
-        locale,
-        issueDate: parseOptionalIsoDate(req.body?.issueDate) ?? new Date().toISOString().slice(0, 10),
-        dueDate: parseOptionalIsoDate(req.body?.dueDate) ?? undefined,
-        documentNumber: parseOptionalString(req.body?.documentNumber)
-          ?? buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData),
-        vatRate: parseOptionalNumber(req.body?.vatRate) ?? 0,
-        legalNotes: parseStringArray(req.body?.legalNotes),
-      }),
+      buildPayload: () => buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any),
       buildEmailPayload: (attachment, locale) => ({
         messageType: 'SPONSOR_INVOICE',
         subject: buildLocalizedSponsorMailSubject('SPONSOR_INVOICE', locale, context.conferenceData),
@@ -452,8 +431,8 @@ async function sendSponsorDocumentEmail(
   context: AuthorizedSponsorContext,
   options: SendSponsorDocumentOptions
 ): Promise<SponsorActionReport> {
-  const locale = resolveContextSponsorLocale(context);
-  const payload = options.buildPayload(locale);
+  const payload = options.buildPayload();
+  const locale = payload.locale;
   const attachment = await generateSponsorDocumentAttachment(payload, context.sponsorId, options.messageType);
   const emailPayload = options.buildEmailPayload(attachment, locale);
 
@@ -462,7 +441,7 @@ async function sendSponsorDocumentEmail(
     eventType: options.eventType,
     subject: emailPayload.subject,
     textPart: emailPayload.textPart ?? '',
-    idempotenceKey: options.buildIdempotenceKey(),
+    idempotenceKey: options.buildIdempotenceKey(payload),
   }, true, emailPayload.attachments);
 }
 
@@ -483,7 +462,6 @@ async function handleSponsorDocumentDownload(
   const startedAt = Date.now();
   try {
     const context = await authorizeSponsorAdminRequest(req, operation);
-    const locale = resolveContextSponsorLocale(context);
     const sentAt = getPreviouslySentDocumentTimestamp(context.sponsorData, documentType);
     if (!sentAt) {
       throw new HttpError(
@@ -497,23 +475,9 @@ async function handleSponsorDocumentDownload(
         }
       );
     }
-
-    const issueDate = sentAt.slice(0, 10);
     const payload = documentType === 'ORDER_FORM'
-      ? buildSponsorOrderFormPayload(context.conferenceData as any, context.sponsorData as any, {
-        locale,
-        issueDate,
-        documentNumber: buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData),
-        vatRate: 0,
-        legalNotes: [],
-      })
-      : buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any, {
-        locale,
-        issueDate,
-        documentNumber: buildSponsorAccountingDocumentNumber(context.conferenceData, context.sponsorData),
-        vatRate: 0,
-        legalNotes: [],
-      });
+      ? buildSponsorOrderFormPayload(context.conferenceData as any, context.sponsorData as any)
+      : buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any);
 
     const document = await generateSponsorDocumentAttachment(
       payload,
@@ -934,47 +898,6 @@ function parseSponsorId(body: any, operation: SponsorActionOperation | SponsorDo
 function parseOptionalIsoDate(value: unknown): string | undefined {
   const normalized = String(value ?? '').trim();
   return normalized || undefined;
-}
-
-/**
- * Parses one optional trimmed string.
- *
- * @param value Unknown input value.
- * @returns Normalized string or `undefined`.
- */
-function parseOptionalString(value: unknown): string | undefined {
-  const normalized = String(value ?? '').trim();
-  return normalized || undefined;
-}
-
-/**
- * Parses one optional numeric value.
- *
- * @param value Unknown input value.
- * @returns Parsed number or `undefined` when invalid.
- */
-function parseOptionalNumber(value: unknown): number | undefined {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-  const parsed = Number(value);
-  if (Number.isNaN(parsed)) {
-    return undefined;
-  }
-  return parsed;
-}
-
-/**
- * Parses one optional string array.
- *
- * @param value Unknown input value.
- * @returns Trimmed non-empty strings.
- */
-function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.map((item) => String(item ?? '').trim()).filter((item) => item.length > 0);
 }
 
 /**

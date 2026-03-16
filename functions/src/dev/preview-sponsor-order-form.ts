@@ -14,21 +14,18 @@ console.warn('preview-sponsor-order-form: TLS certificate verification disabled 
  * Generates one local sponsor order form PDF for developer preview.
  */
 async function main(): Promise<void> {
-  const payload = buildSponsorOrderFormPayload(
-    SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
-    SAMPLE_SPONSOR_DOCUMENT_SPONSOR,
-    {
-      locale: 'en',
-      issueDate: '2026-03-13',
-      documentNumber: 'OF-2026-001',
-      vatRate: 0.2,
-      legalNotes: ['Payment due upon receipt.', 'This document is generated from development fixture data.'],
-    }
-  );
-  const buffer = await renderSponsorDocumentPdf(payload);
-  const outputDirectory = path.join(process.cwd(), 'tmp', 'generated-documents');
-  await fs.mkdir(outputDirectory, { recursive: true });
-  await fs.writeFile(path.join(outputDirectory, 'sponsor-order-form-preview.pdf'), buffer);
+  ['en', 'fr'].forEach(async (locale) => {
+    const payload = buildSponsorOrderFormPayload(
+      SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
+      { ...SAMPLE_SPONSOR_DOCUMENT_SPONSOR, communicationLanguage: locale as 'en' | 'fr' }
+    );
+    const buffer = await renderSponsorDocumentPdf(payload);
+    const outputDirectory = path.join(process.cwd(), 'tmp', 'generated-documents');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await fs.mkdir(outputDirectory, { recursive: true });
+    await fs.writeFile(path.join(outputDirectory, `sponsor-order-form-preview-${locale}-${timestamp}.pdf`), buffer);
+    console.log(`Preview sponsor order form PDF generated at: ${outputDirectory}`);
+  });
 }
 
 void main();

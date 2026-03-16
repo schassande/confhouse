@@ -7,7 +7,8 @@ export class AdminGuard implements CanActivate {
   private readonly signupService = inject(UserSignService);
   private readonly router = inject(Router);
 
-  canActivate(): boolean | UrlTree {
+  async canActivate(): Promise<boolean | UrlTree> {
+    await this.signupService.waitForAuthReady();
     const person = this.signupService.getCurrentPerson();
     if (person && person.isPlatformAdmin) return true;
     return this.router.parseUrl('/');

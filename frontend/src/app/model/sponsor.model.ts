@@ -109,11 +109,11 @@ export interface Sponsor extends PersistentData {
   name: string;
   /** Current business status of the sponsor. */
   status: SponsorStatus;
-  /** Date when the business status was last updated, ISO 8601. */
+  /** Date Time when the business status was last updated, ISO 8601. */
   statusDate: string;
   /** Current payment status. */
   paymentStatus: SponsorPaymentStatus;
-  /** Date when the payment status was last updated, ISO 8601. */
+  /** Date Time when the payment status was last updated, ISO 8601. */
   paymentStatusDate: string;
   /** Description in several languages. */
   description: { [lang: string]: string };
@@ -127,14 +127,20 @@ export interface Sponsor extends PersistentData {
   boothName: string;
   /** Ordered booth preferences submitted by the sponsor. */
   boothWishes: string[];
-  /** Date when the booth wishes were last updated, ISO 8601. */
+  /** Date Time when the booth wishes were last updated, ISO 8601. */
   boothWishesDate: string;
   /** Preferred communication language used for emails and generated documents. */
   communicationLanguage?: SponsorCommunicationLanguage;
   /** Sponsor-side purchase order reference. */
   purchaseOrder?: string;
+  /** Postal address of the sponsor. */
+  address?: string;
+  /** Date Time when the sponsor registration was first created, ISO 8601. */
+  registrationDate?: string;
   /** Immutable acceptance number assigned when the sponsor is first confirmed. */
   acceptedNumber?: number;
+  /** Optional invoice due date overridden by the organizer. */
+  invoiceDueDate?: string;
   /** List of sponsor administrator emails. */
   adminEmails: string[];
   /** Business history of significant sponsor actions. */

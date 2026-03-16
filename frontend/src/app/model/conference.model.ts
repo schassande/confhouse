@@ -58,8 +58,8 @@ export interface Conference extends PersistentData {
     email?: string;
     /** Optional email copied on all sponsor communications. */
     ccEmail?: string;
-    /** VAT number used on generated sponsor documents when applicable. */
-    vat?: string;
+    /** VAT rate applied on generated sponsor documents, as a ratio such as 0.2. */
+    vatRate?: number;
     /** Legal entity identifier used on generated sponsor documents, for example SIRET. */
     entityId?: string;
     /** Optional bank details rendered on sponsor order forms. */
@@ -67,6 +67,8 @@ export interface Conference extends PersistentData {
       iban?: string;
       bic?: string;
     };
+    /** Optional legal notes rendered on generated sponsor documents. */
+    legalNotes?: string[];
   };
 }
 

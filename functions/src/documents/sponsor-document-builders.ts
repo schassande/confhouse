@@ -1,6 +1,5 @@
 import {
   LocalizedTextMap,
-  SponsorDocumentBuildOptions,
   SponsorDocumentConferenceSource,
   SponsorDocumentLineItem,
   SponsorDocumentLocale,
@@ -8,7 +7,7 @@ import {
   SponsorDocumentSponsorSource,
   SponsorDocumentSponsorTypeSource,
 } from './sponsor-document-model';
-import { buildSponsorAccountingDocumentNumber } from '../sponsor/sponsor-communication';
+import { buildSponsorAccountingDocumentNumber, resolveSponsorCommunicationLanguage } from '../sponsor/sponsor-communication';
 
 /**
  * Resolves one localized text with locale fallback.
@@ -33,6 +32,134 @@ function getLocalizedText(values: LocalizedTextMap | undefined, locale: SponsorD
 }
 
 /**
+ * Formats one ISO date for the target document locale.
+ *
+ * @param value ISO date string.
+ * @param locale Requested locale.
+ * @returns Localized human-readable date, or the raw value when invalid.
+ */
+function formatConferenceDate(value: string, locale: SponsorDocumentLocale): string {
+  const trimmedValue = String(value ?? '').trim();
+  if (!trimmedValue) {
+    return '';
+  }
+
+  const date = new Date(`${trimmedValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
+    return trimmedValue;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
+/**
+ * Adds one month to an ISO date while keeping a valid calendar day.
+ *
+ * @param value ISO date string.
+ * @returns Shifted ISO date.
+ */
+function addOneMonth(value: string): string {
+  const trimmedValue = String(value ?? '').trim();
+  if (!trimmedValue) {
+    return trimmedValue;
+  }
+
+  const [yearRaw, monthRaw, dayRaw] = trimmedValue.split('-').map((part) => Number(part));
+  if (!Number.isFinite(yearRaw) || !Number.isFinite(monthRaw) || !Number.isFinite(dayRaw)) {
+    return trimmedValue;
+  }
+
+  const baseDate = new Date(Date.UTC(yearRaw, monthRaw - 1, dayRaw));
+  if (Number.isNaN(baseDate.getTime())) {
+    return trimmedValue;
+  }
+
+  const targetMonthIndex = baseDate.getUTCMonth() + 1;
+  const targetYear = baseDate.getUTCFullYear() + Math.floor(targetMonthIndex / 12);
+  const normalizedTargetMonth = targetMonthIndex % 12;
+  const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, normalizedTargetMonth + 1, 0)).getUTCDate();
+  const targetDay = Math.min(baseDate.getUTCDate(), lastDayOfTargetMonth);
+  const nextDate = new Date(Date.UTC(targetYear, normalizedTargetMonth, targetDay));
+  return nextDate.toISOString().slice(0, 10);
+}
+
+/**
+ * Resolves the locale used for generated sponsor documents.
+ *
+ * @param conference Conference source data.
+ * @param sponsor Sponsor source data.
+ * @returns Supported locale.
+ */
+function resolveDocumentLocale(
+  conference: SponsorDocumentConferenceSource,
+  sponsor: SponsorDocumentSponsorSource
+): SponsorDocumentLocale {
+  return resolveSponsorCommunicationLanguage(sponsor, conference);
+}
+
+/**
+ * Returns the first issue date for the requested document type.
+ *
+ * @param documentType Document type to build.
+ * @param sponsor Sponsor source data.
+ * @returns ISO issue date.
+ */
+function resolveIssueDate(
+  documentType: 'ORDER_FORM' | 'INVOICE',
+  sponsor: SponsorDocumentSponsorSource
+): string {
+  const firstSentAt = documentType === 'ORDER_FORM'
+    ? sponsor.documents?.orderFormSentAt
+    : sponsor.documents?.invoiceSentAt;
+  const firstIssuedDate = String(firstSentAt ?? '').trim().slice(0, 10);
+  return firstIssuedDate || new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Resolves the invoice due date from sponsor settings or default business rules.
+ *
+ * @param sponsor Sponsor source data.
+ * @param issueDate Resolved issue date.
+ * @returns ISO due date.
+ */
+function resolveInvoiceDueDate(sponsor: SponsorDocumentSponsorSource, issueDate: string): string {
+  const configuredDueDate = String(sponsor.invoiceDueDate ?? '').trim();
+  return configuredDueDate || addOneMonth(issueDate);
+}
+
+/**
+ * Builds the sponsorship line item label shown in sponsor accounting documents.
+ *
+ * @param conference Conference source data.
+ * @param sponsorType Sponsor type source data.
+ * @param locale Requested locale.
+ * @returns Human-readable line item label.
+ */
+function buildLineItemLabel(
+  conference: SponsorDocumentConferenceSource,
+  sponsorType: SponsorDocumentSponsorTypeSource,
+  locale: SponsorDocumentLocale
+): string {
+  const orderedDays = [...(conference.days ?? [])]
+    .filter((day) => String(day.date ?? '').trim().length > 0)
+    .sort((left, right) => String(left.date).localeCompare(String(right.date)));
+  const startDate = orderedDays[0]?.date ? formatConferenceDate(orderedDays[0].date, locale) : '';
+  const endDate = orderedDays.at(-1)?.date ? formatConferenceDate(orderedDays.at(-1)!.date, locale) : '';
+  const conferenceEdition = conference.edition ? ` ${conference.edition}` : '';
+
+  if (locale === 'fr') {
+    return `Sponsoring ${sponsorType.name} de la conference ${String(conference.name ?? '').trim()}${conferenceEdition} du ${startDate} au ${endDate}`.trim();
+  }
+
+  return `Conference sponsorship ${sponsorType.name} for ${String(conference.name ?? '').trim()}${conferenceEdition} from ${startDate} to ${endDate}`.trim();
+}
+
+/**
  * Ensures the conference contains the issuer information required by generated documents.
  *
  * @param conference Conference source data.
@@ -43,7 +170,6 @@ function extractIssuer(conference: SponsorDocumentConferenceSource) {
   const legalEntity = String(conference.sponsoring?.legalEntity ?? '').trim();
   const address = String(conference.sponsoring?.address ?? '').trim();
   const email = String(conference.sponsoring?.email ?? '').trim();
-  const vat = String(conference.sponsoring?.vat ?? '').trim();
   const entityId = String(conference.sponsoring?.entityId ?? '').trim();
 
   if (!legalEntity || !address || !email) {
@@ -54,7 +180,6 @@ function extractIssuer(conference: SponsorDocumentConferenceSource) {
     legalEntity,
     address,
     email,
-    vat: vat || undefined,
     entityId: entityId || undefined,
   };
 }
@@ -100,17 +225,19 @@ function getSponsorType(
 /**
  * Builds the initial single sponsorship line item from the current sponsor type price.
  *
+ * @param conference Conference source data.
  * @param sponsorType Sponsor type source data.
  * @param locale Requested locale.
  * @returns One normalized line item.
  */
 function buildBaseLineItem(
+  conference: SponsorDocumentConferenceSource,
   sponsorType: SponsorDocumentSponsorTypeSource,
   locale: SponsorDocumentLocale
 ): SponsorDocumentLineItem {
   const localizedDescription = getLocalizedText(sponsorType.description, locale);
   return {
-    label: sponsorType.name,
+    label: buildLineItemLabel(conference, sponsorType, locale),
     description: localizedDescription || undefined,
     quantity: 1,
     unitPrice: Number(sponsorType.price ?? 0),
@@ -142,23 +269,23 @@ function computeTotals(lineItems: SponsorDocumentLineItem[], vatRate: number) {
  * @param documentType Document type to build.
  * @param conference Conference source data.
  * @param sponsor Sponsor source data.
- * @param options Build options.
  * @returns Normalized sponsor document payload.
  */
 function buildBaseSponsorDocumentPayload(
   documentType: 'ORDER_FORM' | 'INVOICE',
   conference: SponsorDocumentConferenceSource,
-  sponsor: SponsorDocumentSponsorSource,
-  options: SponsorDocumentBuildOptions
+  sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentPayload {
+  const locale = resolveDocumentLocale(conference, sponsor);
   const sponsorType = getSponsorType(conference, sponsor);
   const issuer = extractIssuer(conference);
-  const lineItems = [buildBaseLineItem(sponsorType, options.locale)];
-  const vatRate = Number(options.vatRate ?? 0);
+  const lineItems = [buildBaseLineItem(conference, sponsorType, locale)];
+  const vatRate = Number(conference.sponsoring?.vatRate ?? 0);
+  const issueDate = resolveIssueDate(documentType, sponsor);
 
   return {
     documentType,
-    locale: options.locale,
+    locale,
     conferenceName: String(conference.name ?? '').trim(),
     conferenceEdition: conference.edition,
     conferenceLogo: String(conference.logo ?? '').trim() || undefined,
@@ -167,16 +294,21 @@ function buildBaseSponsorDocumentPayload(
     issuer,
     recipient: {
       name: String(sponsor.name ?? '').trim(),
+      address: String(sponsor.address ?? '').trim() || undefined,
       email: Array.isArray(sponsor.adminEmails) ? String(sponsor.adminEmails[0] ?? '').trim() || undefined : undefined,
       purchaseOrder: String(sponsor.purchaseOrder ?? '').trim() || undefined,
     },
     lineItems,
     totals: computeTotals(lineItems, vatRate),
-    issueDate: options.issueDate,
-    dueDate: options.dueDate,
-    documentNumber: options.documentNumber || buildSponsorAccountingDocumentNumber(conference, sponsor),
+    issueDate,
+    dueDate: documentType === 'INVOICE' ? resolveInvoiceDueDate(sponsor, issueDate) : undefined,
+    documentNumber: buildSponsorAccountingDocumentNumber(conference, sponsor),
     currency: 'EUR',
-    legalNotes: options.legalNotes ?? [],
+    legalNotes: Array.isArray(conference.sponsoring?.legalNotes)
+      ? conference.sponsoring!.legalNotes
+          .map((note) => String(note ?? '').trim())
+          .filter((note) => note.length > 0)
+      : [],
     bankDetails: extractBankDetails(conference),
   };
 }
@@ -186,15 +318,13 @@ function buildBaseSponsorDocumentPayload(
  *
  * @param conference Conference source data.
  * @param sponsor Sponsor source data.
- * @param options Build options.
  * @returns Order form payload.
  */
 export function buildSponsorOrderFormPayload(
   conference: SponsorDocumentConferenceSource,
-  sponsor: SponsorDocumentSponsorSource,
-  options: SponsorDocumentBuildOptions
+  sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentPayload {
-  return buildBaseSponsorDocumentPayload('ORDER_FORM', conference, sponsor, options);
+  return buildBaseSponsorDocumentPayload('ORDER_FORM', conference, sponsor);
 }
 
 /**
@@ -202,13 +332,11 @@ export function buildSponsorOrderFormPayload(
  *
  * @param conference Conference source data.
  * @param sponsor Sponsor source data.
- * @param options Build options.
  * @returns Invoice payload.
  */
 export function buildSponsorInvoicePayload(
   conference: SponsorDocumentConferenceSource,
-  sponsor: SponsorDocumentSponsorSource,
-  options: SponsorDocumentBuildOptions
+  sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentPayload {
-  return buildBaseSponsorDocumentPayload('INVOICE', conference, sponsor, options);
+  return buildBaseSponsorDocumentPayload('INVOICE', conference, sponsor);
 }

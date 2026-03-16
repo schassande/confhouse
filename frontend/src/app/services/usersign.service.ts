@@ -53,19 +53,22 @@ export class UserSignService {
   private readonly redirectService = inject(RedirectService);
   private readonly _user = signal<User | null>(null);
   private readonly _person = signal<Person | null>(null);
+  private readonly authReadyPromise: Promise<void>;
   person = computed(() => this._person());
 
   /**
    * Initializes Firebase persistence and restores the authenticated session when possible.
    */
   constructor() {
-    // Set Firebase persistence to localStorage (survives page refreshes)
-    void setPersistence(this.auth, browserLocalPersistence);
-    
-    // Listen to auth state changes and restore user session
-    onAuthStateChanged(this.auth, (firebaseUser) => {
-      void this.handleAuthStateChanged(firebaseUser);
-    });
+    this.authReadyPromise = this.initializeAuthPersistenceAndRestoreSession();
+  }
+
+  /**
+   * Resolves once Firebase has restored the initial auth state from persistence.
+   * Guards can await this to avoid redirecting during refresh.
+   */
+  async waitForAuthReady(): Promise<void> {
+    await this.authReadyPromise;
   }
 
   /**
@@ -574,5 +577,28 @@ export class UserSignService {
     }
 
     return this.redirectService.get() ?? '/login';
+  }
+
+  /**
+   * Configures Firebase auth persistence and resolves once the initial auth state is restored.
+   */
+  private async initializeAuthPersistenceAndRestoreSession(): Promise<void> {
+    try {
+      await setPersistence(this.auth, browserLocalPersistence);
+    } catch (error) {
+      console.error('Unable to configure Firebase auth persistence:', error);
+    }
+
+    await new Promise<void>((resolve) => {
+      let firstEmission = true;
+      onAuthStateChanged(this.auth, (firebaseUser) => {
+        void this.handleAuthStateChanged(firebaseUser).finally(() => {
+          if (firstEmission) {
+            firstEmission = false;
+            resolve();
+          }
+        });
+      });
+    });
   }
 }

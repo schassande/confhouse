@@ -46,12 +46,6 @@
         </div>
       </div>
 
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
-          <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
-        </div>
-      </div>
     </section>
 
     <section class="config-section">
@@ -65,8 +59,8 @@
           <input id="legalEntity" pInputText formControlName="legalEntity" type="text" />
         </div>
         <div class="field">
-          <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
-          <input id="email" pInputText formControlName="email" type="email" />
+          <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
+          <input id="entityId" pInputText formControlName="entityId" type="text" />
         </div>
       </div>
 
@@ -75,20 +69,26 @@
           <label for="address">{{ 'CONFERENCE.SPONSOR_CONFIG.ADDRESS' | translate }}</label>
           <textarea id="address" pTextarea formControlName="address" rows="3"></textarea>
         </div>
-        <div class="field">
-          <label for="vat">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT' | translate }}</label>
-          <input id="vat" pInputText formControlName="vat" type="text" />
-        </div>
       </div>
 
       <div class="form-grid two-columns">
         <div class="field">
-          <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
-          <input id="entityId" pInputText formControlName="entityId" type="text" />
+          <label for="vatRate">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT_RATE' | translate }}</label>
+          <p-inputNumber
+            inputId="vatRate"
+            formControlName="vatRate"
+            [showButtons]="true"
+            [step]="0.01"
+            [min]="0"
+            [max]="1"
+            mode="decimal"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+          ></p-inputNumber>
         </div>
         <div class="field">
-          <label for="ccEmail">{{ 'CONFERENCE.SPONSOR_CONFIG.CC_EMAIL' | translate }}</label>
-          <input id="ccEmail" pInputText formControlName="ccEmail" type="email" />
+          <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
+          <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
         </div>
       </div>
 
@@ -101,6 +101,57 @@
           <label for="bankBic">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_BIC' | translate }}</label>
           <input id="bankBic" pInputText formControlName="bankBic" type="text" />
         </div>
+      </div>
+
+      <div class="field">
+        <label for="legalNotesText">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES' | translate }}</label>
+        <textarea id="legalNotesText" pTextarea formControlName="legalNotesText" rows="4"></textarea>
+        <small>{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES_HELP' | translate }}</small>
+      </div>
+
+      <div class="form-grid two-columns">
+        <div class="field">
+          <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
+          <input id="email" pInputText formControlName="email" type="email" />
+        </div>
+        <div class="field">
+          <label for="ccEmail">{{ 'CONFERENCE.SPONSOR_CONFIG.CC_EMAIL' | translate }}</label>
+          <input id="ccEmail" pInputText formControlName="ccEmail" type="email" />
+        </div>
+      </div>
+
+    </section>
+    <section class="config-section">
+      <div class="section-header">
+        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate }}</h2>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          class="p-button-secondary p-button-sm"
+          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_BOOTH_MAP' | translate"
+          (click)="addBoothMap()"
+        ></button>
+      </div>
+
+      @if (sponsorBoothMapsArray.controls.length === 0) {
+      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BOOTH_MAPS' | translate }}</p>
+      }
+
+      <div formArrayName="sponsorBoothMaps" class="booth-map-list">
+        @for (control of sponsorBoothMapsArray.controls; track $index) {
+        <div class="booth-map-row">
+          <input pInputText [formControlName]="$index" type="text" placeholder="https://..." />
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-danger p-button-sm"
+            [label]="'COMMON.REMOVE' | translate"
+            (click)="removeBoothMap($index)"
+          ></button>
+        </div>
+        }
       </div>
     </section>
 
@@ -233,39 +284,6 @@
       </div>
     </section>
 
-    <section class="config-section">
-      <div class="section-header">
-        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate }}</h2>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-plus"
-          class="p-button-secondary p-button-sm"
-          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_BOOTH_MAP' | translate"
-          (click)="addBoothMap()"
-        ></button>
-      </div>
-
-      @if (sponsorBoothMapsArray.controls.length === 0) {
-      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BOOTH_MAPS' | translate }}</p>
-      }
-
-      <div formArrayName="sponsorBoothMaps" class="booth-map-list">
-        @for (control of sponsorBoothMapsArray.controls; track $index) {
-        <div class="booth-map-row">
-          <input pInputText [formControlName]="$index" type="text" placeholder="https://..." />
-          <button
-            pButton
-            type="button"
-            icon="pi pi-trash"
-            class="p-button-danger p-button-sm"
-            [label]="'COMMON.REMOVE' | translate"
-            (click)="removeBoothMap($index)"
-          ></button>
-        </div>
-        }
-      </div>
-    </section>
   </form>
   }
 </section>

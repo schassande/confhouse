@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Supported sponsor workflow statuses on the backend.
  */
 export type SponsorStatus =
@@ -72,3 +72,5 @@ export interface SponsorRecord {
   documents?: SponsorDocuments;
   logistics?: SponsorLogistics;
 }
+
+

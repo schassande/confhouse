@@ -32,6 +32,7 @@ export interface SponsorDocumentConferenceSource {
   name: string;
   edition?: number;
   logo: string;
+  languages?: string[];
   days: Day[];
   sponsoring?: {
     counter?: number;
@@ -39,12 +40,13 @@ export interface SponsorDocumentConferenceSource {
     address?: string;
     email?: string;
     ccEmail?: string;
-    vat?: string;
+    vatRate?: number;
     entityId?: string;
     bankDetails?: {
       iban?: string;
       bic?: string;
     };
+    legalNotes?: string[];
     sponsorTypes?: SponsorDocumentSponsorTypeSource[];
   };
 }
@@ -63,7 +65,13 @@ export interface SponsorDocumentSponsorSource {
   adminEmails?: string[];
   communicationLanguage?: SponsorDocumentLocale;
   purchaseOrder?: string;
+  address?: string;
   acceptedNumber?: number;
+  invoiceDueDate?: string;
+  documents?: {
+    orderFormSentAt?: string;
+    invoiceSentAt?: string;
+  };
 }
 
 /**
@@ -73,7 +81,6 @@ export interface SponsorDocumentIssuer {
   legalEntity: string;
   address: string;
   email: string;
-  vat?: string;
   entityId?: string;
 }
 
@@ -82,6 +89,7 @@ export interface SponsorDocumentIssuer {
  */
 export interface SponsorDocumentRecipient {
   name: string;
+  address?: string;
   email?: string;
   purchaseOrder?: string;
 }
@@ -136,16 +144,4 @@ export interface SponsorDocumentPayload {
   currency: 'EUR';
   legalNotes: string[];
   bankDetails?: SponsorDocumentBankDetails;
-}
-
-/**
- * Common options accepted by sponsor document payload builders.
- */
-export interface SponsorDocumentBuildOptions {
-  locale: SponsorDocumentLocale;
-  issueDate: string;
-  dueDate?: string;
-  documentNumber?: string;
-  vatRate?: number;
-  legalNotes?: string[];
 }

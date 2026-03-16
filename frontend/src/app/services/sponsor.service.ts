@@ -225,7 +225,6 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
     return await this.postSponsorOrganizerAction('sendSponsorOrderForm', {
       conferenceId,
       sponsorId,
-      issueDate: this.getTodayIsoDate(),
     });
   }
 
@@ -243,7 +242,6 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
     return await this.postSponsorOrganizerAction('sendSponsorInvoice', {
       conferenceId,
       sponsorId,
-      issueDate: this.getTodayIsoDate(),
     });
   }
 
@@ -398,15 +396,6 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
       throw new Error('User not authenticated');
     }
     return await user.getIdToken();
-  }
-
-  /**
-   * Returns today's ISO date in `YYYY-MM-DD` format.
-   *
-   * @returns ISO date string.
-   */
-  private getTodayIsoDate(): string {
-    return new Date().toISOString().slice(0, 10);
   }
 
   /**

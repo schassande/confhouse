@@ -69,6 +69,9 @@ export class SponsorApplicationComponent {
   readonly sponsorTypeOptions = computed<SelectOption[]>(() =>
     this.sponsorTypes().map((type) => ({ label: type.name, value: type.id }))
   );
+  readonly sponsorType = computed<string>(() =>
+    this.sponsorTypes().find((type) => type.id === this.existingSponsor()!.sponsorTypeId )?.name ?? ''
+  );
   readonly communicationLanguageOptions = computed<SelectOption[]>(() => [
     { label: this.translateService.instant('LANGUAGE.FR'), value: 'fr' },
     { label: this.translateService.instant('LANGUAGE.EN'), value: 'en' },
@@ -83,7 +86,7 @@ export class SponsorApplicationComponent {
   readonly formGroup = computed(() => this.form());
   readonly isEditing = computed(() => !!this.existingSponsor()?.id);
   readonly isSponsoringPeriodOpen = computed(() => this.isWithinSponsoringPeriod(this.conference()));
-  readonly logoPreviewUrl = computed(() => String(this.formGroup()?.get('logo')?.value ?? '').trim());
+  readonly logoPreviewUrl = signal('');
   readonly boothWishItems = computed(() => this.boothWishItemsState());
   readonly adminEmails = computed(() => {
     this.adminEmailsVersion();
@@ -150,6 +153,7 @@ export class SponsorApplicationComponent {
       sponsorTypeId: [String(sponsor?.sponsorTypeId ?? '').trim(), [Validators.required]],
       communicationLanguage: [this.normalizeCommunicationLanguage(sponsor?.communicationLanguage)],
       purchaseOrder: [String(sponsor?.purchaseOrder ?? '').trim()],
+      address: [String(sponsor?.address ?? '').trim()],
       logo: [String(sponsor?.logo ?? '').trim()],
       adminEmails: [this.computeInitialAdminEmails(sponsor?.adminEmails)],
     };
@@ -179,6 +183,10 @@ export class SponsorApplicationComponent {
     });
 
     const form = this.fb.group(controls);
+    this.logoPreviewUrl.set(String(form.get('logo')?.value ?? '').trim());
+    form.get('logo')?.valueChanges.subscribe((value) => {
+      this.logoPreviewUrl.set(String(value ?? '').trim());
+    });
     form.get('sponsorTypeId')?.valueChanges.subscribe((value) =>
       this.syncBoothWishesForSponsorType(String(value ?? '').trim())
     );
@@ -295,6 +303,24 @@ export class SponsorApplicationComponent {
     });
   }
 
+  formatLocalDateTime(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      return '-';
+    }
+
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
+      return normalized;
+    }
+
+    const locale = this.translateService.currentLang || navigator.language || 'fr-FR';
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(parsed);
+  }
+
   /**
    * Returns the ordered booth wishes currently stored in the form.
    *
@@ -388,20 +414,22 @@ export class SponsorApplicationComponent {
     const boothWishes = this.boothWishesControlValue();
     const boothWishesDate = this.computeBoothWishesDate(editingSponsor, boothWishes);
     const adminEmails = this.computeInitialAdminEmails(this.adminEmailsControlValue());
-    const today = this.todayIsoDate();
+    const now = this.nowIsoDate();
     const payload: Sponsor = {
       id: String(editingSponsor?.id ?? '').trim(),
       lastUpdated: String(editingSponsor?.lastUpdated ?? '').trim(),
       conferenceId: conference.id,
       name: String(form.get('name')?.value ?? '').trim(),
       status: this.resolveSelfServiceStatus(editingSponsor),
-      statusDate: editingSponsor?.statusDate ?? today,
+      statusDate: editingSponsor?.statusDate ?? now,
       paymentStatus: editingSponsor?.paymentStatus ?? 'PENDING',
-      paymentStatusDate: editingSponsor?.paymentStatusDate ?? today,
+      paymentStatusDate: editingSponsor?.paymentStatusDate ?? now,
       description: this.extractLocalizedValues('description'),
       sponsorTypeId,
       communicationLanguage: this.normalizeCommunicationLanguage(form.get('communicationLanguage')?.value),
       purchaseOrder: String(form.get('purchaseOrder')?.value ?? '').trim() || undefined,
+      address: String(form.get('address')?.value ?? '').trim() || undefined,
+      registrationDate: editingSponsor?.registrationDate ?? now,
       acceptedNumber: editingSponsor?.acceptedNumber,
       logo: String(form.get('logo')?.value ?? '').trim(),
       website: this.extractLocalizedValues('website'),
@@ -469,12 +497,21 @@ export class SponsorApplicationComponent {
    */
   private computeBoothWishesDate(sponsor: Sponsor | undefined, boothWishes: string[]): string {
     if (!sponsor) {
-      return this.todayIsoDate();
+      return this.nowIsoDate();
     }
 
     const previous = JSON.stringify(sponsor.boothWishes ?? []);
     const next = JSON.stringify(boothWishes);
-    return previous === next ? String(sponsor.boothWishesDate ?? '').trim() || this.todayIsoDate() : this.todayIsoDate();
+    return previous === next ? String(sponsor.boothWishesDate ?? '').trim() || this.nowIsoDate() : this.nowIsoDate();
+  }
+
+  /**
+   * Returns the current timestamp in ISO date-time format.
+   *
+   * @returns Date-time formatted as ISO 8601.
+   */
+  private nowIsoDate(): string {
+    return new Date().toISOString();
   }
 
   /**

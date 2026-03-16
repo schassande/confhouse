@@ -90,5 +90,8 @@ export function formatAmount(amount: number, locale: SponsorDocumentLocale): str
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'EUR',
-  }).format(amount);
+  })
+    .format(amount)
+    // pdfmake/Roboto can render some Intl spacing glyphs poorly in generated PDFs.
+    .replace(/[\u202f\u00a0]/g, ' ');
 }

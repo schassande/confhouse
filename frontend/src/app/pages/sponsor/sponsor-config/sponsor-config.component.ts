@@ -87,10 +87,11 @@ export class SponsorConfigComponent {
     address: [''],
     email: [''],
     ccEmail: [''],
-    vat: [''],
+    vatRate: [0],
     entityId: [''],
     bankIban: [''],
     bankBic: [''],
+    legalNotesText: [''],
     sponsorTypes: this.fb.array<FormGroup>([]),
     sponsorBoothMaps: this.fb.array<FormControl<string>>([]),
   });
@@ -188,12 +189,13 @@ export class SponsorConfigComponent {
         address: String(this.form.get('address')?.value ?? '').trim() || undefined,
         email: String(this.form.get('email')?.value ?? '').trim() || undefined,
         ccEmail: String(this.form.get('ccEmail')?.value ?? '').trim() || undefined,
-        vat: String(this.form.get('vat')?.value ?? '').trim() || undefined,
+        vatRate: this.normalizeOptionalNumber(this.form.get('vatRate')?.value),
         entityId: String(this.form.get('entityId')?.value ?? '').trim() || undefined,
         bankDetails: {
           iban: String(this.form.get('bankIban')?.value ?? '').trim() || undefined,
           bic: String(this.form.get('bankBic')?.value ?? '').trim() || undefined,
         },
+        legalNotes: this.parseMultilineValues(this.form.get('legalNotesText')?.value),
         sponsorTypes,
         sponsorBoothMaps,
       },
@@ -232,10 +234,13 @@ export class SponsorConfigComponent {
       address: String(conference?.sponsoring?.address ?? '').trim(),
       email: String(conference?.sponsoring?.email ?? '').trim(),
       ccEmail: String(conference?.sponsoring?.ccEmail ?? '').trim(),
-      vat: String(conference?.sponsoring?.vat ?? '').trim(),
+      vatRate: Number(conference?.sponsoring?.vatRate ?? 0),
       entityId: String(conference?.sponsoring?.entityId ?? '').trim(),
       bankIban: String(conference?.sponsoring?.bankDetails?.iban ?? '').trim(),
       bankBic: String(conference?.sponsoring?.bankDetails?.bic ?? '').trim(),
+      legalNotesText: Array.isArray(conference?.sponsoring?.legalNotes)
+        ? conference!.sponsoring!.legalNotes!.join('\n')
+        : '',
     });
 
     const sponsorTypes = conference?.sponsoring?.sponsorTypes ?? [];
@@ -337,6 +342,22 @@ export class SponsorConfigComponent {
 
   private generateSponsorTypeId(): string {
     return `sponsor-type-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  private parseMultilineValues(value: unknown): string[] | undefined {
+    const lines = String(value ?? '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    return lines.length > 0 ? lines : undefined;
+  }
+
+  private normalizeOptionalNumber(value: unknown): number | undefined {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
   }
 
   /**

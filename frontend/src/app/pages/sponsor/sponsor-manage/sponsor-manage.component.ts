@@ -10,8 +10,9 @@ import {
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DataViewModule } from 'primeng/dataview';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -48,6 +49,7 @@ interface SelectOption {
     ReactiveFormsModule,
     TranslateModule,
     ButtonModule,
+    ConfirmDialogModule,
     DataViewModule,
     DialogModule,
     InputTextModule,
@@ -55,7 +57,7 @@ interface SelectOption {
     ToastModule,
     SelectModule,
   ],
-  providers: [MessageService],
+  providers: [ConfirmationService, MessageService],
   templateUrl: './sponsor-manage.component.html',
   styleUrl: './sponsor-manage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +67,7 @@ export class SponsorManageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
   private readonly sponsorService = inject(SponsorService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -83,6 +86,7 @@ export class SponsorManageComponent {
   readonly actionInProgress = signal<string | null>(null);
   readonly isEditing = computed(() => this.editingId() !== null);
   readonly languageCodes = computed(() => this.conference()?.languages ?? ['EN', 'FR']);
+  readonly logoPreviewUrl = computed(() => String(this.form()?.get('logo')?.value ?? '').trim());
   readonly sponsorStatusOptions = computed<SelectOption[]>(() => [
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_POTENTIAL'), value: 'POTENTIAL' },
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CANDIDATE'), value: 'CANDIDATE' },
@@ -137,7 +141,12 @@ export class SponsorManageComponent {
     const selectedType = this.selectedTypeId();
     return [...this.sponsors()]
       .filter((sponsor) => selectedType === 'ALL' || sponsor.sponsorTypeId === selectedType)
-      .sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
+      .sort((a, b) => {
+        const leftDate = String(a.registrationDate ?? '').trim();
+        const rightDate = String(b.registrationDate ?? '').trim();
+        const dateCompare = leftDate.localeCompare(rightDate);
+        return dateCompare !== 0 ? dateCompare : String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
   });
 
   readonly filteredCountLabel = computed(() =>
@@ -209,30 +218,36 @@ export class SponsorManageComponent {
   }
 
   onDelete(sponsor: Sponsor): void {
-    if (!confirm(this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.CONFIRM_DELETE'))) {
-      return;
-    }
-
-    this.sponsorService.delete(sponsor.id).then(
-      () => {
-        this.sponsors.set(this.sponsors().filter((item) => item.id !== sponsor.id));
-        this.onCancel();
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translateService.instant('COMMON.SUCCESS'),
-          detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DELETED'),
-        });
-        this.cdr.markForCheck();
+    this.confirmationService.confirm({
+      message: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.CONFIRM_DELETE'),
+      header: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DELETE'),
+      acceptLabel: this.translateService.instant('COMMON.REMOVE'),
+      rejectLabel: this.translateService.instant('COMMON.CANCEL'),
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.sponsorService.delete(sponsor.id).then(
+          () => {
+            this.sponsors.set(this.sponsors().filter((item) => item.id !== sponsor.id));
+            this.onCancel();
+            this.messageService.add({
+              severity: 'success',
+              summary: this.translateService.instant('COMMON.SUCCESS'),
+              detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DELETED'),
+            });
+            this.cdr.markForCheck();
+          },
+          (error) => {
+            console.error('Error deleting sponsor:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: this.translateService.instant('COMMON.ERROR'),
+              detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
+            });
+          }
+        );
       },
-      (error) => {
-        console.error('Error deleting sponsor:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: this.translateService.instant('COMMON.ERROR'),
-          detail: this.translateService.instant('CONFERENCE.CONFIG.UPDATE_ERROR'),
-        });
-      }
-    );
+    });
   }
 
   onSave(): void {
@@ -265,19 +280,22 @@ export class SponsorManageComponent {
       conferenceId: this.conferenceId(),
       name: String(form.value.name ?? '').trim(),
       status: editingSponsor?.status ?? this.normalizeSponsorStatus(form.value.status),
-      statusDate: editingSponsor?.statusDate ?? this.normalizeDate(form.value.statusDate),
+      statusDate: editingSponsor?.statusDate ?? this.nowIsoDateTime(),
       paymentStatus: editingSponsor?.paymentStatus ?? this.normalizePaymentStatus(form.value.paymentStatus),
-      paymentStatusDate: editingSponsor?.paymentStatusDate ?? this.normalizeDate(form.value.paymentStatusDate),
+      paymentStatusDate: editingSponsor?.paymentStatusDate ?? this.nowIsoDateTime(),
       description: this.extractLocalizedValues(form, 'description'),
       sponsorTypeId,
       communicationLanguage: this.normalizeCommunicationLanguage(form.value.communicationLanguage),
       purchaseOrder: String(form.value.purchaseOrder ?? '').trim() || undefined,
+      address: String(form.value.address ?? '').trim() || undefined,
+      registrationDate: editingSponsor?.registrationDate ?? this.nowIsoDateTime(),
       acceptedNumber: editingSponsor?.acceptedNumber,
+      invoiceDueDate: this.normalizeOptionalDate(form.value.invoiceDueDate),
       logo: String(form.value.logo ?? '').trim(),
       website: this.extractLocalizedValues(form, 'website'),
       boothName: editingSponsor?.boothName ?? String(form.value.boothName ?? '').trim(),
       boothWishes: this.parseList(form.value.boothWishesText),
-      boothWishesDate: this.normalizeDate(form.value.boothWishesDate),
+      boothWishesDate: this.normalizeDateTime(form.value.boothWishesDate),
       adminEmails: this.parseList(form.value.adminEmailsText),
       conferenceTickets: editingSponsor?.conferenceTickets ?? this.extractConferenceTickets(form),
       businessEvents: editingSponsor?.businessEvents,
@@ -324,7 +342,7 @@ export class SponsorManageComponent {
         this.conferenceId(),
         sponsor.id,
         this.normalizeSponsorStatus(form.value.status),
-        this.normalizeDate(form.value.statusDate)
+        this.nowIsoDateTime()
       )
     );
   }
@@ -343,7 +361,7 @@ export class SponsorManageComponent {
         this.conferenceId(),
         sponsor.id,
         this.normalizePaymentStatus(form.value.paymentStatus),
-        this.normalizeDate(form.value.paymentStatusDate)
+        this.nowIsoDateTime()
       )
     );
   }
@@ -514,20 +532,38 @@ export class SponsorManageComponent {
     return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.EVENT_${eventType}`);
   }
 
+  formatLocalDateTime(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      return '-';
+    }
+
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
+      return normalized;
+    }
+
+    const locale = this.translateService.currentLang || navigator.language || 'fr-FR';
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(parsed);
+  }
+
   private createForm(sponsor?: Sponsor): FormGroup {
     const controls: Record<string, unknown> = {
       name: [String(sponsor?.name ?? '').trim(), [Validators.required, Validators.minLength(2)]],
       sponsorTypeId: [String(sponsor?.sponsorTypeId ?? '').trim(), [Validators.required]],
       status: [String(sponsor?.status ?? 'POTENTIAL').trim(), [Validators.required]],
-      statusDate: [this.normalizeDate(sponsor?.statusDate)],
       paymentStatus: [String(sponsor?.paymentStatus ?? 'PENDING').trim(), [Validators.required]],
-      paymentStatusDate: [this.normalizeDate(sponsor?.paymentStatusDate)],
       communicationLanguage: [this.normalizeCommunicationLanguage(sponsor?.communicationLanguage)],
       purchaseOrder: [String(sponsor?.purchaseOrder ?? '').trim()],
+      address: [String(sponsor?.address ?? '').trim()],
+      invoiceDueDate: [this.normalizeDateInputValue(sponsor?.invoiceDueDate)],
       logo: [String(sponsor?.logo ?? '').trim()],
       boothName: [String(sponsor?.boothName ?? '').trim()],
       boothWishesText: [Array.isArray(sponsor?.boothWishes) ? sponsor?.boothWishes.join('\n') : ''],
-      boothWishesDate: [this.normalizeDate(sponsor?.boothWishesDate)],
+      boothWishesDate: [this.normalizeDateTimeInputValue(sponsor?.boothWishesDate ?? new Date().toISOString())],
       adminEmailsText: [Array.isArray(sponsor?.adminEmails) ? sponsor?.adminEmails.join('\n') : ''],
       conferenceTickets: this.fb.array<FormGroup>(
         (sponsor?.conferenceTickets ?? []).map((ticket) => this.createConferenceTicketGroup(ticket))
@@ -602,12 +638,48 @@ export class SponsorManageComponent {
       .filter((value) => value.length > 0);
   }
 
-  private normalizeDate(value: unknown): string {
+  private normalizeDateTime(value: unknown): string {
     const normalized = String(value ?? '').trim();
     if (normalized.length > 0) {
+      const parsed = new Date(normalized);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+    return new Date().toISOString();
+  }
+
+  private normalizeDateInputValue(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
+  }
+
+  private normalizeDateTimeInputValue(value: unknown): string {
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      return '';
+    }
+
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
       return normalized;
     }
-    return new Date().toISOString().slice(0, 10);
+
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const hours = String(parsed.getHours()).padStart(2, '0');
+    const minutes = String(parsed.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  private normalizeOptionalDate(value: unknown): string | undefined {
+    const normalized = this.normalizeDateInputValue(value);
+    return normalized || undefined;
+  }
+
+  private nowIsoDateTime(): string {
+    return new Date().toISOString();
   }
 
   private normalizeSponsorStatus(value: unknown): SponsorStatus {

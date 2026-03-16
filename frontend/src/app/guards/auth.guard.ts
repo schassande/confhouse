@@ -9,7 +9,8 @@ export class AuthGuard implements CanActivate {
   private readonly router = inject(Router);
   private readonly redirectService = inject(RedirectService);
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
+  async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
+    await this.userSignService.waitForAuthReady();
     const person = this.userSignService.getCurrentPerson();
     if (person) return true;
 
