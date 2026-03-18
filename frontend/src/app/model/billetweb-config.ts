@@ -19,10 +19,8 @@ export interface BilletwebConfig extends PersistentData {
     speaker: BilletwebTicketType;
     /** Ticket types in billerweb for an organizer */
     organizer: BilletwebTicketType;
-    /** Ticket types in billerweb for a sponsor having access to the conference */
-    sponsorConference: BilletwebTicketType;
-    /** Ticket types in billerweb for a sponsor having access to the hall of sponsor */
-    sponsorStand: BilletwebTicketType;
+    /** Ticket types in billerweb available for sponsors */
+    sponsors: BilletwebTicketType[];
   }
 }
 

@@ -20,6 +20,7 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
+import { BilletwebConfig } from '../../../model/billetweb-config';
 import {
   Conference,
 } from '../../../model/conference.model';
@@ -33,6 +34,7 @@ import {
   SponsorType,
 } from '../../../model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
+import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { SponsorService } from '../../../services/sponsor.service';
 
 interface SelectOption {
@@ -66,6 +68,7 @@ export class SponsorManageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly sponsorService = inject(SponsorService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -74,6 +77,7 @@ export class SponsorManageComponent {
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly loading = signal(true);
 
   readonly sponsors = signal<Sponsor[]>([]);
@@ -127,9 +131,9 @@ export class SponsorManageComponent {
   );
 
   readonly conferenceTicketTypeOptions = computed<SelectOption[]>(() =>
-    (this.conference()?.ticket?.conferenceTicketTypes ?? []).map((type) => ({
+    (this.billetwebConfig()?.ticketTypes?.sponsors ?? []).map((type) => ({
       label: type.ticketTypeName,
-      value: type.id,
+      value: type.ticketTypeId,
     }))
   );
   readonly communicationLanguageOptions = computed<SelectOption[]>(() => [
@@ -165,10 +169,12 @@ export class SponsorManageComponent {
 
     forkJoin({
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      billetwebConfig: this.billetwebConfigService.findByConferenceId(conferenceId).pipe(take(1)),
       sponsors: this.sponsorService.byConferenceId(conferenceId).pipe(take(1)),
     }).subscribe({
-      next: ({ conference, sponsors }) => {
+      next: ({ conference, billetwebConfig, sponsors }) => {
         this.conference.set(conference);
+        this.billetwebConfig.set(billetwebConfig);
         this.sponsorTypes.set(conference?.sponsoring?.sponsorTypes ?? []);
         this.sponsors.set(sponsors);
         this.loading.set(false);

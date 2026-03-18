@@ -25,15 +25,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { take } from 'rxjs';
-import {
-  Conference,
-  ConferenceTicketType,
-} from '../../../model/conference.model';
-import {
-  SponsorConferenceTicketQuota,
-  SponsorType,
-} from '../../../model/sponsor.model';
+import { forkJoin, take } from 'rxjs';
+import { BilletwebConfig } from '../../../model/billetweb-config';
+import { Conference } from '../../../model/conference.model';
+import { SponsorConferenceTicketQuota, SponsorType } from '../../../model/sponsor.model';
+import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 
 interface SelectOption {
@@ -65,17 +61,19 @@ export class SponsorConfigComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly loading = signal(true);
   readonly ticketTypeOptions = computed<SelectOption[]>(() =>
-    (this.conference()?.ticket?.conferenceTicketTypes ?? []).map((ticketType) => ({
+    (this.billetwebConfig()?.ticketTypes?.sponsors ?? []).map((ticketType) => ({
       label: ticketType.ticketTypeName,
-      value: ticketType.id,
+      value: ticketType.ticketTypeId,
     }))
   );
 
@@ -96,6 +94,9 @@ export class SponsorConfigComponent {
     sponsorBoothMaps: this.fb.array<FormControl<string>>([]),
   });
 
+  /**
+   * Loads the conference and BilletWeb configuration for the current route.
+   */
   ngOnInit(): void {
     const conferenceId = this.conferenceId();
     if (!conferenceId) {
@@ -103,57 +104,107 @@ export class SponsorConfigComponent {
       return;
     }
 
-    this.conferenceService.byId(conferenceId).pipe(take(1)).subscribe({
-      next: (conference) => {
+    forkJoin({
+      conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      billetwebConfig: this.billetwebConfigService.findByConferenceId(conferenceId).pipe(take(1)),
+    }).subscribe({
+      next: ({ conference, billetwebConfig }) => {
         this.conference.set(conference);
+        this.billetwebConfig.set(billetwebConfig);
         this.initForm(conference);
         this.loading.set(false);
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading conference:', error);
+        console.error('Error loading conference sponsor configuration:', error);
         this.loading.set(false);
         this.cdr.markForCheck();
       },
     });
   }
 
+  /**
+   * Returns the sponsor types form array.
+   *
+   * @returns Sponsor types form array.
+   */
   get sponsorTypesArray(): FormArray<FormGroup> {
     return this.form.get('sponsorTypes') as FormArray<FormGroup>;
   }
 
+  /**
+   * Returns the sponsor booth maps form array.
+   *
+   * @returns Sponsor booth maps form array.
+   */
   get sponsorBoothMapsArray(): FormArray<FormControl<string>> {
     return this.form.get('sponsorBoothMaps') as FormArray<FormControl<string>>;
   }
 
+  /**
+   * Returns the quotas form array for one sponsor type.
+   *
+   * @param index Sponsor type index.
+   * @returns Quotas form array.
+   */
   sponsorTypeQuotaArray(index: number): FormArray<FormGroup> {
     return this.sponsorTypesArray.at(index).get('conferenceTicketQuotas') as FormArray<FormGroup>;
   }
 
+  /**
+   * Adds one empty sponsor type card to the form.
+   */
   addSponsorType(): void {
     this.sponsorTypesArray.push(this.createSponsorTypeGroup());
   }
 
+  /**
+   * Removes one sponsor type card from the form.
+   *
+   * @param index Sponsor type index.
+   */
   removeSponsorType(index: number): void {
     this.sponsorTypesArray.removeAt(index);
   }
 
+  /**
+   * Adds one empty quota row to one sponsor type.
+   *
+   * @param sponsorTypeIndex Sponsor type index.
+   */
   addConferenceTicketQuota(sponsorTypeIndex: number): void {
     this.sponsorTypeQuotaArray(sponsorTypeIndex).push(this.createConferenceTicketQuotaGroup());
   }
 
+  /**
+   * Removes one quota row from one sponsor type.
+   *
+   * @param sponsorTypeIndex Sponsor type index.
+   * @param quotaIndex Quota row index.
+   */
   removeConferenceTicketQuota(sponsorTypeIndex: number, quotaIndex: number): void {
     this.sponsorTypeQuotaArray(sponsorTypeIndex).removeAt(quotaIndex);
   }
 
+  /**
+   * Adds one booth map input to the form.
+   */
   addBoothMap(): void {
     this.sponsorBoothMapsArray.push(this.fb.control('', { nonNullable: true }));
   }
 
+  /**
+   * Removes one booth map input from the form.
+   *
+   * @param index Booth map index.
+   */
   removeBoothMap(index: number): void {
     this.sponsorBoothMapsArray.removeAt(index);
   }
 
+  /**
+   * Persists the sponsor configuration on the conference document.
+   */
   onSave(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -223,6 +274,11 @@ export class SponsorConfigComponent {
     });
   }
 
+  /**
+   * Initializes the form from the current conference payload.
+   *
+   * @param conference Current conference payload.
+   */
   private initForm(conference: Conference | undefined): void {
     this.sponsorTypesArray.clear();
     this.sponsorBoothMapsArray.clear();
@@ -244,9 +300,7 @@ export class SponsorConfigComponent {
     });
 
     const sponsorTypes = conference?.sponsoring?.sponsorTypes ?? [];
-    sponsorTypes.forEach((sponsorType) =>
-      this.sponsorTypesArray.push(this.createSponsorTypeGroup(sponsorType))
-    );
+    sponsorTypes.forEach((sponsorType) => this.sponsorTypesArray.push(this.createSponsorTypeGroup(sponsorType)));
 
     const boothMaps = conference?.sponsoring?.sponsorBoothMaps ?? [];
     boothMaps.forEach((boothMap) =>
@@ -254,6 +308,12 @@ export class SponsorConfigComponent {
     );
   }
 
+  /**
+   * Builds one sponsor type form group.
+   *
+   * @param sponsorType Existing sponsor type value.
+   * @returns Sponsor type form group.
+   */
   private createSponsorTypeGroup(sponsorType?: SponsorType): FormGroup {
     return this.fb.group({
       id: [String(sponsorType?.id ?? '').trim()],
@@ -270,26 +330,31 @@ export class SponsorConfigComponent {
       ],
       boothNamesText: [Array.isArray(sponsorType?.boothNames) ? sponsorType?.boothNames.join('\n') : ''],
       conferenceTicketQuotas: this.fb.array<FormGroup>(
-        (sponsorType?.conferenceTicketQuotas ?? []).map((quota) =>
-          this.createConferenceTicketQuotaGroup(quota)
-        )
+        (sponsorType?.conferenceTicketQuotas ?? []).map((quota) => this.createConferenceTicketQuotaGroup(quota))
       ),
     });
   }
 
-  private createConferenceTicketQuotaGroup(
-    quota?: SponsorConferenceTicketQuota,
-    conferenceTicketType?: ConferenceTicketType
-  ): FormGroup {
+  /**
+   * Builds one sponsor ticket quota form group.
+   *
+   * @param quota Existing quota value.
+   * @returns Sponsor ticket quota form group.
+   */
+  private createConferenceTicketQuotaGroup(quota?: SponsorConferenceTicketQuota): FormGroup {
     return this.fb.group({
-      conferenceTicketTypeId: [
-        String(quota?.conferenceTicketTypeId ?? conferenceTicketType?.id ?? '').trim(),
-        [Validators.required],
-      ],
+      conferenceTicketTypeId: [String(quota?.conferenceTicketTypeId ?? '').trim(), [Validators.required]],
       quota: [Number(quota?.quota ?? 0), [Validators.min(0)]],
     });
   }
 
+  /**
+   * Maps one sponsor type form group back to the persisted model.
+   *
+   * @param group Sponsor type form group.
+   * @param existing Existing sponsor type payload.
+   * @returns Persisted sponsor type payload.
+   */
   private mapSponsorType(group: FormGroup, existing?: SponsorType): SponsorType {
     const groupValue = group.getRawValue() as {
       id?: string;
@@ -340,10 +405,21 @@ export class SponsorConfigComponent {
     };
   }
 
+  /**
+   * Generates one client-side sponsor type identifier.
+   *
+   * @returns Sponsor type identifier.
+   */
   private generateSponsorTypeId(): string {
     return `sponsor-type-${Math.random().toString(36).slice(2, 10)}`;
   }
 
+  /**
+   * Splits one textarea value into persisted non-empty lines.
+   *
+   * @param value Raw textarea value.
+   * @returns Non-empty lines or `undefined`.
+   */
   private parseMultilineValues(value: unknown): string[] | undefined {
     const lines = String(value ?? '')
       .split(/\r?\n/)
@@ -352,6 +428,12 @@ export class SponsorConfigComponent {
     return lines.length > 0 ? lines : undefined;
   }
 
+  /**
+   * Converts one optional numeric field to a persisted number.
+   *
+   * @param value Raw numeric input value.
+   * @returns Parsed number or `undefined`.
+   */
   private normalizeOptionalNumber(value: unknown): number | undefined {
     if (value === '' || value === null || value === undefined) {
       return undefined;

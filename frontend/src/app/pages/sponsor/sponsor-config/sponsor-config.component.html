@@ -240,6 +240,7 @@
                 class="p-button-secondary p-button-sm"
                 [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_TICKET_QUOTA' | translate"
                 (click)="addConferenceTicketQuota(sponsorTypeIndex)"
+                [disabled]="ticketTypeOptions().length === 0"
               ></button>
             </div>
 
@@ -247,16 +248,20 @@
             <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_TICKET_QUOTAS' | translate }}</small>
             }
 
+            @if (ticketTypeOptions().length === 0) {
+            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BILLETWEB_SPONSOR_TICKETS' | translate }}</small>
+            }
+
             <div formArrayName="conferenceTicketQuotas" class="quota-list">
               @for (quotaGroup of sponsorTypeQuotaArray(sponsorTypeIndex).controls; track $index; let quotaIndex = $index) {
               <div class="form-grid quota-row" [formGroupName]="$index">
                 <div class="field">
-                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_TYPE' | translate }}</label>
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE' | translate }}</label>
                   <p-select
                     [options]="ticketTypeOptions()"
                     optionLabel="label"
                     optionValue="value"
-                    [placeholder]="'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_TYPE_PLACEHOLDER' | translate"
+                    [placeholder]="'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE_PLACEHOLDER' | translate"
                     formControlName="conferenceTicketTypeId"
                   ></p-select>
                 </div>

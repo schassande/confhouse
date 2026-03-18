@@ -154,27 +154,19 @@
                   </div>
 
                   <div class="field">
-                    <label for="sponsorConferenceTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_CONFERENCE_TICKET' | translate }}</label>
-                    <p-select
-                      inputId="sponsorConferenceTicketTypeId"
-                      formControlName="sponsorConferenceTicketTypeId"
-                      [options]="ticketOptions()"
+                    <label for="sponsorTicketTypeIds">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS' | translate }}</label>
+                    <p-multiselect
+                      inputId="sponsorTicketTypeIds"
+                      formControlName="sponsorTicketTypeIds"
+                      [options]="sponsorTicketOptions()"
                       optionLabel="label"
                       optionValue="value"
-                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
-                    ></p-select>
-                  </div>
-
-                  <div class="field">
-                    <label for="sponsorStandTicketTypeId">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_STAND_TICKET' | translate }}</label>
-                    <p-select
-                      inputId="sponsorStandTicketTypeId"
-                      formControlName="sponsorStandTicketTypeId"
-                      [options]="ticketOptions()"
-                      optionLabel="label"
-                      optionValue="value"
-                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.TICKET_PLACEHOLDER' | translate"
-                    ></p-select>
+                      optionDisabled="disabled"
+                      display="chip"
+                      [showToggleAll]="false"
+                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_PLACEHOLDER' | translate"
+                    ></p-multiselect>
+                    <small>{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_HELP' | translate }}</small>
                   </div>
                 </div>
 
