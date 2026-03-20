@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { Person } from '../model/person.model';
+import { Person } from '@shared/model/person.model';
 import { map, Observable, from, of, catchError, throwError } from 'rxjs';
 import { getDocs, orderBy as fbOrderBy, startAfter as fbStartAfter, limit as fbLimit, query as fbQuery, startAt as fbStartAt, endAt as fbEndAt, where as fbWhere } from 'firebase/firestore';
 import { HttpClient } from '@angular/common/http';
@@ -243,3 +243,4 @@ export class PersonService extends FirestoreGenericService<Person> {
     })());
   }
 }
+

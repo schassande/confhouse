@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal, computed, effect } 
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference, SessionType, Track } from '../../../model/conference.model';
+import { Conference, SessionType, Track } from '@shared/model/conference.model';
 import { TranslateService } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { TranslateModule } from '@ngx-translate/core';
-import { Activity, ParticipantType } from '../../../model/activity.model';
+import { Activity, ParticipantType } from '@shared/model/activity.model';
 import { ActivityService } from '../../../services/activity.service';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import { SponsorService } from '../../../services/sponsor.service';
@@ -15,7 +15,7 @@ import { UserSignService } from '../../../services/usersign.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import { SessionService } from '../../../services/session.service';
-import { Session, SessionAllocation } from '../../../model/session.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 import { PersonService } from '../../../services/person.service';
 import { catchError, forkJoin, map, of, take } from 'rxjs';
@@ -575,3 +575,5 @@ export class ConferenceViewComponent {
       .includes(normalizedSpeakerId);
   }
 }
+
+

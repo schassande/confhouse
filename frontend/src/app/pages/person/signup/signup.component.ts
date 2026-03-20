@@ -10,7 +10,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { UserSignService } from '../../../services/usersign.service';
-import { Person } from '../../../model/person.model';
+import { Person } from '@shared/model/person.model';
 import { RedirectService } from '../../../services/redirect.service';
 
 @Component({
@@ -127,3 +127,5 @@ export class SignupComponent {
     }
   }
 }
+
+

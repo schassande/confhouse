@@ -15,10 +15,10 @@ import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
-import { Conference, Day, Slot } from '../../../model/conference.model';
-import { Person } from '../../../model/person.model';
-import { Session, SessionAllocation } from '../../../model/session.model';
-import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { Conference, Day, Slot } from '@shared/model/conference.model';
+import { Person } from '@shared/model/person.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ConferenceAdminService } from '../../../services/conference-admin.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
@@ -652,3 +652,5 @@ export class ConferenceSpeakerEdit implements OnInit {
     return luminance > 0.62 ? '#0F172A' : '#FFFFFF';
   }
 }
+
+

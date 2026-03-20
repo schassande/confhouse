@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConferenceService } from '../../services/conference.service';
-import { Conference } from '../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UserSignService } from '../../services/usersign.service';
@@ -9,7 +9,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { ButtonModule } from 'primeng/button';
 import { PlatformConfigService } from '../../services/platform-config.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { buildDefaultPlatformConfig, PlatformConfig } from '../../model/platform-config.model';
+import { buildDefaultPlatformConfig, PlatformConfig } from '@shared/model/platform-config.model';
 import { take } from 'rxjs';
 
 @Component({
@@ -105,3 +105,5 @@ export class HomeComponent {
     void this.router.navigate(['/conference/create']);
   }
 }
+
+

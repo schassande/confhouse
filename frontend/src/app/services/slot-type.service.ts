@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { SlotType } from '../model/slot-type.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { forkJoin, map, mergeMap, Observable, of, take } from 'rxjs';
 
 const SLOT_TYPES: SlotType[] = [
@@ -86,3 +86,4 @@ export class SlotTypeService extends FirestoreGenericService<SlotType> {
     );
   }
 }
+

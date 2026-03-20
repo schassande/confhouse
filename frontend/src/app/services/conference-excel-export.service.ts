@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, catchError, of } from 'rxjs';
 import type { Workbook, Worksheet } from 'exceljs';
-import { Conference, Day, Slot } from '../model/conference.model';
-import { Session, SessionAllocation } from '../model/session.model';
-import { Person } from '../model/person.model';
-import { Activity, ActivityParticipation } from '../model/activity.model';
-import { SlotType } from '../model/slot-type.model';
+import { Conference, Day, Slot } from '@shared/model/conference.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
+import { Person } from '@shared/model/person.model';
+import { Activity, ActivityParticipation } from '@shared/model/activity.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { SessionService } from './session.service';
 import { SessionAllocationService } from './session-allocation.service';
 import { SlotTypeService } from './slot-type.service';
@@ -674,3 +674,4 @@ export class ConferenceExcelExportService {
     URL.revokeObjectURL(url);
   }
 }
+

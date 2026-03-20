@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { Conference, Day, Room, SessionType, Slot, SlotError } from '../model/conference.model';
-import { SlotType } from '../model/slot-type.model';
+import { Conference, Day, Room, SessionType, Slot, SlotError } from '@shared/model/conference.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { getDocs, orderBy as fbOrderBy, startAfter as fbStartAfter, limit as fbLimit, query as fbQuery, startAt as fbStartAt, endAt as fbEndAt, where as fbWhere } from 'firebase/firestore';
 import { map, Observable, from } from 'rxjs';
 import { ConferenceOrganizerService } from './conference-organizer.service';
@@ -204,3 +204,4 @@ export class ConferenceService extends FirestoreGenericService<Conference> {
     return `${this.formatHour(s)} - ${this.formatHour(e)}`;
   }
 }
+

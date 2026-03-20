@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { Room, Slot } from '../../../../../model/conference.model';
+import { Room, Slot } from '@shared/model/conference.model';
 import { ConferenceService } from '../../../../../services/conference.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -55,3 +55,5 @@ export class CopyRoormToRoom {
     this.newSlots.emit(newSlots);
   }
 }
+
+

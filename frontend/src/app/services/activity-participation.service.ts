@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { ActivityParticipation } from '../model/activity.model';
+import { ActivityParticipation } from '@shared/model/activity.model';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { firstValueFrom, from, map, Observable } from 'rxjs';
 
@@ -130,3 +130,4 @@ export class ActivityParticipationService extends FirestoreGenericService<Activi
     return toDelete.length;
   }
 }
+

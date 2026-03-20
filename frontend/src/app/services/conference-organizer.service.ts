@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Conference } from '../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 
 @Injectable({ providedIn: 'root' })
 export class ConferenceOrganizerService {
@@ -39,3 +39,4 @@ export class ConferenceOrganizerService {
     return normalizedEmail.slice(atIndex + 1);
   }
 }
+

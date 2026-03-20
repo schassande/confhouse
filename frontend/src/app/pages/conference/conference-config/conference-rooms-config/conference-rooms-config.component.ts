@@ -1,6 +1,6 @@
 import { Component, input, ChangeDetectionStrategy, ChangeDetectorRef, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Conference, SessionType, Room } from '../../../../model/conference.model';
+import { Conference, SessionType, Room } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -211,3 +211,5 @@ export class ConferenceRoomsConfigComponent {
     this.onCancel();
   }
 }
+
+

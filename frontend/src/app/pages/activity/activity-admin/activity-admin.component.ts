@@ -9,9 +9,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { firstValueFrom, take } from 'rxjs';
-import { Activity, ActivityAttribute, ActivityParticipation } from '../../../model/activity.model';
-import { Person } from '../../../model/person.model';
-import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { Activity, ActivityAttribute, ActivityParticipation } from '@shared/model/activity.model';
+import { Person } from '@shared/model/person.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import {
   ActivityParticipantExportRow,
@@ -496,3 +496,5 @@ export class ActivityAdminComponent {
   }
 
 }
+
+

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ConferenceDashboard } from '../model/conference-dashboard.model';
+import { ConferenceDashboard } from '@shared/model/conference-dashboard.model';
 import { FirestoreGenericService } from './firestore-generic.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,3 +13,4 @@ export class ConferenceDashboardService extends FirestoreGenericService<Conferen
     return this.byId(conferenceId);
   }
 }
+

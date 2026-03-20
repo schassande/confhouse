@@ -12,9 +12,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ConfirmationService } from 'primeng/api';
 import { ConferenceAdminService, DuplicateConferencePayload } from '../../../services/conference-admin.service';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { ConferenceManageDashboard } from './conference-manage-dashboard/conference-manage-dashboard';
-import { Activity } from '../../../model/activity.model';
+import { Activity } from '@shared/model/activity.model';
 import { ActivityService } from '../../../services/activity.service';
 import { ConferenceExcelExportService } from '../../../services/conference-excel-export.service';
 import { catchError, from, map, of } from 'rxjs';
@@ -327,3 +327,5 @@ export class ConferenceManage {
     }
   }
 }
+
+

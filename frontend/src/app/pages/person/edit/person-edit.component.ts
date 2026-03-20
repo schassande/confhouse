@@ -8,7 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
-import { Person, SocialLink } from '../../../model/person.model';
+import { Person, SocialLink } from '@shared/model/person.model';
 import { PersonService } from '../../../services/person.service';
 import { UserSignService } from '../../../services/usersign.service';
 
@@ -172,3 +172,5 @@ export class PersonEditComponent {
     return person.speaker;
   }
 }
+
+

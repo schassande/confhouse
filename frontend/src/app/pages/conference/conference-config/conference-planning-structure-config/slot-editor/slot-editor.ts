@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, signal, model, computed, input, inject, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Day, Room, SessionType, Slot } from '../../../../../model/conference.model';
-import { SlotType } from '../../../../../model/slot-type.model';
+import { Day, Room, SessionType, Slot } from '@shared/model/conference.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -173,4 +173,6 @@ export class SlotEditorComponent implements OnInit {
     this.currentSlot.set(this.computeCurrentSlot());
   }
 }
+
+
 

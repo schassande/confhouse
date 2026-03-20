@@ -11,9 +11,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { forkJoin, from, map, Observable, of, switchMap, take } from 'rxjs';
-import { Conference, SessionType, Track } from '../../../model/conference.model';
-import { Person } from '../../../model/person.model';
-import { OverriddenField, Session, SessionAllocation, SessionLevel, SessionStatus } from '../../../model/session.model';
+import { Conference, SessionType, Track } from '@shared/model/conference.model';
+import { Person } from '@shared/model/person.model';
+import { OverriddenField, Session, SessionAllocation, SessionLevel, SessionStatus } from '@shared/model/session.model';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
@@ -638,4 +638,6 @@ export class SessionEdit implements OnInit {
     );
   }
 }
+
+
 

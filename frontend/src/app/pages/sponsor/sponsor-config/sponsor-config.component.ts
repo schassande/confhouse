@@ -26,9 +26,9 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
-import { BilletwebConfig } from '../../../model/billetweb-config';
-import { Conference } from '../../../model/conference.model';
-import { SponsorConferenceTicketQuota, SponsorType } from '../../../model/sponsor.model';
+import { BilletwebConfig } from '@shared/model/billetweb-config';
+import { Conference } from '@shared/model/conference.model';
+import { SponsorConferenceTicketQuota, SponsorType } from '@shared/model/sponsor.model';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 
@@ -456,3 +456,5 @@ export class SponsorConfigComponent {
     return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
   }
 }
+
+

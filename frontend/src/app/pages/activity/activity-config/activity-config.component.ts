@@ -15,8 +15,8 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { Activity, ActivityAttribute, AttributeType, ParticipantType } from '../../../model/activity.model';
-import { Conference, Day, Slot } from '../../../model/conference.model';
+import { Activity, ActivityAttribute, AttributeType, ParticipantType } from '@shared/model/activity.model';
+import { Conference, Day, Slot } from '@shared/model/conference.model';
 import { ActivityService } from '../../../services/activity.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { take } from 'rxjs';
@@ -628,3 +628,5 @@ export class ActivityConfigComponent {
     return String(slotTypeId ?? '').trim().toLowerCase() === 'activity';
   }
 }
+
+

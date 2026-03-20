@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
-import { Conference } from '../../../../model/conference.model';
-import { ConferenceDashboard } from '../../../../model/conference-dashboard.model';
+import { Conference } from '@shared/model/conference.model';
+import { ConferenceDashboard } from '@shared/model/conference-dashboard.model';
 import { ConferenceAdminService } from '../../../../services/conference-admin.service';
 import { ConferenceDashboardService } from '../../../../services/conference-dashboard.service';
 
@@ -118,3 +118,5 @@ export class ConferenceManageDashboard {
     ]);
   }
 }
+
+

@@ -1,6 +1,6 @@
 import { Component, input, ChangeDetectionStrategy, computed, signal, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Conference, Day } from '../../../../model/conference.model';
+import { Conference, Day } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StepperModule } from 'primeng/stepper';
 import { ButtonModule } from 'primeng/button';
@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { DayStructure } from './day-structure/day-structure';
 import { ConferenceService } from '../../../../services/conference.service';
 import { SlotTypeService } from '../../../../services/slot-type.service';
-import { SlotType } from '../../../../model/slot-type.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { DayToDayCopyRequest } from './copy-day-to-day/copy-day-to-day';
 
 @Component({
@@ -211,3 +211,5 @@ export class ConferencePlanningStructureConfigComponent implements OnInit {
     days.forEach((day, index) => day.dayIndex = index);
   }
 }
+
+

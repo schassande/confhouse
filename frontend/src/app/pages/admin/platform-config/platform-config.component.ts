@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PlatformConfigService } from '../../../services/platform-config.service';
 import { SlotTypeService } from '../../../services/slot-type.service';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 
 interface ConferenceOption {
   label: string;
@@ -126,3 +126,5 @@ export class PlatformConfigComponent {
     return name || edition || String(conference.id ?? '');
   }
 }
+
+

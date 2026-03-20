@@ -1,47 +1,15 @@
 import { admin } from '../common/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '../common/firestore-collections';
+import type {
+  ConferenceDashboard,
+  DashboardRefreshTrigger,
+} from '../../../shared/src/model/conference-dashboard.model';
 
 const CONFIRMED_STATUSES = new Set(['SPEAKER_CONFIRMED', 'PROGRAMMED']);
 const ALLOCATED_STATUSES = new Set(['SCHEDULED', 'PROGRAMMED']);
 const SPEAKER_COUNT_STATUSES = new Set(['ACCEPTED', 'SPEAKER_CONFIRMED', 'PROGRAMMED', 'SCHEDULED']);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const UNKNOWN_SESSION_TYPE_ID = '__unknown__';
-
-export type DashboardRefreshTrigger = 'MANUAL_REFRESH' | 'SCHEDULED_DAILY' | 'AUTO_EVENT';
-
-export interface DashboardCountsBySessionType {
-  total: number;
-  bySessionTypeId: Record<string, number>;
-}
-
-export interface ConferenceDashboard {
-  id: string;
-  conferenceId: string;
-  schemaVersion: number;
-  trigger: DashboardRefreshTrigger;
-  computedAt: string;
-  lastUpdated: string;
-  submitted: DashboardCountsBySessionType;
-  confirmed: DashboardCountsBySessionType;
-  allocated: DashboardCountsBySessionType;
-  speakers: {
-    total: number;
-    sessionsWith2Speakers: number;
-    sessionsWith3Speakers: number;
-  };
-  slots: {
-    allocated: number;
-    total: number;
-    ratio: number;
-  };
-  conferenceHall: {
-    lastImportAt: string;
-  };
-  schedule: {
-    conferenceStartDate: string;
-    daysBeforeConference: number;
-  };
-}
 
 export interface PersistedConferenceDashboard {
   dashboard: ConferenceDashboard;
@@ -370,3 +338,6 @@ async function loadConferenceHallLastImportAt(db: admin.firestore.Firestore, con
   }
   return String((directDocSnap.data() as any)?.lastCommunication ?? '').trim();
 }
+
+
+

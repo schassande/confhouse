@@ -23,7 +23,7 @@ import {
   User,
 } from 'firebase/auth';
 import { PersonService } from './person.service';
-import { Person } from '../model/person.model';
+import { Person } from '@shared/model/person.model';
 import { firstValueFrom } from 'rxjs';
 import { functionBaseUrl } from './constantes';
 import { TranslateService } from '@ngx-translate/core';
@@ -602,3 +602,4 @@ export class UserSignService {
     });
   }
 }
+

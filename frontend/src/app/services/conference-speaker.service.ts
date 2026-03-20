@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { ConferenceSpeaker, SubmitSource } from '../model/speaker.model';
-import { Session } from '../model/session.model';
+import { ConferenceSpeaker, SubmitSource } from '@shared/model/speaker.model';
+import { Session } from '@shared/model/session.model';
 import { Firestore } from '@angular/fire/firestore';
 import { collection, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { from, map, Observable } from 'rxjs';
@@ -246,3 +246,4 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     return true;
   }
 }
+

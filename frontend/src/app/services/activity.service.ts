@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { Activity } from '../model/activity.model';
+import { Activity } from '@shared/model/activity.model';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { from, map, Observable } from 'rxjs';
 
@@ -32,3 +32,4 @@ export class ActivityService extends FirestoreGenericService<Activity> {
     );
   }
 }
+

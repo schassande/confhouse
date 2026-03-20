@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { TagModule } from 'primeng/tag';
-import { SessionStatus } from '../../model/session.model';
+import { SessionStatus } from '@shared/model/session.model';
 import {
   getSessionStatusSeverity,
   getSessionStatusTranslationKey,
   SessionStatusTagSeverity,
-} from '../../model/session-status.utils';
+} from '@shared/model/session-status.utils';
 
 @Component({
   selector: 'app-session-status-badge',
@@ -24,3 +24,5 @@ export class SessionStatusBadgeComponent {
     return getSessionStatusSeverity(this.status ?? undefined);
   }
 }
+
+

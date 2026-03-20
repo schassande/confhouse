@@ -1,7 +1,7 @@
 import { Component, input, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Conference } from '../../../../model/conference.model';
-import { ConferenceHallConfig, SessionTypeMapping } from '../../../../model/conferencehall.model';
+import { Conference } from '@shared/model/conference.model';
+import { ConferenceHallConfig, SessionTypeMapping } from '@shared/model/conferencehall.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -188,3 +188,5 @@ export class ConferencehallConfigComponent implements OnInit {
       });
   }
 }
+
+

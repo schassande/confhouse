@@ -16,9 +16,9 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { firstValueFrom, take } from 'rxjs';
-import { Activity, ActivityAttribute, ActivityParticipation, ParticipantType } from '../../../model/activity.model';
-import { Conference } from '../../../model/conference.model';
-import { Person } from '../../../model/person.model';
+import { Activity, ActivityAttribute, ActivityParticipation, ParticipantType } from '@shared/model/activity.model';
+import { Conference } from '@shared/model/conference.model';
+import { Person } from '@shared/model/person.model';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import { ActivityService } from '../../../services/activity.service';
 import { ConferenceService } from '../../../services/conference.service';
@@ -702,3 +702,5 @@ export class ActivityParticipationComponent {
     return 'ATTENDEE';
   }
 }
+
+

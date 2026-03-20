@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, si
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { Conference } from '../../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { ConferenceHallConfigService } from '../../../../services/conference-hall-config.service';
 import {
   ConferenceHallImportReport,
@@ -117,3 +117,5 @@ export class ConferencehallImportComponent implements OnInit {
     }
   }
 }
+
+

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Conference, SessionType } from '../../../../model/conference.model';
+import { Conference, SessionType } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConferenceService } from '../../../../services/conference.service';
 import { ButtonModule } from 'primeng/button';
@@ -255,4 +255,6 @@ export class ConferenceSessionTypesConfigComponent implements OnInit {
     return luminance > 0.6 ? '#111827' : '#FFFFFF';
   }
 }
+
+
 

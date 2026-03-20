@@ -14,10 +14,10 @@ import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
-import { Conference, Day, Slot } from '../../../model/conference.model';
-import { Person } from '../../../model/person.model';
-import { Session, SessionAllocation } from '../../../model/session.model';
-import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { Conference, Day, Slot } from '@shared/model/conference.model';
+import { Person } from '@shared/model/person.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
@@ -721,3 +721,5 @@ export class ConferenceSpeakers implements OnInit {
     return luminance > 0.62 ? '#0F172A' : '#FFFFFF';
   }
 }
+
+

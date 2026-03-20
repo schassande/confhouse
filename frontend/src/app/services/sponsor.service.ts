@@ -10,7 +10,7 @@ import {
   SponsorCommunicationLanguage,
   SponsorPaymentStatus,
   SponsorStatus,
-} from '../model/sponsor.model';
+} from '@shared/model/sponsor.model';
 import { FirestoreGenericService } from './firestore-generic.service';
 import { functionBaseUrl } from './constantes';
 
@@ -461,3 +461,4 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
     URL.revokeObjectURL(objectUrl);
   }
 }
+

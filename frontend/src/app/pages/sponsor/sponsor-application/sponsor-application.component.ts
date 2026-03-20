@@ -11,8 +11,8 @@ import { OrderListModule } from 'primeng/orderlist';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { Conference } from '../../../model/conference.model';
-import { Sponsor, SponsorCommunicationLanguage, SponsorType } from '../../../model/sponsor.model';
+import { Conference } from '@shared/model/conference.model';
+import { Sponsor, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
@@ -657,3 +657,5 @@ export class SponsorApplicationComponent {
     });
   }
 }
+
+

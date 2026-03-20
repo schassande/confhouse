@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { Session, SessionAllocation, SessionStatus } from '../model/session.model';
+import { Session, SessionAllocation, SessionStatus } from '@shared/model/session.model';
 import { map, Observable, from } from 'rxjs';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
-import { Conference, Day, Room, Slot } from '../model/conference.model';
-import { ConferenceSpeaker } from '../model/speaker.model';
-import { SlotType } from '../model/slot-type.model';
+import { Conference, Day, Room, Slot } from '@shared/model/conference.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
+import { SlotType } from '@shared/model/slot-type.model';
 
 export interface AutoAllocateInput {
   conferenceId: string;
@@ -425,3 +425,4 @@ export class SessionService extends FirestoreGenericService<Session> {
     return String(value ?? '').trim().toLowerCase();
   }
 }
+

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, inject, OnInit, signal, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Conference } from '../../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConferenceService } from '../../../../services/conference.service';
 import { ConferenceOrganizerService } from '../../../../services/conference-organizer.service';
@@ -153,3 +153,5 @@ export class ConferenceGeneralConfigComponent implements OnInit {
     this.dummy.set(this.dummy() + 1);
   }
 }
+
+

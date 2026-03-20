@@ -17,10 +17,10 @@ import {
   UnallocatedSessionListComponent,
   UnallocatedSessionListItem,
 } from '../../../components/unallocated-session-list/unallocated-session-list.component';
-import { Conference, Day, Room, SessionType, Slot, Track } from '../../../model/conference.model';
-import { SlotType } from '../../../model/slot-type.model';
-import { Session, SessionAllocation as SessionAllocationModel, SessionStatus } from '../../../model/session.model';
-import { ConferenceSpeaker } from '../../../model/speaker.model';
+import { Conference, Day, Room, SessionType, Slot, Track } from '@shared/model/conference.model';
+import { SlotType } from '@shared/model/slot-type.model';
+import { Session, SessionAllocation as SessionAllocationModel, SessionStatus } from '@shared/model/session.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
@@ -1304,3 +1304,5 @@ const OCCUPATION_COLOR_SCALE = [
   '#16A34A',
   '#15803D',
 ] as const;
+
+

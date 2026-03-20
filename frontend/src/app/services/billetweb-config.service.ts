@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 import { Observable, from, map, switchMap } from 'rxjs';
-import { BilletwebConfig } from '../model/billetweb-config';
+import { BilletwebConfig } from '@shared/model/billetweb-config';
 import { FirestoreGenericService } from './firestore-generic.service';
 
 @Injectable({ providedIn: 'root' })
@@ -93,3 +93,4 @@ export class BilletwebConfigService extends FirestoreGenericService<BilletwebCon
     };
   }
 }
+

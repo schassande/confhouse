@@ -2,14 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, forkJoin, map, of, take, catchError } from 'rxjs';
 import { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { TranslateService } from '@ngx-translate/core';
-import { Conference, Day, Room, Track } from '../model/conference.model';
-import { Session, SessionAllocation } from '../model/session.model';
+import { Conference, Day, Room, Track } from '@shared/model/conference.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
 import { PersonService } from './person.service';
 import { SessionAllocationService } from './session-allocation.service';
 import { SessionService } from './session.service';
-import { SlotType } from '../model/slot-type.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { SlotTypeService } from './slot-type.service';
-import { Activity } from '../model/activity.model';
+import { Activity } from '@shared/model/activity.model';
 import { ActivityService } from './activity.service';
 
 interface ExportData {
@@ -801,3 +801,4 @@ export class PlanningPdfService {
     URL.revokeObjectURL(url);
   }
 }
+

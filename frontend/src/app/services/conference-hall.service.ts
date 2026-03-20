@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { firstValueFrom } from 'rxjs';
-import { Conference } from '../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { functionBaseUrl } from './constantes';
 
 export interface ConferenceHallImportReport {
@@ -69,3 +69,4 @@ export class ConferenceHallService {
     return await user.getIdToken();
   }
 }
+

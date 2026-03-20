@@ -5,7 +5,7 @@ import {
   buildDefaultPlatformConfig,
   PlatformConfig,
   PLATFORM_CONFIG_DOC_ID,
-} from '../model/platform-config.model';
+} from '@shared/model/platform-config.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({ providedIn: 'root' })
@@ -54,3 +54,4 @@ export class PlatformConfigService extends FirestoreGenericService<PlatformConfi
     return this.singleConferenceModeSignal;
   }
 }
+

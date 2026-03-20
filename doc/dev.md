@@ -1,5 +1,53 @@
 # Development documentation
 
+## Shared TypeScript models
+
+Persistent and reusable TypeScript models are now centralized under `shared/src/model`.
+
+This folder is the source of truth for business contracts reused by:
+
+- the Angular frontend
+- the Cloud Functions backend
+
+### Frontend organization
+
+The Angular application now imports shared models directly with the `@shared/model/...` alias.
+
+`frontend/src/app/model` is no longer used as an intermediate layer.
+Frontend-only helpers or view models must stay in feature folders or services instead of recreating shared contracts locally.
+
+### Functions organization
+
+Cloud Functions import shared models directly from `shared/src/model`.
+
+When the backend only needs a subset of a persisted entity, derive a backend-specific type from the shared contract with `Pick<>` or `Omit<>` instead of redefining the structure manually.
+
+Example:
+
+```ts
+import type { Sponsor } from '../../../shared/src/model/sponsor.model';
+
+export type SponsorRecord = Pick<Sponsor, 'status' | 'statusDate' | 'paymentStatus'>;
+```
+
+### Compilation impact
+
+This repository currently uses a lightweight shared-source setup:
+
+- `frontend/tsconfig.app.json` includes `../shared/src/**/*.ts`
+- `frontend/tsconfig.json` defines the `@shared/*` path alias to `../shared/src/*`
+- `functions/tsconfig.json` includes `../shared/src`
+- there is no separate package build step for `shared`
+
+Both applications therefore compile against the same TypeScript sources directly.
+
+### Practical rules
+
+- add or update shared business models in `shared/src/model`
+- do not introduce new duplicated persistent-model definitions under `frontend` or `functions`
+- keep UI-only helpers or view-models outside `shared` unless they are intentionally cross-runtime
+- after changing a shared model, verify both `frontend` and `functions` still compile
+
 ## Local development
 
 ### Backend (Cloud Functions)

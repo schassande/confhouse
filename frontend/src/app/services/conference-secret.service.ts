@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { ConferenceSecret } from '../model/conference-secret.model';
+import { ConferenceSecret } from '@shared/model/conference-secret.model';
 import { Observable, from, map, switchMap } from 'rxjs';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 
@@ -56,3 +56,4 @@ export class ConferenceSecretService extends FirestoreGenericService<ConferenceS
     );
   }
 }
+

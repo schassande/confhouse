@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferencehallConfigComponent } from './conferencehall-config/conferencehall-config.component';
 import { ConferencehallImportComponent } from './conferencehall-import/conferencehall-import.component';
@@ -39,3 +39,5 @@ export class SessionImportComponent {
     });
   }
 }
+
+

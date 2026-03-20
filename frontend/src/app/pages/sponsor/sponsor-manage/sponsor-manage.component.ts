@@ -20,10 +20,10 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
-import { BilletwebConfig } from '../../../model/billetweb-config';
+import { BilletwebConfig } from '@shared/model/billetweb-config';
 import {
   Conference,
-} from '../../../model/conference.model';
+} from '@shared/model/conference.model';
 import {
   ConferenceTicket,
   Sponsor,
@@ -32,7 +32,7 @@ import {
   SponsorPaymentStatus,
   SponsorStatus,
   SponsorType,
-} from '../../../model/sponsor.model';
+} from '@shared/model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { SponsorService } from '../../../services/sponsor.service';
@@ -768,3 +768,5 @@ export class SponsorManageComponent {
   }
 
 }
+
+

@@ -9,11 +9,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { StepperModule } from 'primeng/stepper';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { BilletwebApiService, BilletwebEvent, BilletwebTicketTypeOption } from '../../../services/billetweb-api.service';
 import { ConferenceSecretService, BILLETWEB_KEY_SECRET_NAME } from '../../../services/conference-secret.service';
-import { BilletwebConfig, BilletwebTicketType } from '../../../model/billetweb-config';
+import { BilletwebConfig, BilletwebTicketType } from '@shared/model/billetweb-config';
 import { ConferenceService } from '../../../services/conference.service';
 
 interface SelectOption {
@@ -601,3 +601,5 @@ export class BilletwebConfigComponent {
     return this.form.valid && !this.saving();
   }
 }
+
+

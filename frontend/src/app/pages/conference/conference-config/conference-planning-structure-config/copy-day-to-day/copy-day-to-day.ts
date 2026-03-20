@@ -1,5 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { Day } from '../../../../../model/conference.model';
+import { Day } from '@shared/model/conference.model';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
@@ -44,3 +44,5 @@ export class CopyDayToDay {
     });
   }
 }
+
+

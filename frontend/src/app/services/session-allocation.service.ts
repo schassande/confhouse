@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { FirestoreGenericService } from './firestore-generic.service';
-import { Session, SessionAllocation, SessionStatus } from '../model/session.model';
+import { Session, SessionAllocation, SessionStatus } from '@shared/model/session.model';
 import { from, map, Observable, firstValueFrom } from 'rxjs';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 import { SessionService } from './session.service';
@@ -317,3 +317,4 @@ export class SessionAllocationService extends FirestoreGenericService<SessionAll
     return `${this.slotKey(allocation.dayId, allocation.slotId, allocation.roomId)}::${String(allocation.sessionId ?? '').trim()}`;
   }
 }
+

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 import { Observable, from, map, switchMap } from 'rxjs';
-import { VoxxrinConfig } from '../model/voxxrin-config.model';
+import { VoxxrinConfig } from '@shared/model/voxxrin-config.model';
 import { FirestoreGenericService } from './firestore-generic.service';
 
 @Injectable({ providedIn: 'root' })
@@ -50,3 +50,4 @@ export class VoxxrinConfigService extends FirestoreGenericService<VoxxrinConfig>
     );
   }
 }
+

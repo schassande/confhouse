@@ -4,7 +4,7 @@ import {
   SpeakerSessionDecision,
   SpeakerSessionActionReport,
 } from './conference-admin.service';
-import { Session, SessionAllocation } from '../model/session.model';
+import { Session, SessionAllocation } from '@shared/model/session.model';
 import { SessionDeallocationResult } from './session-allocation.service';
 
 export type { SpeakerSessionDecision };
@@ -71,3 +71,4 @@ export class SpeakerSessionManagementService {
     };
   }
 }
+

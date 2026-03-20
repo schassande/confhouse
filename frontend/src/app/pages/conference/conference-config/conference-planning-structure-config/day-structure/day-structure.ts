@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, output, model, OnInit, signal, Signal, HostBinding, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Day, Room, SessionType, Slot } from '../../../../../model/conference.model';
+import { Day, Room, SessionType, Slot } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SlotTypeService } from '../../../../../services/slot-type.service';
-import { SlotType } from '../../../../../model/slot-type.model';
+import { SlotType } from '@shared/model/slot-type.model';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,7 @@ import { MenuModule } from 'primeng/menu';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { SessionAllocation } from '../../../../../model/session.model';
+import { SessionAllocation } from '@shared/model/session.model';
 import { SessionAllocationService } from '../../../../../services/session-allocation.service';
 
 @Component({
@@ -420,3 +420,5 @@ interface DayRoom {
   room: Room;
   enable: boolean;
 }
+
+

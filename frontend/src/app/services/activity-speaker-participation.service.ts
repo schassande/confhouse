@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { Workbook, Worksheet } from 'exceljs';
-import { Activity, ActivityParticipation } from '../model/activity.model';
-import { Person } from '../model/person.model';
-import { ConferenceSpeaker } from '../model/speaker.model';
+import { Activity, ActivityParticipation } from '@shared/model/activity.model';
+import { Person } from '@shared/model/person.model';
+import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ConferenceSpeakerService } from './conference-speaker.service';
 import { PersonService } from './person.service';
 
@@ -275,3 +275,4 @@ export class ActivitySpeakerParticipationService {
     URL.revokeObjectURL(url);
   }
 }
+

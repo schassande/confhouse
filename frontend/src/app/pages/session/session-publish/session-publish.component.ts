@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference, Day, Room } from '../../../model/conference.model';
+import { Conference, Day, Room } from '@shared/model/conference.model';
 import { ConferenceAdminService } from '../../../services/conference-admin.service';
 import { PlanningPdfService } from '../../../services/planning-pdf.service';
 
@@ -251,3 +251,5 @@ export class SessionPublishComponent {
     URL.revokeObjectURL(url);
   }
 }
+
+

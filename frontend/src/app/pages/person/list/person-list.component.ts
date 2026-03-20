@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, signal, inject, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Person } from '../../../model/person.model';
+import { Person } from '@shared/model/person.model';
 import { PersonService } from '../../../services/person.service';
 import { UserSignService } from '../../../services/usersign.service';
 import { Router, RouterModule } from '@angular/router';
@@ -118,3 +118,5 @@ export class PersonListComponent implements OnInit {
     }
   }
 }
+
+

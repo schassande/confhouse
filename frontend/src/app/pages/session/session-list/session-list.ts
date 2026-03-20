@@ -6,10 +6,10 @@ import { catchError, combineLatest, forkJoin, map, of, take } from 'rxjs';
 import { SessionService } from '../../../services/session.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { Session, SessionStatus } from '../../../model/session.model';
-import { getSessionStatusTranslationKey } from '../../../model/session-status.utils';
+import { Session, SessionStatus } from '@shared/model/session.model';
+import { getSessionStatusTranslationKey } from '@shared/model/session-status.utils';
 import { PersonService } from '../../../services/person.service';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 import { ButtonModule } from 'primeng/button';
@@ -329,3 +329,5 @@ export class SessionList implements OnInit {
     });
   }
 }
+
+

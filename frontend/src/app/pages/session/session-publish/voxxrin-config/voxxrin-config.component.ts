@@ -11,8 +11,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { AccordionModule } from 'primeng/accordion';
 import { ColorPickerModule } from 'primeng/colorpicker';
-import { Conference } from '../../../../model/conference.model';
-import { VoxxrinConfig, VoxxrinFloorPlan, VoxxrinThemeColors } from '../../../../model/voxxrin-config.model';
+import { Conference } from '@shared/model/conference.model';
+import { VoxxrinConfig, VoxxrinFloorPlan, VoxxrinThemeColors } from '@shared/model/voxxrin-config.model';
 import { ConferenceService } from '../../../../services/conference.service';
 import { ConferenceSecretService, VOXXRIN_SECRET_TOKEN_SECRET_NAME } from '../../../../services/conference-secret.service';
 import { VoxxrinConfigService } from '../../../../services/voxxrin-config.service';
@@ -547,3 +547,5 @@ export class VoxxrinConfigComponent implements OnInit {
     return `#${hex}`;
   }
 }
+
+

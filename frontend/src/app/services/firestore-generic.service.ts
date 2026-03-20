@@ -1,7 +1,7 @@
 import { EnvironmentInjector, inject, runInInjectionContext } from '@angular/core';
 import { Firestore, collectionData, docData } from '@angular/fire/firestore';
 import { from, map, Observable } from 'rxjs';
-import { PersistentData } from '../model/persistant.model';
+import { PersistentData } from '@shared/model/persistant.model';
 import {
   collection,
   CollectionReference,
@@ -170,3 +170,4 @@ export abstract class FirestoreGenericService<T extends PersistentData> {
 export interface PersistentDataFilter<T extends PersistentData> {
   (data: T): boolean;
 }
+

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 import { Observable, from, map, switchMap } from 'rxjs';
-import { ConferenceHallConfig, SessionTypeMapping } from '../model/conferencehall.model';
+import { ConferenceHallConfig, SessionTypeMapping } from '@shared/model/conferencehall.model';
 import { FirestoreGenericService } from './firestore-generic.service';
 
 @Injectable({ providedIn: 'root' })
@@ -60,3 +60,4 @@ export class ConferenceHallConfigService extends FirestoreGenericService<Confere
     );
   }
 }
+

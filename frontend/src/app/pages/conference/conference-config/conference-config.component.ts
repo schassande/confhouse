@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, computed, CUSTOM_EL
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ConferenceService } from '../../../services/conference.service';
-import { Conference } from '../../../model/conference.model';
+import { Conference } from '@shared/model/conference.model';
 import { TranslateService } from '@ngx-translate/core';
 import { UserSignService } from '../../../services/usersign.service';
 import { ButtonModule } from 'primeng/button';
@@ -209,3 +209,5 @@ export class ConferenceConfigComponent implements OnInit {
     });
   }
 }
+
+
