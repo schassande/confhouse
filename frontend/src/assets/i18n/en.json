@@ -399,6 +399,7 @@
     },
     "SPONSOR_MANAGE": {
       "TITLE": "Sponsors management",
+      "BACK_TO_LIST": "Back to sponsors",
       "ADD": "Add sponsor",
       "EDIT": "Edit sponsor",
       "DELETE": "Delete sponsor",

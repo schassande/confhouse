@@ -738,6 +738,7 @@
     },
     "SPONSOR_MANAGE": {
       "TITLE": "Gestion des sponsors",
+      "BACK_TO_LIST": "Retour aux sponsors",
       "ADD": "Ajouter un sponsor",
       "EDIT": "Modifier le sponsor",
       "DELETE": "Supprimer le sponsor",

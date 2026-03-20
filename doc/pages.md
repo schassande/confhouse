@@ -38,6 +38,8 @@ flowchart TD
 
   SP_CFG["/conference/:conferenceId/sponsors/config"]
   SP_MAN["/conference/:conferenceId/sponsors/manage"]
+  SP_MAN_CREATE["/conference/:conferenceId/sponsors/manage/create"]
+  SP_MAN_EDIT["/conference/:conferenceId/sponsors/manage/:sponsorId"]
 
   PUB["/conference/:conferenceId/publish"]
   PUB_VOX["/conference/:conferenceId/publish/voxxrin-config"]
@@ -76,6 +78,10 @@ flowchart TD
 
   CONF_MANAGE --> SP_CFG
   CONF_MANAGE --> SP_MAN
+  SP_MAN --> SP_MAN_CREATE
+  SP_MAN --> SP_MAN_EDIT
+  SP_MAN_CREATE --> SP_MAN
+  SP_MAN_EDIT --> SP_MAN
 
   SESS_LIST --> SESS_CREATE
   SESS_LIST --> SESS_EDIT
@@ -363,15 +369,37 @@ Navigation:
 
 ### 26. Sponsors Manage (`/conference/:conferenceId/sponsors/manage`)
 Purpose:
-- Operational sponsor management (assignment, details).
+- Operational sponsor management list.
 
 Access:
 - Authenticated + organizer + valid conference context.
 
 Navigation:
 - Opened from Manage.
+- To `/conference/:conferenceId/sponsors/manage/create` to create a sponsor.
+- To `/conference/:conferenceId/sponsors/manage/:sponsorId` to edit a sponsor.
 
-### 27. Publish (`/conference/:conferenceId/publish`)
+### 27. Sponsor Create (`/conference/:conferenceId/sponsors/manage/create`)
+Purpose:
+- Full-page sponsor creation form for organizers.
+
+Access:
+- Authenticated + organizer + valid conference context.
+
+Navigation:
+- Returns to `/conference/:conferenceId/sponsors/manage` after save or cancel.
+
+### 28. Sponsor Edit (`/conference/:conferenceId/sponsors/manage/:sponsorId`)
+Purpose:
+- Full-page sponsor editing and operational actions for one sponsor.
+
+Access:
+- Authenticated + organizer + valid conference context.
+
+Navigation:
+- Returns to `/conference/:conferenceId/sponsors/manage` after save, delete, or cancel.
+
+### 29. Publish (`/conference/:conferenceId/publish`)
 Purpose:
 - Publishing hub.
 - Voxxrin JSON export.
@@ -383,7 +411,7 @@ Access:
 Navigation:
 - To `/conference/:conferenceId/publish/voxxrin-config`.
 
-### 28. Voxxrin Config (`/conference/:conferenceId/publish/voxxrin-config`)
+### 30. Voxxrin Config (`/conference/:conferenceId/publish/voxxrin-config`)
 Purpose:
 - Detailed Voxxrin publishing configuration.
 
@@ -393,7 +421,7 @@ Access:
 Navigation:
 - Accessible from Publish page.
 
-### 29. Admin Persons (`/admin/persons`)
+### 31. Admin Persons (`/admin/persons`)
 Purpose:
 - Global person administration.
 
@@ -403,7 +431,7 @@ Access:
 Navigation:
 - Accessible from admin menu.
 
-### 30. Admin Platform Config (`/admin/platform-config`)
+### 32. Admin Platform Config (`/admin/platform-config`)
 Purpose:
 - Global platform settings administration.
 
