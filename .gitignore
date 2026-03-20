@@ -6,3 +6,4 @@ functions/.env*
 functions/.firebase
 functions/.vscode
 
+firebase-debug.log
