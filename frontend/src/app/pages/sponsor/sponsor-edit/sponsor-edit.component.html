@@ -123,8 +123,7 @@
               </div>
               }
             </div>
-            <div class="form-row">
-              @for (language of languageCodes(); track language) {
+            @for (language of languageCodes(); track language) {
               <div class="form-section">
                 <label [for]="'description_' + language" class="form-label">
                   {{ localizedFieldLabel('DESCRIPTION', language) }}
@@ -137,8 +136,7 @@
                   class="w-full"
                 ></textarea>
               </div>
-              }
-            </div>
+            }
             <div class="form-row">
               @for (language of languageCodes(); track language) {
               <div class="form-section">
