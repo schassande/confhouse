@@ -360,6 +360,7 @@ Navigation:
 ### 25. Sponsors Config (`/conference/:conferenceId/sponsors/config`)
 Purpose:
 - Sponsoring structure configuration (types, booth maps, etc.).
+- Tabbed organizer screen with fixed `Campagne` and `Facturation` tabs, one dynamic tab per sponsor type, and a `+` tab used to create and activate a new sponsor type.
 
 Access:
 - Authenticated + organizer + valid conference context.

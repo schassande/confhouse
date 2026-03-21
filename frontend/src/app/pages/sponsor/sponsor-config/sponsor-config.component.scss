@@ -22,6 +22,14 @@
   gap: 16px;
 }
 
+.config-tabs {
+  display: block;
+}
+
+.config-tabs :is(.p-tabpanels, .p-tabpanel) {
+  padding: 0;
+}
+
 .config-section {
   border: 1px solid #d7d7d7;
   border-radius: 12px;
@@ -49,9 +57,7 @@
 }
 
 .sponsor-type-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 12px;
+  margin-top: 12px;
 }
 
 .card-header {
@@ -106,11 +112,31 @@
   gap: 8px;
 }
 
+.booth-map-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
 .booth-map-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
+}
+
+.booth-map-preview {
+  width: 100%;
+  max-width: 100%;
+  max-height: 32rem;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #dbe2ea;
+  background: #fff;
 }
 
 .empty-message {

@@ -3,7 +3,6 @@
 
   <div class="header-row">
     <h1>
-      {{ conference()?.name }} {{ conference()?.edition }} -
       {{ 'CONFERENCE.SPONSOR_CONFIG.TITLE' | translate }}
     </h1>
     <div class="header-actions">
@@ -30,276 +29,285 @@
   <div class="loading-state">{{ 'CONFERENCE.LOADING' | translate }}</div>
   } @else {
   <form [formGroup]="form" class="config-form">
-    <section class="config-section">
-      <div class="section-header">
-        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.REGISTRATION_WINDOW' | translate }}</h2>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="startDate">{{ 'CONFERENCE.SPONSOR_CONFIG.START_DATE' | translate }}</label>
-          <input id="startDate" pInputText formControlName="startDate" type="date" />
-        </div>
-        <div class="field">
-          <label for="endDate">{{ 'CONFERENCE.SPONSOR_CONFIG.END_DATE' | translate }}</label>
-          <input id="endDate" pInputText formControlName="endDate" type="date" />
-        </div>
-      </div>
-
-    </section>
-
-    <section class="config-section">
-      <div class="section-header">
-        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER' | translate }}</h2>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="legalEntity">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_ENTITY' | translate }}</label>
-          <input id="legalEntity" pInputText formControlName="legalEntity" type="text" />
-        </div>
-        <div class="field">
-          <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
-          <input id="entityId" pInputText formControlName="entityId" type="text" />
-        </div>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="address">{{ 'CONFERENCE.SPONSOR_CONFIG.ADDRESS' | translate }}</label>
-          <textarea id="address" pTextarea formControlName="address" rows="3"></textarea>
-        </div>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="vatRate">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT_RATE' | translate }}</label>
-          <p-inputNumber
-            inputId="vatRate"
-            formControlName="vatRate"
-            [showButtons]="true"
-            [step]="0.01"
-            [min]="0"
-            [max]="1"
-            mode="decimal"
-            [minFractionDigits]="0"
-            [maxFractionDigits]="2"
-          ></p-inputNumber>
-        </div>
-        <div class="field">
-          <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
-          <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
-        </div>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="bankIban">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_IBAN' | translate }}</label>
-          <input id="bankIban" pInputText formControlName="bankIban" type="text" />
-        </div>
-        <div class="field">
-          <label for="bankBic">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_BIC' | translate }}</label>
-          <input id="bankBic" pInputText formControlName="bankBic" type="text" />
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="legalNotesText">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES' | translate }}</label>
-        <textarea id="legalNotesText" pTextarea formControlName="legalNotesText" rows="4"></textarea>
-        <small>{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES_HELP' | translate }}</small>
-      </div>
-
-      <div class="form-grid two-columns">
-        <div class="field">
-          <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
-          <input id="email" pInputText formControlName="email" type="email" />
-        </div>
-        <div class="field">
-          <label for="ccEmail">{{ 'CONFERENCE.SPONSOR_CONFIG.CC_EMAIL' | translate }}</label>
-          <input id="ccEmail" pInputText formControlName="ccEmail" type="email" />
-        </div>
-      </div>
-
-    </section>
-    <section class="config-section">
-      <div class="section-header">
-        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate }}</h2>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-plus"
-          class="p-button-secondary p-button-sm"
-          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_BOOTH_MAP' | translate"
-          (click)="addBoothMap()"
-        ></button>
-      </div>
-
-      @if (sponsorBoothMapsArray.controls.length === 0) {
-      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BOOTH_MAPS' | translate }}</p>
-      }
-
-      <div formArrayName="sponsorBoothMaps" class="booth-map-list">
-        @for (control of sponsorBoothMapsArray.controls; track $index) {
-        <div class="booth-map-row">
-          <input pInputText [formControlName]="$index" type="text" placeholder="https://..." />
-          <button
-            pButton
-            type="button"
-            icon="pi pi-trash"
-            class="p-button-danger p-button-sm"
-            [label]="'COMMON.REMOVE' | translate"
-            (click)="removeBoothMap($index)"
-          ></button>
-        </div>
+    <p-tabs class="config-tabs" [value]="activeTabValue()" (valueChange)="onTabChange($event)">
+      <p-tablist>
+        <p-tab [value]="campaignTabValue">Campagne</p-tab>
+        <p-tab [value]="billingTabValue">Facturation</p-tab>
+        @for (group of sponsorTypesArray.controls; track sponsorTypeTabValue($index); let sponsorTypeIndex = $index) {
+        <p-tab [value]="sponsorTypeTabValue(sponsorTypeIndex)">
+          {{ sponsorTypeTabLabel(sponsorTypeIndex) }}
+        </p-tab>
         }
-      </div>
-    </section>
+        <p-tab [value]="addSponsorTypeTabValue">+</p-tab>
+      </p-tablist>
 
-    <section class="config-section">
-      <div class="section-header">
-        <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPES' | translate }}</h2>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-plus"
-          class="p-button-secondary p-button-sm"
-          [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_SPONSOR_TYPE' | translate"
-          (click)="addSponsorType()"
-        ></button>
-      </div>
-
-      @if (sponsorTypesArray.controls.length === 0) {
-      <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_SPONSOR_TYPES' | translate }}</p>
-      }
-
-      <div formArrayName="sponsorTypes" class="sponsor-types-list">
-        @for (group of sponsorTypesArray.controls; track $index; let sponsorTypeIndex = $index) {
-        <article class="sponsor-type-card" [formGroupName]="sponsorTypeIndex">
-          <div class="card-header">
-            <h3>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPE' | translate }} #{{ $index + 1 }}</h3>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-trash"
-              class="p-button-danger p-button-sm"
-              [label]="'COMMON.REMOVE' | translate"
-                (click)="removeSponsorType(sponsorTypeIndex)"
-            ></button>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.NAME' | translate }}</label>
-              <input pInputText formControlName="name" type="text" />
+      <p-tabpanels>
+        <p-tabpanel [value]="campaignTabValue">
+          <section class="config-section">
+            <div class="section-header">
+              <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.REGISTRATION_WINDOW' | translate }}</h2>
             </div>
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.MAX_NUMBER' | translate }}</label>
-              <p-inputNumber formControlName="maxNumber" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
-            </div>
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.PRICE' | translate }}</label>
-              <p-inputNumber formControlName="price" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
-            </div>
-          </div>
 
-          <div class="form-grid two-columns">
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.COLOR' | translate }}</label>
-              <p-colorPicker formControlName="color" appendTo="body" format="hex"></p-colorPicker>
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="startDate">{{ 'CONFERENCE.SPONSOR_CONFIG.START_DATE' | translate }}</label>
+                <input id="startDate" pInputText formControlName="startDate" type="date" />
+              </div>
+              <div class="field">
+                <label for="endDate">{{ 'CONFERENCE.SPONSOR_CONFIG.END_DATE' | translate }}</label>
+                <input id="endDate" pInputText formControlName="endDate" type="date" />
+              </div>
             </div>
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.FONT_COLOR' | translate }}</label>
-              <p-colorPicker formControlName="fontColor" appendTo="body" format="hex"></p-colorPicker>
-            </div>
-          </div>
+          </section>
 
-          <div class="form-grid two-columns">
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_EN' | translate }}</label>
-              <textarea pTextarea formControlName="descriptionEn" rows="3"></textarea>
-            </div>
-            <div class="field">
-              <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_FR' | translate }}</label>
-              <textarea pTextarea formControlName="descriptionFr" rows="3"></textarea>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE' | translate }}</label>
-            <p-select
-              [options]="boothAllocationModeOptions()"
-              optionLabel="label"
-              optionValue="value"
-              formControlName="boothAllocationMode"
-            ></p-select>
-            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_HELP' | translate }}</small>
-          </div>
-
-          <div class="field">
-            <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES' | translate }}</label>
-            <textarea pTextarea formControlName="boothNamesText" rows="3"></textarea>
-            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>
-          </div>
-
-          <div class="field">
-            <div class="section-header quota-header">
-              <h4>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_QUOTAS' | translate }}</h4>
+          <section class="config-section">
+            <div class="section-header">
+              <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate }}</h2>
               <button
                 pButton
                 type="button"
                 icon="pi pi-plus"
                 class="p-button-secondary p-button-sm"
-                [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_TICKET_QUOTA' | translate"
-                (click)="addConferenceTicketQuota(sponsorTypeIndex)"
-                [disabled]="ticketTypeOptions().length === 0"
+                [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_BOOTH_MAP' | translate"
+                (click)="addBoothMap()"
               ></button>
             </div>
 
-            @if (sponsorTypeQuotaArray(sponsorTypeIndex).controls.length === 0) {
-            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_TICKET_QUOTAS' | translate }}</small>
+            @if (sponsorBoothMapsArray.controls.length === 0) {
+            <p class="empty-message">{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BOOTH_MAPS' | translate }}</p>
             }
 
-            @if (ticketTypeOptions().length === 0) {
-            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BILLETWEB_SPONSOR_TICKETS' | translate }}</small>
-            }
-
-            <div formArrayName="conferenceTicketQuotas" class="quota-list">
-              @for (quotaGroup of sponsorTypeQuotaArray(sponsorTypeIndex).controls; track $index; let quotaIndex = $index) {
-              <div class="form-grid quota-row" [formGroupName]="$index">
-                <div class="field">
-                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE' | translate }}</label>
-                  <p-select
-                    [options]="ticketTypeOptions()"
-                    optionLabel="label"
-                    optionValue="value"
-                    [placeholder]="'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE_PLACEHOLDER' | translate"
-                    formControlName="conferenceTicketTypeId"
-                  ></p-select>
-                </div>
-                <div class="field">
-                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.QUOTA' | translate }}</label>
-                  <p-inputNumber formControlName="quota" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
-                </div>
-                <div class="field quota-action">
-                  <label>{{ 'COMMON.REMOVE' | translate }}</label>
+            <div formArrayName="sponsorBoothMaps" class="booth-map-list">
+              @for (control of sponsorBoothMapsArray.controls; track $index) {
+              <div class="booth-map-card">
+                <div class="booth-map-row">
+                  <input pInputText [formControlName]="$index" type="text" placeholder="https://..." />
                   <button
                     pButton
                     type="button"
                     icon="pi pi-trash"
                     class="p-button-danger p-button-sm"
                     [label]="'COMMON.REMOVE' | translate"
-                    (click)="removeConferenceTicketQuota(sponsorTypeIndex, quotaIndex)"
+                    (click)="removeBoothMap($index)"
                   ></button>
                 </div>
+
+                @if (control.value) {
+                <img
+                  class="booth-map-preview"
+                  [src]="control.value"
+                  [alt]="'CONFERENCE.SPONSOR_CONFIG.BOOTH_MAPS' | translate"
+                />
+                }
               </div>
               }
             </div>
-          </div>
-        </article>
-        }
-      </div>
-    </section>
+          </section>
+        </p-tabpanel>
 
+        <p-tabpanel [value]="billingTabValue">
+          <section class="config-section">
+            <div class="section-header">
+              <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER' | translate }}</h2>
+            </div>
+
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="legalEntity">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_ENTITY' | translate }}</label>
+                <input id="legalEntity" pInputText formControlName="legalEntity" type="text" />
+              </div>
+              <div class="field">
+                <label for="entityId">{{ 'CONFERENCE.SPONSOR_CONFIG.ENTITY_ID' | translate }}</label>
+                <input id="entityId" pInputText formControlName="entityId" type="text" />
+              </div>
+            </div>
+
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="address">{{ 'CONFERENCE.SPONSOR_CONFIG.ADDRESS' | translate }}</label>
+                <textarea id="address" pTextarea formControlName="address" rows="3"></textarea>
+              </div>
+            </div>
+
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="vatRate">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT_RATE' | translate }}</label>
+                <p-inputNumber
+                  inputId="vatRate"
+                  formControlName="vatRate"
+                  [showButtons]="true"
+                  [step]="0.01"
+                  [min]="0"
+                  [max]="1"
+                  mode="decimal"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                ></p-inputNumber>
+              </div>
+              <div class="field">
+                <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
+                <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+              </div>
+            </div>
+
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="bankIban">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_IBAN' | translate }}</label>
+                <input id="bankIban" pInputText formControlName="bankIban" type="text" />
+              </div>
+              <div class="field">
+                <label for="bankBic">{{ 'CONFERENCE.SPONSOR_CONFIG.BANK_BIC' | translate }}</label>
+                <input id="bankBic" pInputText formControlName="bankBic" type="text" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="legalNotesText">{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES' | translate }}</label>
+              <textarea id="legalNotesText" pTextarea formControlName="legalNotesText" rows="4"></textarea>
+              <small>{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES_HELP' | translate }}</small>
+            </div>
+
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
+                <input id="email" pInputText formControlName="email" type="email" />
+              </div>
+              <div class="field">
+                <label for="ccEmail">{{ 'CONFERENCE.SPONSOR_CONFIG.CC_EMAIL' | translate }}</label>
+                <input id="ccEmail" pInputText formControlName="ccEmail" type="email" />
+              </div>
+            </div>
+          </section>
+        </p-tabpanel>
+
+        @for (group of sponsorTypesArray.controls; track sponsorTypeTabValue($index); let sponsorTypeIndex = $index) {
+        <p-tabpanel [value]="sponsorTypeTabValue(sponsorTypeIndex)">
+          <article class="config-section sponsor-type-card" [formGroup]="group">
+              <div class="card-header">
+                <h3>{{ sponsorTypeTabLabel(sponsorTypeIndex) }}</h3>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-danger p-button-sm"
+                  [label]="'COMMON.REMOVE' | translate"
+                  (click)="removeSponsorType(sponsorTypeIndex)"
+                ></button>
+              </div>
+
+              <div class="form-grid">
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.NAME' | translate }}</label>
+                  <input pInputText formControlName="name" type="text" />
+                </div>
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.MAX_NUMBER' | translate }}</label>
+                  <p-inputNumber formControlName="maxNumber" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+                </div>
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.PRICE' | translate }}</label>
+                  <p-inputNumber formControlName="price" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+                </div>
+              </div>
+
+              <div class="form-grid two-columns">
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.COLOR' | translate }}</label>
+                  <p-colorPicker formControlName="color" appendTo="body" format="hex"></p-colorPicker>
+                </div>
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.FONT_COLOR' | translate }}</label>
+                  <p-colorPicker formControlName="fontColor" appendTo="body" format="hex"></p-colorPicker>
+                </div>
+              </div>
+
+              <div class="form-grid two-columns">
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_EN' | translate }}</label>
+                  <textarea pTextarea formControlName="descriptionEn" rows="3"></textarea>
+                </div>
+                <div class="field">
+                  <label>{{ 'CONFERENCE.SPONSOR_CONFIG.DESCRIPTION_FR' | translate }}</label>
+                  <textarea pTextarea formControlName="descriptionFr" rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE' | translate }}</label>
+                <p-select
+                  [options]="boothAllocationModeOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  formControlName="boothAllocationMode"
+                ></p-select>
+                <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_HELP' | translate }}</small>
+              </div>
+
+              <div class="field">
+                <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES' | translate }}</label>
+                <textarea pTextarea formControlName="boothNamesText" rows="3"></textarea>
+                <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>
+              </div>
+
+              <div class="field">
+                <div class="section-header quota-header">
+                  <h4>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_QUOTAS' | translate }}</h4>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    class="p-button-secondary p-button-sm"
+                    [label]="'CONFERENCE.SPONSOR_CONFIG.ADD_TICKET_QUOTA' | translate"
+                    (click)="addConferenceTicketQuota(sponsorTypeIndex)"
+                    [disabled]="ticketTypeOptions().length === 0"
+                  ></button>
+                </div>
+
+                @if (sponsorTypeQuotaArray(sponsorTypeIndex).controls.length === 0) {
+                <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_TICKET_QUOTAS' | translate }}</small>
+                }
+
+                @if (ticketTypeOptions().length === 0) {
+                <small>{{ 'CONFERENCE.SPONSOR_CONFIG.NO_BILLETWEB_SPONSOR_TICKETS' | translate }}</small>
+                }
+
+                <div formArrayName="conferenceTicketQuotas" class="quota-list">
+                  @for (quotaGroup of sponsorTypeQuotaArray(sponsorTypeIndex).controls; track $index; let quotaIndex = $index) {
+                  <div class="form-grid quota-row" [formGroupName]="$index">
+                    <div class="field">
+                      <label>{{ 'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE' | translate }}</label>
+                      <p-select
+                        [options]="ticketTypeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [placeholder]="'CONFERENCE.SPONSOR_CONFIG.SPONSOR_TICKET_TYPE_PLACEHOLDER' | translate"
+                        formControlName="conferenceTicketTypeId"
+                      ></p-select>
+                    </div>
+                    <div class="field">
+                      <label>{{ 'CONFERENCE.SPONSOR_CONFIG.QUOTA' | translate }}</label>
+                      <p-inputNumber formControlName="quota" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
+                    </div>
+                    <div class="field quota-action">
+                      <label>{{ 'COMMON.REMOVE' | translate }}</label>
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        class="p-button-danger p-button-sm"
+                        [label]="'COMMON.REMOVE' | translate"
+                        (click)="removeConferenceTicketQuota(sponsorTypeIndex, quotaIndex)"
+                      ></button>
+                    </div>
+                  </div>
+                  }
+                </div>
+              </div>
+          </article>
+        </p-tabpanel>
+        }
+      </p-tabpanels>
+    </p-tabs>
   </form>
   }
 </section>

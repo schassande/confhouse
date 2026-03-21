@@ -23,6 +23,7 @@ import { ColorPickerModule } from 'primeng/colorpicker';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
@@ -51,6 +52,7 @@ interface SelectOption {
     TextareaModule,
     ToastModule,
     SelectModule,
+    TabsModule,
   ],
   providers: [MessageService],
   templateUrl: './sponsor-config.component.html',
@@ -58,6 +60,10 @@ interface SelectOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SponsorConfigComponent {
+  readonly campaignTabValue = 'campaign';
+  readonly billingTabValue = 'billing';
+  readonly addSponsorTypeTabValue = 'add-sponsor-type';
+
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly conferenceService = inject(ConferenceService);
@@ -70,6 +76,7 @@ export class SponsorConfigComponent {
   readonly conference = signal<Conference | undefined>(undefined);
   readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly loading = signal(true);
+  readonly activeTabValue = signal(this.campaignTabValue);
   readonly ticketTypeOptions = computed<SelectOption[]>(() =>
     (this.billetwebConfig()?.ticketTypes?.sponsors ?? []).map((ticketType) => ({
       label: ticketType.ticketTypeName,
@@ -175,7 +182,9 @@ export class SponsorConfigComponent {
    * Adds one empty sponsor type card to the form.
    */
   addSponsorType(): void {
-    this.sponsorTypesArray.push(this.createSponsorTypeGroup());
+    const sponsorTypeGroup = this.createSponsorTypeGroup();
+    this.sponsorTypesArray.push(sponsorTypeGroup);
+    this.activeTabValue.set(this.sponsorTypeTabValue(this.sponsorTypesArray.length - 1));
   }
 
   /**
@@ -184,7 +193,9 @@ export class SponsorConfigComponent {
    * @param index Sponsor type index.
    */
   removeSponsorType(index: number): void {
+    const removedTabValue = this.sponsorTypeTabValue(index);
     this.sponsorTypesArray.removeAt(index);
+    this.ensureActiveTabAfterSponsorTypeRemoval(removedTabValue, index);
   }
 
   /**
@@ -220,6 +231,43 @@ export class SponsorConfigComponent {
    */
   removeBoothMap(index: number): void {
     this.sponsorBoothMapsArray.removeAt(index);
+  }
+
+  /**
+   * Activates one existing content tab or creates one sponsor type from the pseudo-tab.
+   *
+   * @param value Target tab value.
+   */
+  onTabChange(value: string | number | undefined): void {
+    const normalizedValue = String(value ?? '').trim();
+    if (normalizedValue === this.addSponsorTypeTabValue) {
+      this.addSponsorType();
+      return;
+    }
+
+    this.activeTabValue.set(normalizedValue || this.campaignTabValue);
+  }
+
+  /**
+   * Returns one stable tab value for a sponsor type form group.
+   *
+   * @param index Sponsor type index.
+   * @returns Tab value.
+   */
+  sponsorTypeTabValue(index: number): string {
+    const sponsorTypeId = String(this.sponsorTypesArray.at(index)?.get('id')?.value ?? '').trim();
+    return sponsorTypeId ? `sponsor-type-${sponsorTypeId}` : `sponsor-type-${index}`;
+  }
+
+  /**
+   * Returns the live tab label for one sponsor type.
+   *
+   * @param index Sponsor type index.
+   * @returns Sponsor type name or fallback label.
+   */
+  sponsorTypeTabLabel(index: number): string {
+    const sponsorTypeName = String(this.sponsorTypesArray.at(index)?.get('name')?.value ?? '').trim();
+    return sponsorTypeName || `${this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.SPONSOR_TYPE')} ${index + 1}`;
   }
 
   /**
@@ -326,6 +374,8 @@ export class SponsorConfigComponent {
     boothMaps.forEach((boothMap) =>
       this.sponsorBoothMapsArray.push(this.fb.control(String(boothMap ?? ''), { nonNullable: true }))
     );
+
+    this.activeTabValue.set(this.campaignTabValue);
   }
 
   /**
@@ -335,8 +385,9 @@ export class SponsorConfigComponent {
    * @returns Sponsor type form group.
    */
   private createSponsorTypeGroup(sponsorType?: SponsorType): FormGroup {
+    const sponsorTypeId = String(sponsorType?.id ?? '').trim() || this.generateSponsorTypeId();
     return this.fb.group({
-      id: [String(sponsorType?.id ?? '').trim()],
+      id: [sponsorTypeId],
       name: [String(sponsorType?.name ?? '').trim(), [Validators.required]],
       maxNumber: [Number(sponsorType?.maxNumber ?? 0)],
       price: [Number(sponsorType?.price ?? 0)],
@@ -497,6 +548,26 @@ export class SponsorConfigComponent {
       default:
         return 'MANUAL';
     }
+  }
+
+  /**
+   * Reconciles the active tab after one sponsor type removal.
+   *
+   * @param removedTabValue Removed tab value.
+   * @param removedIndex Removed sponsor type index.
+   */
+  private ensureActiveTabAfterSponsorTypeRemoval(removedTabValue: string, removedIndex: number): void {
+    if (this.activeTabValue() !== removedTabValue) {
+      return;
+    }
+
+    if (this.sponsorTypesArray.length === 0) {
+      this.activeTabValue.set(this.campaignTabValue);
+      return;
+    }
+
+    const fallbackIndex = Math.min(removedIndex, this.sponsorTypesArray.length - 1);
+    this.activeTabValue.set(this.sponsorTypeTabValue(fallbackIndex));
   }
 }
 
