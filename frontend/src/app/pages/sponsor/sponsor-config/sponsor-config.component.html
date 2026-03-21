@@ -225,6 +225,17 @@
           </div>
 
           <div class="field">
+            <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE' | translate }}</label>
+            <p-select
+              [options]="boothAllocationModeOptions()"
+              optionLabel="label"
+              optionValue="value"
+              formControlName="boothAllocationMode"
+            ></p-select>
+            <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_HELP' | translate }}</small>
+          </div>
+
+          <div class="field">
             <label>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES' | translate }}</label>
             <textarea pTextarea formControlName="boothNamesText" rows="3"></textarea>
             <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>

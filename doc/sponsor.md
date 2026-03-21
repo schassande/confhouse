@@ -59,8 +59,24 @@ It contains at least:
 - a price
 - a display color
 - a text color
+- a booth allocation mode
 - a list of available booth names
 - a list of conference ticket quotas
+
+`SponsorType.boothAllocationMode` defines how booths are assigned for that sponsorship offer.
+
+Allowed values are:
+
+- `MANUAL`: organizer assigns the booth explicitly
+- `RANDOM`: booth is assigned automatically without considering wishes
+- `REGISTRATION_DATE`: automatic allocation based on sponsor registration date and wishes
+- `WISHES_DATE`: automatic allocation based on last wishes update date and wishes
+- `CONFIRMATION_DATE`: automatic allocation based on confirmation date and wishes
+- `PAYMENT_DATE`: automatic allocation based on payment date and wishes
+
+Rules:
+
+- if no explicit value is configured, the default booth allocation mode is `MANUAL`
 
 ### Sponsorship Period
 

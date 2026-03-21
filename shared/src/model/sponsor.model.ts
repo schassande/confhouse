@@ -59,10 +59,22 @@ export interface SponsorType extends WithId {
   fontColor: string;
   /** List of possible booth names for this sponsor type. */
   boothNames: string[];
+  boothAllocationMode: BoothAllocationMode;
   /** List of conference ticket quotas for this sponsor type. */
   conferenceTicketQuotas: SponsorConferenceTicketQuota[];
 }
 
+/**
+ * define the way the booths are allocated to the sponsor
+ */
+export type BoothAllocationMode = 
+  'RANDOM' // Random allocation of the booth not based on the wishes
+  | 'MANUAL' // Organizer allocates manually the stand
+  | 'REGISTRATION_DATE' // Automatic allocation based on the registration date and the wishes
+  | 'WISHES_DATE'  // Automatic allocation based on the last whises date and the wishes
+  | 'CONFIRMATION_DATE'  // Automatic allocation based on the confirmation date and the wishes
+  | 'PAYMENT_DATE' // Automatic allocation based on the payment date and the wishes
+;
 /**
  * One conference ticket allocated to a sponsor.
  */

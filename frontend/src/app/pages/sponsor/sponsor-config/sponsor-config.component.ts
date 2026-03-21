@@ -28,7 +28,7 @@ import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
 import { BilletwebConfig } from '@shared/model/billetweb-config';
 import { Conference } from '@shared/model/conference.model';
-import { SponsorConferenceTicketQuota, SponsorType } from '@shared/model/sponsor.model';
+import { BoothAllocationMode, SponsorConferenceTicketQuota, SponsorType } from '@shared/model/sponsor.model';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 
@@ -76,6 +76,26 @@ export class SponsorConfigComponent {
       value: ticketType.ticketTypeId,
     }))
   );
+  readonly boothAllocationModeOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_MANUAL'), value: 'MANUAL' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_RANDOM'), value: 'RANDOM' },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_REGISTRATION_DATE'),
+      value: 'REGISTRATION_DATE',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_WISHES_DATE'),
+      value: 'WISHES_DATE',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_CONFIRMATION_DATE'),
+      value: 'CONFIRMATION_DATE',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_CONFIG.BOOTH_ALLOCATION_MODE_PAYMENT_DATE'),
+      value: 'PAYMENT_DATE',
+    },
+  ]);
 
   readonly form = this.fb.group({
     startDate: [''],
@@ -328,6 +348,7 @@ export class SponsorConfigComponent {
       descriptionFr: [
         String(sponsorType?.description?.['FR'] ?? sponsorType?.description?.['fr'] ?? '').trim(),
       ],
+      boothAllocationMode: [this.normalizeBoothAllocationMode(sponsorType?.boothAllocationMode)],
       boothNamesText: [Array.isArray(sponsorType?.boothNames) ? sponsorType?.boothNames.join('\n') : ''],
       conferenceTicketQuotas: this.fb.array<FormGroup>(
         (sponsorType?.conferenceTicketQuotas ?? []).map((quota) => this.createConferenceTicketQuotaGroup(quota))
@@ -365,6 +386,7 @@ export class SponsorConfigComponent {
       fontColor?: string;
       descriptionEn?: string;
       descriptionFr?: string;
+      boothAllocationMode?: BoothAllocationMode;
       boothNamesText?: string;
       conferenceTicketQuotas?: Array<{
         conferenceTicketTypeId?: string;
@@ -400,6 +422,7 @@ export class SponsorConfigComponent {
         EN: String(groupValue.descriptionEn ?? '').trim(),
         FR: String(groupValue.descriptionFr ?? '').trim(),
       },
+      boothAllocationMode: this.normalizeBoothAllocationMode(groupValue.boothAllocationMode),
       boothNames,
       conferenceTicketQuotas,
     };
@@ -454,6 +477,26 @@ export class SponsorConfigComponent {
       return '';
     }
     return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
+  }
+
+  /**
+   * Normalizes one booth allocation mode with a persisted fallback.
+   *
+   * @param value Raw booth allocation mode value.
+   * @returns Valid booth allocation mode.
+   */
+  private normalizeBoothAllocationMode(value: unknown): BoothAllocationMode {
+    switch (value) {
+      case 'RANDOM':
+      case 'REGISTRATION_DATE':
+      case 'WISHES_DATE':
+      case 'CONFIRMATION_DATE':
+      case 'PAYMENT_DATE':
+      case 'MANUAL':
+        return value;
+      default:
+        return 'MANUAL';
+    }
   }
 }
 
