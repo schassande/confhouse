@@ -9,10 +9,11 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { OrderListModule } from 'primeng/orderlist';
 import { SelectModule } from 'primeng/select';
+import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { Conference } from '@shared/model/conference.model';
-import { Sponsor, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
+import { ConferenceTicket, Sponsor, SponsorBusinessEvent, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
@@ -40,6 +41,7 @@ interface BoothWishItem {
     ReactiveFormsModule,
     RouterModule,
     SelectModule,
+    TabsModule,
     TextareaModule,
     ToastModule,
     TranslateModule,
@@ -88,6 +90,9 @@ export class SponsorApplicationComponent {
   readonly isSponsoringPeriodOpen = computed(() => this.isWithinSponsoringPeriod(this.conference()));
   readonly logoPreviewUrl = signal('');
   readonly boothWishItems = computed(() => this.boothWishItemsState());
+  readonly currentBusinessEvents = computed<SponsorBusinessEvent[]>(() =>
+    this.sponsorService.getSortedBusinessEvents(this.existingSponsor())
+  );
   readonly adminEmails = computed(() => {
     this.adminEmailsVersion();
     return this.adminEmailsControlValue();
@@ -301,6 +306,26 @@ export class SponsorApplicationComponent {
     return this.translateService.instant(`CONFERENCE.SPONSOR_APPLICATION.${prefix}`, {
       language: language.toUpperCase(),
     });
+  }
+
+  /**
+   * Returns the translated label for one sponsor business event.
+   *
+   * @param eventType Business event type.
+   * @returns Translated label.
+   */
+  businessEventLabel(eventType: SponsorBusinessEvent['type']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.EVENT_${eventType}`);
+  }
+
+  /**
+   * Returns the translated label for one sponsor ticket lifecycle status.
+   *
+   * @param status Ticket lifecycle status.
+   * @returns Translated label.
+   */
+  conferenceTicketStatusLabel(status: ConferenceTicket['status']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.TICKET_${status}`);
   }
 
   formatLocalDateTime(value: unknown): string {
