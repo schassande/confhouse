@@ -246,6 +246,23 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
   }
 
   /**
+   * Sends the sponsor paid invoice email through the backend action layer.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @returns Backend sponsor action report.
+   */
+  async sendSponsorPaidInvoice(
+    conferenceId: string,
+    sponsorId: string
+  ): Promise<SponsorActionReport> {
+    return await this.postSponsorOrganizerAction('sendSponsorPaidInvoice', {
+      conferenceId,
+      sponsorId,
+    });
+  }
+
+  /**
    * Sends the sponsor payment reminder email through the backend action layer.
    *
    * @param conferenceId Conference identifier.
@@ -319,6 +336,20 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    */
   async downloadSponsorInvoice(conferenceId: string, sponsorId: string): Promise<SponsorDocumentDownload> {
     return await this.postSponsorDocumentDownload('downloadSponsorInvoice', {
+      conferenceId,
+      sponsorId,
+    });
+  }
+
+  /**
+   * Downloads a regenerated paid sponsor invoice for one sponsor admin.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @returns Regenerated PDF payload.
+   */
+  async downloadSponsorPaidInvoice(conferenceId: string, sponsorId: string): Promise<SponsorDocumentDownload> {
+    return await this.postSponsorDocumentDownload('downloadSponsorPaidInvoice', {
       conferenceId,
       sponsorId,
     });

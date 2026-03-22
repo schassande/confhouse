@@ -26,7 +26,7 @@
           {{ 'CONFERENCE.SPONSOR_APPLICATION.PERIOD_CLOSED' | translate }}
         </div>
       }
-
+ct
       <div class="form-grid">
         <div class="form-section">
           @if (existingSponsor(); as sponsor) {
@@ -261,6 +261,15 @@
                 [disabled]="!sponsor.documents?.invoiceSentAt"
                 [loading]="isDocumentActionPending('invoice')"
                 (click)="onDownloadInvoice()"
+              ></button>
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                [label]="'CONFERENCE.SPONSOR_APPLICATION.DOWNLOAD_PAID_INVOICE' | translate"
+                [disabled]="!sponsor.documents?.invoicePaidSentAt"
+                [loading]="isDocumentActionPending('paid-invoice')"
+                (click)="onDownloadPaidInvoice()"
               ></button>
             </div>
           </div>

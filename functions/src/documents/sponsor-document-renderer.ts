@@ -28,6 +28,7 @@ function buildDocumentDefinition(payload: SponsorDocumentPayload): any {
   case 'ORDER_FORM':
     return buildSponsorOrderFormDefinition(payload);
   case 'INVOICE':
+  case 'INVOICE_PAID':
     return buildSponsorInvoiceDefinition(payload);
   default:
     throw new Error(`Unsupported sponsor document type: ${String(payload.documentType ?? '')}`);

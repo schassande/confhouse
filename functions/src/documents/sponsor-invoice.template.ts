@@ -30,7 +30,7 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
         }]
         : []),
       {
-        text: labels.documentType.INVOICE,
+        text: labels.documentType[payload.documentType],
         fontSize: 20,
         bold: true,
         margin: [0, 0, 0, 20],

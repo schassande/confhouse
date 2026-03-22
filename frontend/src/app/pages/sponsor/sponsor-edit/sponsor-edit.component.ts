@@ -34,6 +34,7 @@ import {
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
+import { StepperModule } from 'primeng/stepper';
 
 interface SelectOption {
   label: string;
@@ -57,6 +58,7 @@ type SponsorEditNotice = 'saved' | 'deleted';
     ToastModule,
     SelectModule,
     TabsModule,
+    StepperModule
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './sponsor-edit.component.html',
@@ -84,7 +86,7 @@ export class SponsorEditComponent implements OnInit {
   readonly loading = signal(true);
   readonly loadError = signal('');
   readonly actionInProgress = signal<string | null>(null);
-  readonly documentAction = signal<'order-form' | 'invoice' | null>(null);
+  readonly documentAction = signal<'order-form' | 'invoice' | 'paid-invoice' | null>(null);
   readonly mode = signal<SponsorEditMode>('create');
   readonly form = signal<FormGroup | null>(null);
   readonly editingId = signal<string | null>(null);
@@ -136,6 +138,7 @@ export class SponsorEditComponent implements OnInit {
     { label: this.translateService.instant('LANGUAGE.FR'), value: 'fr' },
     { label: this.translateService.instant('LANGUAGE.EN'), value: 'en' },
   ]);
+  readonly step = signal<number>(1);
 
   ngOnInit(): void {
     this.initializeMode();
@@ -362,6 +365,20 @@ export class SponsorEditComponent implements OnInit {
   }
 
   /**
+   * Downloads the regenerated sponsor paid invoice when it was previously sent.
+   */
+  async onDownloadPaidInvoice(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.invoicePaidSentAt) {
+      return;
+    }
+
+    await this.downloadSponsorDocument('paid-invoice', () =>
+      this.sponsorService.downloadSponsorPaidInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
    * Sends the sponsor invoice email through the backend action layer.
    */
   async onSendInvoice(): Promise<void> {
@@ -371,6 +388,19 @@ export class SponsorEditComponent implements OnInit {
     }
     await this.runSponsorAction('mail-invoice', async () =>
       await this.sponsorService.sendSponsorInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
+   * Sends the sponsor paid invoice email through the backend action layer.
+   */
+  async onSendPaidInvoice(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor || sponsor.paymentStatus !== 'PAID') {
+      return;
+    }
+    await this.runSponsorAction('mail-paid-invoice', async () =>
+      await this.sponsorService.sendSponsorPaidInvoice(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -417,7 +447,7 @@ export class SponsorEditComponent implements OnInit {
     return this.actionInProgress() === actionKey;
   }
 
-  isDocumentActionPending(action: 'order-form' | 'invoice'): boolean {
+  isDocumentActionPending(action: 'order-form' | 'invoice' | 'paid-invoice'): boolean {
     return this.documentAction() === action;
   }
 
@@ -533,6 +563,13 @@ export class SponsorEditComponent implements OnInit {
 
     this.editingId.set(sponsor.id);
     this.form.set(this.createForm(sponsor));
+    if (sponsor.paymentStatus === 'PAID') {
+      this.step.set(3);
+    } else if (sponsor.documents?.orderFormSentAt) {
+      this.step.set(2);
+    } else {
+      this.step.set(1);
+    }
   }
 
   private createForm(sponsor?: Sponsor): FormGroup {
@@ -753,7 +790,7 @@ export class SponsorEditComponent implements OnInit {
    * @param callback Backend callback.
    */
   private async downloadSponsorDocument(
-    action: 'order-form' | 'invoice',
+    action: 'order-form' | 'invoice' | 'paid-invoice',
     callback: () => Promise<{ sponsor: Sponsor; document: { filename: string; contentType: string; base64Content: string } }>
   ): Promise<void> {
     this.documentAction.set(action);

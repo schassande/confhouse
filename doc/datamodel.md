@@ -315,7 +315,8 @@ This entity is not embedded in `Conference`.
 
 Sponsor business operations use the following extension fields:
 - `businessEvents` stores dated business facts such as `ORDER_FORM_SENT`, `INVOICE_SENT`, `PAYMENT_REMINDER_SENT`, `BOOTH_ASSIGNED`, `BOOTH_CHANGED`, `TICKETS_ALLOCATED`
-- `documents` stores lightweight summary projections such as `orderFormSentAt`, `invoiceSentAt`, `lastReminderSentAt`
+- `businessEvents` also includes `INVOICE_PAID_SENT` for acquitted invoice sends
+- `documents` stores lightweight summary projections such as `orderFormSentAt`, `invoiceSentAt`, `invoicePaidSentAt`, `lastReminderSentAt`
 - `logistics` stores lightweight summary projections such as `boothAssignedAt` and `ticketsAllocatedAt`
 
 Rules:

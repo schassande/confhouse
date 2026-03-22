@@ -301,6 +301,7 @@ The initially retained business event types are:
 
 - `ORDER_FORM_SENT`
 - `INVOICE_SENT`
+- `INVOICE_PAID_SENT`
 - `PAYMENT_REMINDER_SENT`
 - `BOOTH_ASSIGNED`
 - `BOOTH_CHANGED`
@@ -315,6 +316,7 @@ interface SponsorBusinessEvent {
   type:
     | 'ORDER_FORM_SENT'
     | 'INVOICE_SENT'
+    | 'INVOICE_PAID_SENT'
     | 'PAYMENT_REMINDER_SENT'
     | 'BOOTH_ASSIGNED'
     | 'BOOTH_CHANGED'
@@ -336,6 +338,7 @@ For any significant business action concerning a sponsor, the application must:
 Examples:
 
 - sending an invoice -> add `INVOICE_SENT`
+- sending a paid invoice -> add `INVOICE_PAID_SENT`
 - sending an order form -> add `ORDER_FORM_SENT`
 - assigning a booth -> add `BOOTH_ASSIGNED`
 - allocating tickets -> add `TICKETS_ALLOCATED`
@@ -356,6 +359,7 @@ The initially retained projections are:
 documents?: {
   orderFormSentAt?: string;
   invoiceSentAt?: string;
+  invoicePaidSentAt?: string;
   lastReminderSentAt?: string;
 };
 
@@ -385,6 +389,7 @@ Examples:
 
 - action "send order form" -> event `ORDER_FORM_SENT`
 - action "send invoice" -> event `INVOICE_SENT`
+- action "send paid invoice" -> event `INVOICE_PAID_SENT`
 - action "send reminder" -> event `PAYMENT_REMINDER_SENT`
 
 ## Sponsor Emails
@@ -408,6 +413,7 @@ The initially retained sponsor email types are:
 - application confirmation
 - order form
 - invoice
+- paid invoice
 - payment reminder
 - administrative summary
 
@@ -475,6 +481,31 @@ History:
 - adds the `INVOICE_SENT` event
 - updates `documents.invoiceSentAt` if this projection is enabled
 
+## Paid Invoice Email
+
+The paid invoice email is used to send a sponsor an acquitted invoice once payment is confirmed.
+
+Rules:
+
+- it is triggered by the explicit action "send paid invoice"
+- it is only available when `paymentStatus = PAID`
+- it must not be sent implicitly from a simple status change
+- it must follow document idempotence rules
+
+Attachment:
+
+- paid invoice PDF
+
+Content rules:
+
+- it is generated from the invoice template
+- if `Sponsor.purchaseOrder` is present, it must appear in the paid invoice
+
+History:
+
+- adds the `INVOICE_PAID_SENT` event
+- updates `documents.invoicePaidSentAt` if this projection is enabled
+
 ## Payment Reminder Email
 
 The payment reminder email is used to remind a sponsor about an expected or overdue payment.
@@ -523,6 +554,7 @@ The following table defines the reference sponsor emails:
 | Application confirmation | Explicit application notification action | None required | None required |
 | Order form | "send order form" action | Order form PDF | `ORDER_FORM_SENT` |
 | Invoice | "send invoice" action | Invoice PDF | `INVOICE_SENT` |
+| Paid invoice | "send paid invoice" action | Paid invoice PDF | `INVOICE_PAID_SENT` |
 | Payment reminder | "send reminder" action | None required | `PAYMENT_REMINDER_SENT` |
 | Administrative summary | Explicit administrative notification action | None required | None required |
 
@@ -539,6 +571,7 @@ The officially retained attachments at this stage are:
 
 - order form PDF
 - invoice PDF
+- paid invoice PDF
 
 ## Sponsor Self-service Document Download
 
@@ -552,6 +585,12 @@ Rules:
 - generated files are not stored
 - regeneration uses the current `Sponsor.communicationLanguage`
 - only documents already sent before are available for download
+
+Available sponsor self-service downloads include:
+
+- order form PDF after `documents.orderFormSentAt`
+- invoice PDF after `documents.invoiceSentAt`
+- paid invoice PDF after `documents.invoicePaidSentAt`
 
 ## Email and Sponsor Consistency Rules
 

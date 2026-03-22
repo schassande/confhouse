@@ -26,6 +26,7 @@ export type SponsorCommunicationLanguage = 'fr' | 'en';
 export type SponsorBusinessEventType =
   | 'ORDER_FORM_SENT'
   | 'INVOICE_SENT'
+  | 'INVOICE_PAID_SENT'
   | 'PAYMENT_REMINDER_SENT'
   | 'BOOTH_ASSIGNED'
   | 'BOOTH_CHANGED'
@@ -101,6 +102,7 @@ export interface SponsorBusinessEvent {
 export interface SponsorDocuments {
   orderFormSentAt?: string;
   invoiceSentAt?: string;
+  invoicePaidSentAt?: string;
   lastReminderSentAt?: string;
 }
 

@@ -31,6 +31,7 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     documentType: {
       ORDER_FORM: 'Order Form',
       INVOICE: 'Invoice',
+      INVOICE_PAID: 'Paid Invoice',
     },
     issuer: 'Issuer',
     recipient: 'Recipient',
@@ -56,6 +57,7 @@ export const DOCUMENT_LABELS: Record<SponsorDocumentLocale, SponsorDocumentLabel
     documentType: {
       ORDER_FORM: 'Bon de commande',
       INVOICE: 'Facture',
+      INVOICE_PAID: 'Facture acquittee',
     },
     issuer: 'Emetteur',
     recipient: 'Destinataire',

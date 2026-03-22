@@ -26,7 +26,7 @@ import {
 } from '../sponsor/sponsor-model';
 import { createMailHistoryRecord, updateMailHistoryRecord } from '../mail/mail-history';
 import { MailjetService } from '../mail/mailjet-service';
-import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload } from '../documents/sponsor-document-builders';
+import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload, buildSponsorPaidInvoicePayload } from '../documents/sponsor-document-builders';
 import { renderSponsorDocumentPdf } from '../documents/sponsor-document-renderer';
 import { MailAttachment, MailRecipient, TransactionalEmailPayload } from '../mail/mail-model';
 import { MAILJET_SECRETS } from '../mail/mailjet-secrets';
@@ -44,11 +44,12 @@ type SponsorActionOperation =
   | 'ALLOCATE_TICKETS'
   | 'SEND_ORDER_FORM'
   | 'SEND_INVOICE'
+  | 'SEND_PAID_INVOICE'
   | 'SEND_PAYMENT_REMINDER'
   | 'SEND_APPLICATION_CONFIRMATION'
   | 'SEND_ADMINISTRATIVE_SUMMARY';
 
-type SponsorDocumentDownloadOperation = 'DOWNLOAD_ORDER_FORM' | 'DOWNLOAD_INVOICE';
+type SponsorDocumentDownloadOperation = 'DOWNLOAD_ORDER_FORM' | 'DOWNLOAD_INVOICE' | 'DOWNLOAD_PAID_INVOICE';
 
 interface SponsorActionReport {
   sponsor: Record<string, unknown>;
@@ -105,6 +106,7 @@ interface GeneratedSponsorDocument {
 type SponsorMailMessageType =
   | 'SPONSOR_ORDER_FORM'
   | 'SPONSOR_INVOICE'
+  | 'SPONSOR_PAID_INVOICE'
   | 'SPONSOR_PAYMENT_REMINDER'
   | 'SPONSOR_APPLICATION_CONFIRMATION'
   | 'SPONSOR_ADMINISTRATIVE_SUMMARY';
@@ -292,6 +294,37 @@ export const sendSponsorInvoice = onRequest({ cors: true, timeoutSeconds: 120, s
 });
 
 /**
+ * Sends the sponsor paid invoice email with its generated PDF attachment.
+ */
+export const sendSponsorPaidInvoice = onRequest({ cors: true, timeoutSeconds: 120, secrets: MAILJET_SECRETS }, async (req, res) => {
+  await handleSponsorAction(req, res, 'SEND_PAID_INVOICE', async (context) => {
+    ensureSponsorPaymentMarkedAsPaid(context, 'SEND_PAID_INVOICE');
+    return await sendSponsorDocumentEmail(context, {
+      messageType: 'SPONSOR_PAID_INVOICE',
+      eventType: 'INVOICE_PAID_SENT',
+      buildIdempotenceKey: (payload) => buildSponsorDocumentIdempotenceKey(
+        'SPONSOR_PAID_INVOICE',
+        context.conferenceId,
+        context.sponsorId,
+        `${payload.documentNumber ?? 'latest'}:${payload.issueDate}:${payload.dueDate ?? ''}:${String(context.sponsorData.paymentStatusDate ?? '').trim()}`
+      ),
+      buildPayload: () => buildSponsorPaidInvoicePayload(context.conferenceData as any, context.sponsorData as any),
+      buildEmailPayload: (attachment, locale) => ({
+        messageType: 'SPONSOR_PAID_INVOICE',
+        subject: buildLocalizedSponsorMailSubject('SPONSOR_PAID_INVOICE', locale, context.conferenceData),
+        textPart: buildLocalizedSponsorMailText('SPONSOR_PAID_INVOICE', locale, context.conferenceData),
+        attachments: [attachment],
+        metadata: {
+          conferenceId: context.conferenceId,
+          sponsorId: context.sponsorId,
+          locale,
+        },
+      }),
+    });
+  });
+});
+
+/**
  * Sends the sponsor payment reminder email.
  */
 export const sendSponsorPaymentReminder = onRequest(
@@ -358,6 +391,13 @@ export const downloadSponsorOrderForm = onRequest({ cors: true, timeoutSeconds: 
  */
 export const downloadSponsorInvoice = onRequest({ cors: true, timeoutSeconds: 120 }, async (req, res) => {
   await handleSponsorDocumentDownload(req, res, 'DOWNLOAD_INVOICE', 'INVOICE');
+});
+
+/**
+ * Regenerates and returns the sponsor paid invoice for one sponsor admin or conference organizer.
+ */
+export const downloadSponsorPaidInvoice = onRequest({ cors: true, timeoutSeconds: 120 }, async (req, res) => {
+  await handleSponsorDocumentDownload(req, res, 'DOWNLOAD_PAID_INVOICE', 'INVOICE_PAID');
 });
 
 /**
@@ -458,7 +498,7 @@ async function handleSponsorDocumentDownload(
   req: any,
   res: any,
   operation: SponsorDocumentDownloadOperation,
-  documentType: 'ORDER_FORM' | 'INVOICE'
+  documentType: 'ORDER_FORM' | 'INVOICE' | 'INVOICE_PAID'
 ): Promise<void> {
   const startedAt = Date.now();
   try {
@@ -478,12 +518,18 @@ async function handleSponsorDocumentDownload(
     }
     const payload = documentType === 'ORDER_FORM'
       ? buildSponsorOrderFormPayload(context.conferenceData as any, context.sponsorData as any)
-      : buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any);
+      : documentType === 'INVOICE'
+        ? buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any)
+        : buildSponsorPaidInvoicePayload(context.conferenceData as any, context.sponsorData as any);
 
     const document = await generateSponsorDocumentAttachment(
       payload,
       context.sponsorId,
-      documentType === 'ORDER_FORM' ? 'SPONSOR_ORDER_FORM' : 'SPONSOR_INVOICE'
+      documentType === 'ORDER_FORM'
+        ? 'SPONSOR_ORDER_FORM'
+        : documentType === 'INVOICE'
+          ? 'SPONSOR_INVOICE'
+          : 'SPONSOR_PAID_INVOICE'
     );
     logger.info('sponsor document regenerated for download', {
       operation,
@@ -892,6 +938,33 @@ function parseSponsorPaymentStatus(value: unknown): SponsorPaymentStatus {
 }
 
 /**
+ * Ensures the sponsor is marked as paid before generating or sending the paid invoice.
+ *
+ * @param context Authorized sponsor action context.
+ * @param operation Current operation name.
+ */
+function ensureSponsorPaymentMarkedAsPaid(
+  context: AuthorizedSponsorContext,
+  operation: SponsorActionOperation
+): void {
+  const paymentStatus = String(context.sponsorData?.paymentStatus ?? '').trim();
+  if (paymentStatus === 'PAID') {
+    return;
+  }
+
+  throw new HttpError(
+    409,
+    'Paid invoice is only available once payment status is PAID',
+    `${operation} rejected: sponsor payment status is not PAID`,
+    {
+      conferenceId: context.conferenceId,
+      sponsorId: context.sponsorId,
+      paymentStatus,
+    }
+  );
+}
+
+/**
  * Reads and validates `sponsorId` from request body.
  *
  * @param body HTTP request body.
@@ -999,12 +1072,14 @@ function buildSponsorDocumentIdempotenceKey(
  */
 function getPreviouslySentDocumentTimestamp(
   sponsorData: Record<string, unknown>,
-  documentType: 'ORDER_FORM' | 'INVOICE'
+  documentType: 'ORDER_FORM' | 'INVOICE' | 'INVOICE_PAID'
 ): string | undefined {
   const documents = sponsorData.documents as Record<string, unknown> | undefined;
   const rawValue = documentType === 'ORDER_FORM'
     ? documents?.orderFormSentAt
-    : documents?.invoiceSentAt;
+    : documentType === 'INVOICE'
+      ? documents?.invoiceSentAt
+      : documents?.invoicePaidSentAt;
   const value = String(rawValue ?? '').trim();
   return value || undefined;
 }
@@ -1054,6 +1129,7 @@ function buildLocalizedSponsorMailSubject(
     ? {
       SPONSOR_ORDER_FORM: 'Bon de commande',
       SPONSOR_INVOICE: 'Facture',
+      SPONSOR_PAID_INVOICE: 'Facture acquittee',
       SPONSOR_PAYMENT_REMINDER: 'Relance de paiement',
       SPONSOR_APPLICATION_CONFIRMATION: 'Confirmation de candidature sponsor',
       SPONSOR_ADMINISTRATIVE_SUMMARY: 'Recapitulatif administratif',
@@ -1061,6 +1137,7 @@ function buildLocalizedSponsorMailSubject(
     : {
       SPONSOR_ORDER_FORM: 'Order form',
       SPONSOR_INVOICE: 'Invoice',
+      SPONSOR_PAID_INVOICE: 'Paid invoice',
       SPONSOR_PAYMENT_REMINDER: 'Payment reminder',
       SPONSOR_APPLICATION_CONFIRMATION: 'Sponsor application confirmation',
       SPONSOR_ADMINISTRATIVE_SUMMARY: 'Administrative summary',
@@ -1088,6 +1165,8 @@ function buildLocalizedSponsorMailText(
       return `Veuillez trouver en piece jointe le bon de commande pour ${conferenceName}.`;
     case 'SPONSOR_INVOICE':
       return `Veuillez trouver en piece jointe la facture pour ${conferenceName}.`;
+    case 'SPONSOR_PAID_INVOICE':
+      return `Veuillez trouver en piece jointe la facture acquittee pour ${conferenceName}.`;
     case 'SPONSOR_PAYMENT_REMINDER':
       return `Ceci est un rappel concernant votre paiement sponsor pour ${conferenceName}.`;
     case 'SPONSOR_APPLICATION_CONFIRMATION':
@@ -1104,6 +1183,8 @@ function buildLocalizedSponsorMailText(
     return `Please find attached the order form for ${conferenceName}.`;
   case 'SPONSOR_INVOICE':
     return `Please find attached the invoice for ${conferenceName}.`;
+  case 'SPONSOR_PAID_INVOICE':
+    return `Please find attached the paid invoice for ${conferenceName}.`;
   case 'SPONSOR_PAYMENT_REMINDER':
     return `This is a reminder regarding your sponsor payment for ${conferenceName}.`;
   case 'SPONSOR_APPLICATION_CONFIRMATION':

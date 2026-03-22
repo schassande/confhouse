@@ -110,12 +110,14 @@ function resolveDocumentLocale(
  * @returns ISO issue date.
  */
 function resolveIssueDate(
-  documentType: 'ORDER_FORM' | 'INVOICE',
+  documentType: 'ORDER_FORM' | 'INVOICE' | 'INVOICE_PAID',
   sponsor: SponsorDocumentSponsorSource
 ): string {
   const firstSentAt = documentType === 'ORDER_FORM'
     ? sponsor.documents?.orderFormSentAt
-    : sponsor.documents?.invoiceSentAt;
+    : documentType === 'INVOICE'
+      ? sponsor.documents?.invoiceSentAt
+      : sponsor.documents?.invoicePaidSentAt;
   const firstIssuedDate = String(firstSentAt ?? '').trim().slice(0, 10);
   return firstIssuedDate || new Date().toISOString().slice(0, 10);
 }
@@ -272,7 +274,7 @@ function computeTotals(lineItems: SponsorDocumentLineItem[], vatRate: number) {
  * @returns Normalized sponsor document payload.
  */
 function buildBaseSponsorDocumentPayload(
-  documentType: 'ORDER_FORM' | 'INVOICE',
+  documentType: 'ORDER_FORM' | 'INVOICE' | 'INVOICE_PAID',
   conference: SponsorDocumentConferenceSource,
   sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentPayload {
@@ -301,7 +303,7 @@ function buildBaseSponsorDocumentPayload(
     lineItems,
     totals: computeTotals(lineItems, vatRate),
     issueDate,
-    dueDate: documentType === 'INVOICE' ? resolveInvoiceDueDate(sponsor, issueDate) : undefined,
+    dueDate: documentType === 'ORDER_FORM' ? undefined : resolveInvoiceDueDate(sponsor, issueDate),
     documentNumber: buildSponsorAccountingDocumentNumber(conference, sponsor),
     currency: 'EUR',
     legalNotes: Array.isArray(conference.sponsoring?.legalNotes)
@@ -339,4 +341,18 @@ export function buildSponsorInvoicePayload(
   sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentPayload {
   return buildBaseSponsorDocumentPayload('INVOICE', conference, sponsor);
+}
+
+/**
+ * Builds the normalized payload for a paid sponsor invoice document.
+ *
+ * @param conference Conference source data.
+ * @param sponsor Sponsor source data.
+ * @returns Paid invoice payload.
+ */
+export function buildSponsorPaidInvoicePayload(
+  conference: SponsorDocumentConferenceSource,
+  sponsor: SponsorDocumentSponsorSource
+): SponsorDocumentPayload {
+  return buildBaseSponsorDocumentPayload('INVOICE_PAID', conference, sponsor);
 }

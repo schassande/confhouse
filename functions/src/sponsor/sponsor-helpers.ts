@@ -147,6 +147,9 @@ export function applySponsorDocumentProjection(
   case 'INVOICE_SENT':
     nextDocuments.invoiceSentAt = eventAt;
     return nextDocuments;
+  case 'INVOICE_PAID_SENT':
+    nextDocuments.invoicePaidSentAt = eventAt;
+    return nextDocuments;
   case 'PAYMENT_REMINDER_SENT':
     nextDocuments.lastReminderSentAt = eventAt;
     return nextDocuments;
@@ -246,3 +249,4 @@ export function applySuccessfulSponsorBusinessEvent<T extends SponsorRecord>(
     logistics: applySponsorLogisticsProjection(withEvent.logistics, event.type, event.at),
   };
 }
+

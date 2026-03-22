@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload } from '../documents/sponsor-document-builders';
+import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload, buildSponsorPaidInvoicePayload } from '../documents/sponsor-document-builders';
 import { getSponsorDocumentDefinition, renderSponsorDocumentPdf } from '../documents/sponsor-document-renderer';
 import { formatAmount } from '../documents/sponsor-document-template-common';
 import {
@@ -48,7 +48,7 @@ test('getSponsorOrderFormDefinition exposes the conference logo like the invoice
   const definition = getSponsorDocumentDefinition(payload);
   assert.equal(definition.content[0].image, 'https://snowcamp.io/img/logo/snowcamp.svg');
   assert.equal(definition.content[1].text, 'Order Form');
-  assert.equal(definition.content[2].columns[1].stack[2].text, '42 Avenue des Sponsors, 75010 Paris, France');
+  assert.equal(definition.content[2].columns[1].stack[1].text, '42 Avenue des Sponsors, 75010 Paris, France');
 });
 
 test('buildSponsorInvoicePayload keeps due date and localized description fallback from business objects', () => {
@@ -87,6 +87,20 @@ test('buildSponsorInvoicePayload defaults due date to one month after issue date
   assert.equal(payload.dueDate, '2026-02-28');
 });
 
+test('buildSponsorPaidInvoicePayload uses the paid invoice issue date and invoice layout label', () => {
+  const payload = buildSponsorPaidInvoicePayload(
+    SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
+    SAMPLE_SPONSOR_DOCUMENT_SPONSOR
+  );
+
+  assert.equal(payload.documentType, 'INVOICE_PAID');
+  assert.equal(payload.issueDate, '2026-02-20');
+  assert.equal(payload.dueDate, '2026-02-15');
+
+  const definition = getSponsorDocumentDefinition(payload);
+  assert.equal(definition.content[1].text, 'Facture acquittee');
+});
+
 test('formatAmount normalizes French currency spacing for PDF rendering', () => {
   const formatted = formatAmount(3000, 'fr');
 
@@ -121,7 +135,7 @@ test('getSponsorDocumentDefinition exposes expected core sections', () => {
   assert.equal(definition.pageSize, 'A4');
   assert.equal(definition.content[0].image, 'https://snowcamp.io/img/logo/snowcamp.svg');
   assert.equal(definition.content[1].text, 'Invoice');
-  assert.equal(definition.content[2].columns[1].stack[2].text, '42 Avenue des Sponsors, 75010 Paris, France');
+  assert.equal(definition.content[2].columns[1].stack[1].text, '42 Avenue des Sponsors, 75010 Paris, France');
   assert.equal(
     definition.content[4].table.body[1][0].stack[0].text,
     'Conference sponsorship Etoile for Snowcamp 2026 from 01/15/2026 to 01/17/2026'

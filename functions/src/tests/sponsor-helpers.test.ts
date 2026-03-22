@@ -66,6 +66,17 @@ test('applySuccessfulSponsorBusinessEvent updates document projections', () => {
   assert.equal(next.documents?.orderFormSentAt, undefined);
 });
 
+test('applySuccessfulSponsorBusinessEvent updates paid invoice projection', () => {
+  const next = applySuccessfulSponsorBusinessEvent(buildSponsorRecord(), {
+    type: 'INVOICE_PAID_SENT',
+    at: '2026-03-20T10:00:00.000Z',
+    by: 'organizer@example.com',
+  });
+
+  assert.equal(next.businessEvents?.length, 1);
+  assert.equal(next.documents?.invoicePaidSentAt, '2026-03-20T10:00:00.000Z');
+});
+
 test('applySuccessfulSponsorBusinessEvent updates booth projection with latest booth change date', () => {
   const assigned = applySuccessfulSponsorBusinessEvent(buildSponsorRecord(), {
     type: 'BOOTH_ASSIGNED',

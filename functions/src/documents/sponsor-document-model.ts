@@ -6,7 +6,7 @@ export type SponsorDocumentLocale = 'en' | 'fr';
 /**
  * Supported sponsor document types.
  */
-export type SponsorDocumentType = 'ORDER_FORM' | 'INVOICE';
+export type SponsorDocumentType = 'ORDER_FORM' | 'INVOICE' | 'INVOICE_PAID';
 
 /**
  * Localized text map used by source business records.
@@ -71,6 +71,7 @@ export interface SponsorDocumentSponsorSource {
   documents?: {
     orderFormSentAt?: string;
     invoiceSentAt?: string;
+    invoicePaidSentAt?: string;
   };
 }
 

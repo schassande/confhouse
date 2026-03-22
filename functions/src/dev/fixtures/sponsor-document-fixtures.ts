@@ -66,5 +66,6 @@ export const SAMPLE_SPONSOR_DOCUMENT_SPONSOR: SponsorDocumentSponsorSource = {
   documents: {
     orderFormSentAt: '2026-01-10T09:30:00.000Z',
     invoiceSentAt: '2026-01-15T09:30:00.000Z',
+    invoicePaidSentAt: '2026-02-20T09:30:00.000Z',
   },
 };

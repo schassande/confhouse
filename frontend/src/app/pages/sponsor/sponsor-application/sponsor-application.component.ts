@@ -78,7 +78,7 @@ export class SponsorApplicationComponent {
   ]);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly documentAction = signal<'order-form' | 'invoice' | null>(null);
+  readonly documentAction = signal<'order-form' | 'invoice' | 'paid-invoice' | null>(null);
   readonly adminEmailsVersion = signal(0);
   readonly boothWishItemsState = signal<BoothWishItem[]>([]);
   readonly selectedBoothWishItems = signal<BoothWishItem[]>([]);
@@ -550,6 +550,19 @@ export class SponsorApplicationComponent {
   }
 
   /**
+   * Downloads the regenerated sponsor paid invoice when it was previously sent.
+   */
+  async onDownloadPaidInvoice(): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.invoicePaidSentAt) {
+      return;
+    }
+    await this.downloadSponsorDocument('paid-invoice', () =>
+      this.sponsorService.downloadSponsorPaidInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
    * Returns whether sponsor self-service is currently allowed for the conference.
    *
    * @param conference Loaded conference.
@@ -618,7 +631,7 @@ export class SponsorApplicationComponent {
    * @param callback Backend callback.
    */
   private async downloadSponsorDocument(
-    action: 'order-form' | 'invoice',
+    action: 'order-form' | 'invoice' | 'paid-invoice',
     callback: () => Promise<{ sponsor: Sponsor; document: { filename: string; contentType: string; base64Content: string } }>
   ): Promise<void> {
     this.documentAction.set(action);
@@ -640,7 +653,7 @@ export class SponsorApplicationComponent {
    * @param action Document action key.
    * @returns `true` when the action is running.
    */
-  isDocumentActionPending(action: 'order-form' | 'invoice'): boolean {
+  isDocumentActionPending(action: 'order-form' | 'invoice' | 'paid-invoice'): boolean {
     return this.documentAction() === action;
   }
 

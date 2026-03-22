@@ -25,7 +25,7 @@
 
   @if (form(); as formGroup) {
   <form [formGroup]="formGroup" class="sponsor-form">
-    <p-tabs [value]="0" class="sponsor-tabs">
+    <p-tabs class="sponsor-tabs" [value]="0">
       <p-tablist>
         <p-tab [value]="0">{{ 'CONFERENCE.SPONSOR_MANAGE.GENERAL_INFO' | translate }}</p-tab>
         <p-tab [value]="1">{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICING' | translate }}</p-tab>
@@ -168,117 +168,187 @@
           <section class="panel-section">
             <div class="form-row">
               <div class="form-section">
-                <label for="invoiceDueDate" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_DUE_DATE' | translate }} {{conference()?.edition}}-{{currentEditingSponsor()?.acceptedNumber != null ? (currentEditingSponsor()?.acceptedNumber | number:'2.0-0') : 'XX'}}</label>
-                <input id="invoiceDueDate" pInputText formControlName="invoiceDueDate" type="date" class="w-full" />
-                <label for="purchaseOrder" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PURCHASE_ORDER' | translate }}</label>
-                <input id="purchaseOrder" pInputText formControlName="purchaseOrder" type="text" class="w-full" />
+                <label for="address" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.ADDRESS' | translate }}</label>
               </div>
               <div class="form-section">
-                <label for="address" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.ADDRESS' | translate }}</label>
                 <textarea id="address" pTextarea formControlName="address" rows="4" class="w-full"></textarea>
               </div>
             </div>
             <div class="form-row">
-              @if (currentEditingSponsor(); as editingSponsor) {
-                <div class="form-section">
-                  <button
-                    pButton
-                    type="button"
-                    class="p-button-secondary"
-                    [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_ORDER_FORM' | translate"
-                    [loading]="isActionPending('mail-order-form')"
-                    (click)="onSendOrderForm()"
-                  ></button>
-                  <div class="document-status">
-                    @if (editingSponsor.documents?.orderFormSentAt) {
-                    <a
-                      href=""
-                      class="document-link"
-                      [class.disabled]="isDocumentActionPending('order-form')"
-                      (click)="$event.preventDefault(); onDownloadOrderForm()"
-                    >
-                      {{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_SENT_AT_LINK' | translate:{
-                        date: formatLocalDateTime(editingSponsor.documents?.orderFormSentAt)
-                      } }}
-                    </a>
-                    } @else {
-                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_NOT_SENT' | translate }}</span>
-                    }
-                  </div>
-                </div>
-              }
-              @if (currentEditingSponsor(); as editingSponsor) {
-                <div class="form-section">
-                  <button
-                    pButton
-                    type="button"
-                    class="p-button-secondary"
-                    [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_INVOICE' | translate"
-                    [loading]="isActionPending('mail-invoice')"
-                    (click)="onSendInvoice()"
-                  ></button>
-                  <div class="document-status">
-                    @if (editingSponsor.documents?.invoiceSentAt) {
-                    <a
-                      href=""
-                      class="document-link"
-                      [class.disabled]="isDocumentActionPending('invoice')"
-                      (click)="$event.preventDefault(); onDownloadInvoice()"
-                    >
-                      {{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_SENT_AT_LINK' | translate:{
-                        date: formatLocalDateTime(editingSponsor.documents?.invoiceSentAt)
-                      } }}
-                    </a>
-                    } @else {
-                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_NOT_SENT' | translate }}</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            <div class="form-row">
               <div class="form-section">
-                <label for="paymentStatus" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS' | translate }}</label>
-                <p-select
-                  inputId="paymentStatus"
-                  [options]="paymentStatusOptions()"
-                  optionLabel="label"
-                  optionValue="value"
-                  formControlName="paymentStatus"
-                  class="w-full"
-                ></p-select>
-                @if (currentEditingSponsor(); as editingSponsor) {
-                  {{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS_DATE' | translate }} {{ formatLocalDateTime(editingSponsor.paymentStatusDate) }}
-                }
+                <label for="invoiceDueDate" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_DUE_DATE' | translate }} {{conference()?.edition}}-{{currentEditingSponsor()?.acceptedNumber != null ? (currentEditingSponsor()?.acceptedNumber | number:'2.0-0') : 'XX'}}</label>
               </div>
-              @if (isEditing()) {
-                @if (currentEditingSponsor(); as editingSponsor) {
-                  <div class="form-section">
-                    <button
-                      pButton
-                      type="button"
-                      style="margin-top: 30px;"
-                      class="p-button-secondary"
-                      [label]="'CONFERENCE.SPONSOR_MANAGE.APPLY_PAYMENT_STATUS' | translate"
-                      [loading]="isActionPending('payment')"
-                      (click)="onApplyPaymentStatus()"
-                    ></button>
-                    <button
-                      pButton
-                      type="button"
-                      class="p-button-secondary"
-                      [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_PAYMENT_REMINDER' | translate"
-                      [loading]="isActionPending('mail-reminder')"
-                      (click)="onSendPaymentReminder()"
-                    ></button>
-                    <div style="text-align: center;">
-                      <span>{{ 'CONFERENCE.SPONSOR_MANAGE.LAST_REMINDER_SENT_AT' | translate }}</span>
-                      <span style="margin-left: 5px;">{{ formatLocalDateTime(editingSponsor.documents?.lastReminderSentAt) }}</span>
-                    </div>
-                  </div>
-                }
-              }
+              <div class="form-section">
+                <input id="invoiceDueDate" pInputText formControlName="invoiceDueDate" type="date" class="w-full" />
+              </div>
             </div>
+            @if (currentEditingSponsor(); as editingSponsor) {
+              <p-stepper [value]="step()">
+                <p-step-item [value]="1">
+                    <p-step>Order</p-step>
+                    <p-step-panel>
+                      <ng-template pTemplate="content">
+                        <div class="form-row">
+                          <div class="form-section">
+                            <label for="purchaseOrder" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PURCHASE_ORDER' | translate }}</label>
+                            <input id="purchaseOrder" pInputText formControlName="purchaseOrder" type="text" class="w-full" />
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-section">
+                            <div class="document-status">
+                              @if (editingSponsor.documents?.orderFormSentAt) {
+                              <a
+                                href=""
+                                class="document-link"
+                                [class.disabled]="isDocumentActionPending('order-form')"
+                                (click)="$event.preventDefault(); onDownloadOrderForm()"
+                              >
+                                {{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_SENT_AT_LINK' | translate:{
+                                  date: formatLocalDateTime(editingSponsor.documents?.orderFormSentAt)
+                                } }}
+                              </a>
+                              } @else {
+                              <span>{{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_NOT_SENT' | translate }}</span>
+                              }
+                            </div>
+                          </div>
+                          <div class="form-section">
+                            <button
+                              pButton
+                              type="button"
+                              class="p-button-secondary"
+                              [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_ORDER_FORM' | translate"
+                              [loading]="isActionPending('mail-order-form')"
+                              (click)="onSendOrderForm()"
+                            ></button>
+                          </div>
+                        </div>
+                      </ng-template>
+                  </p-step-panel>
+              </p-step-item>
+
+              <p-step-item [value]="2">
+                <p-step>Invoice</p-step>
+                <p-step-panel>
+                    <ng-template pTemplate="content">
+                      <div class="form-row">
+                        <div class="form-section">
+                          <div class="document-status">
+                            @if (editingSponsor.documents?.invoiceSentAt) {
+                            <a
+                              href=""
+                              class="document-link"
+                              [class.disabled]="isDocumentActionPending('invoice')"
+                              (click)="$event.preventDefault(); onDownloadInvoice()"
+                            >
+                              {{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_SENT_AT_LINK' | translate:{
+                                date: formatLocalDateTime(editingSponsor.documents?.invoiceSentAt)
+                              } }}
+                            </a>
+                            } @else {
+                            <span>{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_NOT_SENT' | translate }}</span>
+                            }
+                          </div>
+                        </div>
+                        <div class="form-section">
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-secondary"
+                            [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_INVOICE' | translate"
+                            [loading]="isActionPending('mail-invoice')"
+                            (click)="onSendInvoice()"
+                          ></button>
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-section">
+                          <label for="paymentStatus" class="form-label">{{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS' | translate }}</label>
+                          <p-select
+                            inputId="paymentStatus"
+                            [options]="paymentStatusOptions()"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="paymentStatus"
+                            class="w-full"
+                          ></p-select>
+                          @if (currentEditingSponsor(); as editingSponsor) {
+                            {{ 'CONFERENCE.SPONSOR_MANAGE.PAYMENT_STATUS_DATE' | translate }} {{ formatLocalDateTime(editingSponsor.paymentStatusDate) }}
+                          }
+                        </div>
+                        @if (isEditing()) {
+                          @if (currentEditingSponsor(); as editingSponsor) {
+                            <div class="form-section">
+                              <button
+                                pButton
+                                type="button"
+                                style="margin-top: 30px;"
+                                class="p-button-secondary"
+                                [label]="'CONFERENCE.SPONSOR_MANAGE.APPLY_PAYMENT_STATUS' | translate"
+                                [loading]="isActionPending('payment')"
+                                (click)="onApplyPaymentStatus()"
+                              ></button>
+                              <button
+                                pButton
+                                type="button"
+                                class="p-button-secondary"
+                                [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_PAYMENT_REMINDER' | translate"
+                                [loading]="isActionPending('mail-reminder')"
+                                (click)="onSendPaymentReminder()"
+                              ></button>
+                              <div style="text-align: center;">
+                                <span>{{ 'CONFERENCE.SPONSOR_MANAGE.LAST_REMINDER_SENT_AT' | translate }}</span>
+                                <span style="margin-left: 5px;">{{ formatLocalDateTime(editingSponsor.documents?.lastReminderSentAt) }}</span>
+                              </div>
+                            </div>
+                          }
+                        }
+                      </div>
+                    </ng-template>
+                </p-step-panel>
+            </p-step-item>
+
+            <p-step-item [value]="3">
+                <p-step>Invoice Paid</p-step>
+                <p-step-panel>
+                    <ng-template pTemplate="content">
+                      <div class="form-row">
+                        <div class="form-section">
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-secondary"
+                            [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_PAID_INVOICE' | translate"
+                            [disabled]="editingSponsor.paymentStatus !== 'PAID'"
+                            [loading]="isActionPending('mail-paid-invoice')"
+                            (click)="onSendPaidInvoice()"
+                          ></button>
+                          <div class="document-status">
+                            @if (editingSponsor.documents?.invoicePaidSentAt) {
+                            <a
+                              href=""
+                              class="document-link"
+                              [class.disabled]="isDocumentActionPending('paid-invoice')"
+                              (click)="$event.preventDefault(); onDownloadPaidInvoice()"
+                            >
+                              {{ 'CONFERENCE.SPONSOR_MANAGE.PAID_INVOICE_SENT_AT_LINK' | translate:{
+                                date: formatLocalDateTime(editingSponsor.documents?.invoicePaidSentAt)
+                              } }}
+                            </a>
+                            } @else {
+                            <span>{{ 'CONFERENCE.SPONSOR_MANAGE.PAID_INVOICE_NOT_SENT' | translate }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </ng-template>
+                </p-step-panel>
+            </p-step-item>
+          </p-stepper>
+
+
+            }
           </section>
         </p-tabpanel>
 
