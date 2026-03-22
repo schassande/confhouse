@@ -147,6 +147,21 @@
   font-size: 0.9rem;
 }
 
+.document-status {
+  text-align: center;
+}
+
+.document-link {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.document-link.disabled {
+  pointer-events: none;
+  color: #94a3b8;
+}
+
 .w-full {
   width: 100%;
 }

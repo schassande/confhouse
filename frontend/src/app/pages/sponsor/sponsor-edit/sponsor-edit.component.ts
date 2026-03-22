@@ -84,6 +84,7 @@ export class SponsorEditComponent implements OnInit {
   readonly loading = signal(true);
   readonly loadError = signal('');
   readonly actionInProgress = signal<string | null>(null);
+  readonly documentAction = signal<'order-form' | 'invoice' | null>(null);
   readonly mode = signal<SponsorEditMode>('create');
   readonly form = signal<FormGroup | null>(null);
   readonly editingId = signal<string | null>(null);
@@ -333,6 +334,34 @@ export class SponsorEditComponent implements OnInit {
   }
 
   /**
+   * Downloads the regenerated sponsor order form when it was previously sent.
+   */
+  async onDownloadOrderForm(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.orderFormSentAt) {
+      return;
+    }
+
+    await this.downloadSponsorDocument('order-form', () =>
+      this.sponsorService.downloadSponsorOrderForm(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
+   * Downloads the regenerated sponsor invoice when it was previously sent.
+   */
+  async onDownloadInvoice(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor?.id || !sponsor.documents?.invoiceSentAt) {
+      return;
+    }
+
+    await this.downloadSponsorDocument('invoice', () =>
+      this.sponsorService.downloadSponsorInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /**
    * Sends the sponsor invoice email through the backend action layer.
    */
   async onSendInvoice(): Promise<void> {
@@ -386,6 +415,10 @@ export class SponsorEditComponent implements OnInit {
 
   isActionPending(actionKey: string): boolean {
     return this.actionInProgress() === actionKey;
+  }
+
+  isDocumentActionPending(action: 'order-form' | 'invoice'): boolean {
+    return this.documentAction() === action;
   }
 
   addConferenceTicket(): void {
@@ -710,6 +743,34 @@ export class SponsorEditComponent implements OnInit {
     this.sponsors.set(this.sponsors().map((item) => (item.id === sponsor.id ? sponsor : item)));
     if (this.editingId() === sponsor.id) {
       this.form.set(this.createForm(sponsor));
+    }
+  }
+
+  /**
+   * Downloads one sponsor document through the backend and saves it locally.
+   *
+   * @param action Current document action key.
+   * @param callback Backend callback.
+   */
+  private async downloadSponsorDocument(
+    action: 'order-form' | 'invoice',
+    callback: () => Promise<{ sponsor: Sponsor; document: { filename: string; contentType: string; base64Content: string } }>
+  ): Promise<void> {
+    this.documentAction.set(action);
+    try {
+      const response = await callback();
+      this.applyUpdatedSponsor(response.sponsor);
+      this.sponsorService.saveDownloadedDocument(response.document);
+    } catch (error) {
+      console.error('Error downloading sponsor document:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translateService.instant('COMMON.ERROR'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.DOCUMENT_DOWNLOAD_ERROR'),
+      });
+    } finally {
+      this.documentAction.set(null);
+      this.cdr.markForCheck();
     }
   }
 

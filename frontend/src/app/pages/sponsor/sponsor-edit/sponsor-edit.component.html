@@ -189,9 +189,21 @@
                     [loading]="isActionPending('mail-order-form')"
                     (click)="onSendOrderForm()"
                   ></button>
-                  <div style="text-align: center;">
-                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_SENT_AT' | translate }}</span>
-                    <span style="margin-left: 5px;">{{ formatLocalDateTime(editingSponsor.documents?.orderFormSentAt) }}</span>
+                  <div class="document-status">
+                    @if (editingSponsor.documents?.orderFormSentAt) {
+                    <a
+                      href=""
+                      class="document-link"
+                      [class.disabled]="isDocumentActionPending('order-form')"
+                      (click)="$event.preventDefault(); onDownloadOrderForm()"
+                    >
+                      {{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_SENT_AT_LINK' | translate:{
+                        date: formatLocalDateTime(editingSponsor.documents?.orderFormSentAt)
+                      } }}
+                    </a>
+                    } @else {
+                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.ORDER_FORM_NOT_SENT' | translate }}</span>
+                    }
                   </div>
                 </div>
               }
@@ -205,9 +217,21 @@
                     [loading]="isActionPending('mail-invoice')"
                     (click)="onSendInvoice()"
                   ></button>
-                  <div style="text-align: center;">
-                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_SENT_AT' | translate }}</span>
-                    <span style="margin-left: 5px;">{{ formatLocalDateTime(editingSponsor.documents?.invoiceSentAt) }}</span>
+                  <div class="document-status">
+                    @if (editingSponsor.documents?.invoiceSentAt) {
+                    <a
+                      href=""
+                      class="document-link"
+                      [class.disabled]="isDocumentActionPending('invoice')"
+                      (click)="$event.preventDefault(); onDownloadInvoice()"
+                    >
+                      {{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_SENT_AT_LINK' | translate:{
+                        date: formatLocalDateTime(editingSponsor.documents?.invoiceSentAt)
+                      } }}
+                    </a>
+                    } @else {
+                    <span>{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICE_NOT_SENT' | translate }}</span>
+                    }
                   </div>
                 </div>
               }

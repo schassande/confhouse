@@ -114,15 +114,13 @@ export async function getRequesterEmailFromAuthorization(
 }
 
 /**
- * Ensures requester email is part of conference organizers, either explicitly or by configured domain.
- * Throws HttpError(403) when requester is not organizer.
+ * Returns whether requester email is part of conference organizers, either explicitly or by configured domain.
+ *
+ * @param conferenceData Conference payload.
+ * @param requesterEmail Requester email.
+ * @returns `true` when requester is organizer.
  */
-export function ensureRequesterIsOrganizer(
-  conferenceData: any,
-  conferenceId: string,
-  requesterEmail: string,
-  operationName: string
-): void {
+export function isRequesterOrganizer(conferenceData: any, requesterEmail: string): boolean {
   const organizerEmails = (conferenceData?.organizerEmails ?? [])
     .map((email: any) => String(email ?? '').trim().toLowerCase())
     .filter((email: string) => email.length > 0);
@@ -133,8 +131,28 @@ export function ensureRequesterIsOrganizer(
   const requesterDomain = requesterEmail.includes('@')
     ? requesterEmail.slice(requesterEmail.lastIndexOf('@') + 1)
     : '';
-  const isOrganizer = organizerEmails.includes(requesterEmail)
+  return organizerEmails.includes(requesterEmail)
     || (!!organizerEmailDomain && requesterDomain === organizerEmailDomain);
+}
+
+/**
+ * Ensures requester email is part of conference organizers, either explicitly or by configured domain.
+ * Throws HttpError(403) when requester is not organizer.
+ */
+export function ensureRequesterIsOrganizer(
+  conferenceData: any,
+  conferenceId: string,
+  requesterEmail: string,
+  operationName: string
+): void {
+  const isOrganizer = isRequesterOrganizer(conferenceData, requesterEmail);
+  const organizerEmails = (conferenceData?.organizerEmails ?? [])
+    .map((email: any) => String(email ?? '').trim().toLowerCase())
+    .filter((email: string) => email.length > 0);
+  const organizerEmailDomain = String(conferenceData?.organizerEmailDomain ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, '');
   if (!isOrganizer) {
     throw new HttpError(
       403,

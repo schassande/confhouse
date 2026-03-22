@@ -6,6 +6,7 @@ import {
   ensurePostMethod,
   getRequesterEmailFromAuthorization,
   HttpError,
+  isRequesterOrganizer,
   loadConference,
   parseConferenceId,
   ensureRequesterIsOrganizer,
@@ -346,14 +347,14 @@ export const sendSponsorAdministrativeSummary = onRequest(
 );
 
 /**
- * Regenerates and returns the sponsor order form for one sponsor admin.
+ * Regenerates and returns the sponsor order form for one sponsor admin or conference organizer.
  */
 export const downloadSponsorOrderForm = onRequest({ cors: true, timeoutSeconds: 120 }, async (req, res) => {
   await handleSponsorDocumentDownload(req, res, 'DOWNLOAD_ORDER_FORM', 'ORDER_FORM');
 });
 
 /**
- * Regenerates and returns the sponsor invoice for one sponsor admin.
+ * Regenerates and returns the sponsor invoice for one sponsor admin or conference organizer.
  */
 export const downloadSponsorInvoice = onRequest({ cors: true, timeoutSeconds: 120 }, async (req, res) => {
   await handleSponsorDocumentDownload(req, res, 'DOWNLOAD_INVOICE', 'INVOICE');
@@ -446,7 +447,7 @@ async function sendSponsorDocumentEmail(
 }
 
 /**
- * Regenerates one previously sent sponsor document and returns it to one sponsor admin.
+ * Regenerates one previously sent sponsor document and returns it to one sponsor admin or conference organizer.
  *
  * @param req HTTP request.
  * @param res HTTP response.
@@ -461,7 +462,7 @@ async function handleSponsorDocumentDownload(
 ): Promise<void> {
   const startedAt = Date.now();
   try {
-    const context = await authorizeSponsorAdminRequest(req, operation);
+    const context = await authorizeSponsorDocumentDownloadRequest(req, operation);
     const sentAt = getPreviouslySentDocumentTimestamp(context.sponsorData, documentType);
     if (!sentAt) {
       throw new HttpError(
@@ -787,13 +788,13 @@ async function authorizeSponsorOrganizerRequest(req: any, operation: SponsorActi
 }
 
 /**
- * Authenticates one sponsor admin requester and loads the target conference and sponsor.
+ * Authenticates one sponsor admin or organizer requester and loads the target conference and sponsor.
  *
  * @param req HTTP request.
  * @param operation Sponsor download operation name.
  * @returns Authorized sponsor context.
  */
-async function authorizeSponsorAdminRequest(
+async function authorizeSponsorDocumentDownloadRequest(
   req: any,
   operation: SponsorDocumentDownloadOperation
 ): Promise<AuthorizedSponsorContext> {
@@ -824,13 +825,29 @@ async function authorizeSponsorAdminRequest(
   const adminEmails = (Array.isArray(sponsorData.adminEmails) ? sponsorData.adminEmails : [])
     .map((email: unknown) => String(email ?? '').trim().toLowerCase())
     .filter((email: string) => email.length > 0);
-  if (!adminEmails.includes(normalizedRequesterEmail)) {
-    throw new HttpError(403, 'Requester is not a sponsor admin', `${operation} rejected: requester is not sponsor admin`, {
-      conferenceId,
-      sponsorId,
-      requesterEmail,
-    });
+
+  const requesterIsSponsorAdmin = adminEmails.includes(normalizedRequesterEmail);
+  const requesterIsOrganizer = isRequesterOrganizer(conferenceData, normalizedRequesterEmail);
+  if (!requesterIsSponsorAdmin && !requesterIsOrganizer) {
+    throw new HttpError(
+      403,
+      'Requester is neither a sponsor admin nor a conference organizer',
+      `${operation} rejected: requester is neither sponsor admin nor organizer`,
+      {
+        conferenceId,
+        sponsorId,
+        requesterEmail,
+      }
+    );
   }
+
+  logger.info('sponsor document requester authorized', {
+    operation,
+    conferenceId,
+    sponsorId,
+    requesterEmail,
+    requesterRole: requesterIsOrganizer ? 'organizer' : 'sponsor-admin',
+  });
 
   return {
     db,

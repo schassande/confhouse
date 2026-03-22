@@ -51,7 +51,6 @@ export function buildSponsorInvoiceDefinition(payload: SponsorDocumentPayload): 
             width: '*',
             stack: [
               { text: labels.recipient, bold: true, margin: [0, 0, 0, 6] },
-              { text: payload.recipient.name },
               ...(payload.recipient.address ? [{ text: payload.recipient.address }] : []),
               ...(payload.recipient.email ? [{ text: payload.recipient.email }] : []),
             ],
