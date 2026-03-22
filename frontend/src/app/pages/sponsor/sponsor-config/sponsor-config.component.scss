@@ -25,7 +25,11 @@
 .config-tabs {
   display: block;
 }
-
+.add-config {
+  font-size: 2rem;
+  font-weight: bold;
+  padding: 0 20px;
+}
 .config-tabs :is(.p-tabpanels, .p-tabpanel) {
   padding: 0;
 }

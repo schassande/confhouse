@@ -38,7 +38,7 @@
           {{ sponsorTypeTabLabel(sponsorTypeIndex) }}
         </p-tab>
         }
-        <p-tab [value]="addSponsorTypeTabValue">+</p-tab>
+        <p-tab [value]="addSponsorTypeTabValue" class="add-config">+</p-tab>
       </p-tablist>
 
       <p-tabpanels>
@@ -107,9 +107,6 @@
 
         <p-tabpanel [value]="billingTabValue">
           <section class="config-section">
-            <div class="section-header">
-              <h2>{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER' | translate }}</h2>
-            </div>
 
             <div class="form-grid two-columns">
               <div class="field">
@@ -127,9 +124,7 @@
                 <label for="address">{{ 'CONFERENCE.SPONSOR_CONFIG.ADDRESS' | translate }}</label>
                 <textarea id="address" pTextarea formControlName="address" rows="3"></textarea>
               </div>
-            </div>
 
-            <div class="form-grid two-columns">
               <div class="field">
                 <label for="vatRate">{{ 'CONFERENCE.SPONSOR_CONFIG.VAT_RATE' | translate }}</label>
                 <p-inputNumber
@@ -143,10 +138,6 @@
                   [minFractionDigits]="0"
                   [maxFractionDigits]="2"
                 ></p-inputNumber>
-              </div>
-              <div class="field">
-                <label for="counter">{{ 'CONFERENCE.SPONSOR_CONFIG.COUNTER' | translate }}</label>
-                <p-inputNumber inputId="counter" formControlName="counter" [showButtons]="true" [step]="1" [min]="0"></p-inputNumber>
               </div>
             </div>
 
@@ -167,7 +158,7 @@
               <small>{{ 'CONFERENCE.SPONSOR_CONFIG.LEGAL_NOTES_HELP' | translate }}</small>
             </div>
 
-            <div class="form-grid two-columns">
+            <div class="form-grid two-columns" style="margin-top: 20px;">
               <div class="field">
                 <label for="email">{{ 'CONFERENCE.SPONSOR_CONFIG.ISSUER_EMAIL' | translate }}</label>
                 <input id="email" pInputText formControlName="email" type="email" />
