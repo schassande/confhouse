@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 600px;
+  max-width: 800px;
   margin: 20px auto;
   align-items: center;
 
@@ -30,6 +30,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 10px;
   flex: 1;
 }
@@ -101,6 +102,9 @@
 
 .sponsor-text {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .sponsor-main h3 {
@@ -125,6 +129,20 @@
   align-items: center;
   justify-content: center;
   color: #6b7280;
+}
+
+.sponsor-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sponsor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: #4b5563;
+  font-size: 0.92rem;
 }
 
 .type-badge {
@@ -196,6 +214,6 @@
 
   .filters {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 }

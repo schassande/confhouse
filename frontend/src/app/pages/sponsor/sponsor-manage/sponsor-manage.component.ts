@@ -16,6 +16,7 @@ import { ButtonModule } from 'primeng/button';
 import { DataViewModule } from 'primeng/dataview';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
 import { BilletwebConfig } from '@shared/model/billetweb-config';
@@ -30,7 +31,7 @@ interface SelectOption {
   value: string;
 }
 
-type SponsorManageNotice = 'saved' | 'deleted';
+type SponsorTagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 @Component({
   selector: 'app-sponsor-manage',
@@ -44,6 +45,7 @@ type SponsorManageNotice = 'saved' | 'deleted';
     InputTextModule,
     ToastModule,
     SelectModule,
+    TagModule,
   ],
   providers: [MessageService],
   templateUrl: './sponsor-manage.component.html',
@@ -68,14 +70,62 @@ export class SponsorManageComponent implements OnInit {
   readonly sponsors = signal<Sponsor[]>([]);
   readonly sponsorTypes = signal<SponsorType[]>([]);
   readonly selectedTypeId = signal<string>('ALL');
+  readonly selectedSponsorStatus = signal<string>('ALL');
+  readonly selectedPaymentStatus = signal<string>('ALL');
   readonly typeFilterOptions = computed<SelectOption[]>(() => [
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_ALL'), value: 'ALL' },
     ...this.sponsorTypes().map((type) => ({ label: type.name, value: type.id })),
   ]);
+  readonly sponsorStatusFilterOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_STATUS_ALL'), value: 'ALL' },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_POTENTIAL'),
+      value: 'POTENTIAL',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CANDIDATE'),
+      value: 'CANDIDATE',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_WAITING_LIST'),
+      value: 'WAITING_LIST',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CONFIRMED'),
+      value: 'CONFIRMED',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_REJECTED'),
+      value: 'REJECTED',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.STATUS_CANCELED'),
+      value: 'CANCELED',
+    },
+  ]);
+  readonly paymentFilterOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_PAYMENT_ALL'), value: 'ALL' },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_PENDING'),
+      value: 'PENDING',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_PAID'),
+      value: 'PAID',
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_OVERDUE'),
+      value: 'OVERDUE',
+    },
+  ]);
   readonly filteredSponsors = computed(() => {
     const selectedType = this.selectedTypeId();
+    const selectedSponsorStatus = this.selectedSponsorStatus();
+    const selectedPaymentStatus = this.selectedPaymentStatus();
     return [...this.sponsors()]
       .filter((sponsor) => selectedType === 'ALL' || sponsor.sponsorTypeId === selectedType)
+      .filter((sponsor) => selectedSponsorStatus === 'ALL' || sponsor.status === selectedSponsorStatus)
+      .filter((sponsor) => selectedPaymentStatus === 'ALL' || sponsor.paymentStatus === selectedPaymentStatus)
       .sort((a, b) => {
         const leftDate = String(a.registrationDate ?? '').trim();
         const rightDate = String(b.registrationDate ?? '').trim();
@@ -96,6 +146,14 @@ export class SponsorManageComponent implements OnInit {
 
   onFilterTypeChange(value: string): void {
     this.selectedTypeId.set(String(value ?? 'ALL'));
+  }
+
+  onFilterSponsorStatusChange(value: string): void {
+    this.selectedSponsorStatus.set(String(value ?? 'ALL'));
+  }
+
+  onFilterPaymentStatusChange(value: string): void {
+    this.selectedPaymentStatus.set(String(value ?? 'ALL'));
   }
 
   onAddNew(): void {
@@ -127,6 +185,34 @@ export class SponsorManageComponent implements OnInit {
 
   paymentStatusLabel(status: SponsorPaymentStatus): string {
     return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.PAYMENT_${status}`);
+  }
+
+  sponsorStatusSeverity(status: SponsorStatus): SponsorTagSeverity {
+    switch (status) {
+      case 'CONFIRMED':
+        return 'success';
+      case 'CANDIDATE':
+      case 'WAITING_LIST':
+        return 'warn';
+      case 'REJECTED':
+      case 'CANCELED':
+        return 'danger';
+      case 'POTENTIAL':
+      default:
+        return 'secondary';
+    }
+  }
+
+  paymentStatusSeverity(status: SponsorPaymentStatus): SponsorTagSeverity {
+    switch (status) {
+      case 'PAID':
+        return 'success';
+      case 'OVERDUE':
+        return 'danger';
+      case 'PENDING':
+      default:
+        return 'warn';
+    }
   }
 
   /**

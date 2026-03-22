@@ -353,6 +353,9 @@ These projections are used only to simplify:
 - filtering
 - simple business rules
 
+Typical back-office usage includes filtering sponsors by `paymentStatus` and showing document badges when
+`documents.orderFormSentAt`, `documents.invoiceSentAt`, or `documents.invoicePaidSentAt` are present.
+
 The initially retained projections are:
 
 ```ts

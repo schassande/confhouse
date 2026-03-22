@@ -21,6 +21,24 @@
         [placeholder]="'CONFERENCE.SPONSOR_MANAGE.FILTER_LABEL' | translate"
         (onChange)="onFilterTypeChange($event.value)"
       ></p-select>
+      <p-select
+        [options]="sponsorStatusFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedSponsorStatus()"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="'CONFERENCE.SPONSOR_MANAGE.FILTER_STATUS_LABEL' | translate"
+        (onChange)="onFilterSponsorStatusChange($event.value)"
+      ></p-select>
+      <p-select
+        [options]="paymentFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedPaymentStatus()"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="'CONFERENCE.SPONSOR_MANAGE.FILTER_PAYMENT_LABEL' | translate"
+        (onChange)="onFilterPaymentStatusChange($event.value)"
+      ></p-select>
       <span class="count">{{ filteredCountLabel() }}</span>
     </div>
     <button
@@ -56,15 +74,37 @@
                 }
                 <div class="sponsor-text">
                   <h3>{{ sponsor.name }}</h3>
+                  <div class="sponsor-badges">
+                    <p-tag
+                      [value]="sponsorStatusLabel(sponsor.status)"
+                      [severity]="sponsorStatusSeverity(sponsor.status)"
+                    ></p-tag>
+                    <p-tag
+                      [value]="paymentStatusLabel(sponsor.paymentStatus)"
+                      [severity]="paymentStatusSeverity(sponsor.paymentStatus)"
+                    ></p-tag>
+                    @if (sponsor.documents?.orderFormSentAt) {
+                    <p-tag
+                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_ORDER_FORM' | translate"
+                      severity="info"
+                    ></p-tag>
+                    }
+                    @if (sponsor.documents?.invoiceSentAt) {
+                    <p-tag
+                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_INVOICE' | translate"
+                      severity="info"
+                    ></p-tag>
+                    }
+                    @if (sponsor.documents?.invoicePaidSentAt) {
+                    <p-tag
+                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_PAID_INVOICE' | translate"
+                      severity="info"
+                    ></p-tag>
+                    }
+                  </div>
                   <div class="sponsor-meta">
-                    <span>{{ sponsorStatusLabel(sponsor.status) }}</span>
-                    <span>{{ paymentStatusLabel(sponsor.paymentStatus) }}</span>
-                    <span>{{ sponsor.communicationLanguage || 'en' | uppercase }}</span>
                     @if (sponsor.boothName) {
                     <span>{{ sponsor.boothName }}</span>
-                    }
-                    @if (sponsor.acceptedNumber) {
-                    <span>#{{ sponsor.acceptedNumber }}</span>
                     }
                   </div>
                 </div>
