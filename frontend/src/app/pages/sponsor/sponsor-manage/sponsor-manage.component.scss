@@ -35,6 +35,34 @@
   flex: 1;
 }
 
+.allocation-toolbar {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.allocation-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.allocation-button {
+  width: 100%;
+}
+
+.allocation-mode {
+  color: #4b5563;
+  font-size: 0.88rem;
+}
+
 .count {
   color: #4b5563;
   font-size: 0.95rem;
@@ -145,6 +173,18 @@
   font-size: 0.92rem;
 }
 
+.booth-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid #bae6fd;
+}
+
 .type-badge {
   display: inline-flex;
   align-items: center;
@@ -215,5 +255,9 @@
   .filters {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .allocation-item {
+    align-items: stretch;
   }
 }

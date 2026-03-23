@@ -226,6 +226,22 @@ Rules:
 - `acceptedNumber` is assigned only on the first transition to `CONFIRMED`
 - once assigned, `acceptedNumber` is immutable and cannot be reused for another sponsor
 
+### Automatic Booth Allocation
+
+Organizers can trigger booth auto-allocation from the sponsor management page for each sponsor type whose
+`SponsorType.boothAllocationMode` is not `MANUAL`.
+
+Rules:
+
+- auto-allocation only processes sponsors with `status = CONFIRMED`
+- auto-allocation only processes sponsors whose `sponsorTypeId` matches the selected sponsor type
+- each run starts by clearing any existing `boothName` on the processed sponsors before recomputing the result
+- `RANDOM` allocates compatible booths randomly and ignores `boothWishes`
+- `REGISTRATION_DATE`, `WISHES_DATE`, `CONFIRMATION_DATE`, and `PAYMENT_DATE` first sort sponsors by the corresponding date
+- after sorting, the algorithm scans each sponsor and assigns the first wished booth that is still free
+- if none of a sponsor's wished booths is available, the sponsor remains without booth allocation
+- the organizer UI must report the sponsors that remain without booth allocation after the run
+
 ## Acceptance Numbering
 
 When a sponsor is first moved to `CONFIRMED`, the application must:

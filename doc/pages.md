@@ -371,6 +371,7 @@ Navigation:
 ### 26. Sponsors Manage (`/conference/:conferenceId/sponsors/manage`)
 Purpose:
 - Operational sponsor management list.
+- Organizer actions include per-type booth auto-allocation for sponsor types configured with a non-manual booth allocation mode.
 
 Access:
 - Authenticated + organizer + valid conference context.

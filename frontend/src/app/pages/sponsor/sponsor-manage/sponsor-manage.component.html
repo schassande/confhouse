@@ -39,6 +39,15 @@
         [placeholder]="'CONFERENCE.SPONSOR_MANAGE.FILTER_PAYMENT_LABEL' | translate"
         (onChange)="onFilterPaymentStatusChange($event.value)"
       ></p-select>
+      <p-select
+        [options]="sortOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedSortMode()"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="'CONFERENCE.SPONSOR_MANAGE.SORT_LABEL' | translate"
+        (onChange)="onSortModeChange($event.value)"
+      ></p-select>
       <span class="count">{{ filteredCountLabel() }}</span>
     </div>
     <button
@@ -49,6 +58,34 @@
       (click)="onAddNew()"
     ></button>
   </div>
+
+  @if (autoAllocatableSponsorTypes().length > 0) {
+  <div class="allocation-toolbar">
+    @for (sponsorType of autoAllocatableSponsorTypes(); track sponsorType.id) {
+    <div class="allocation-item">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        class="p-button-outlined allocation-button"
+        [label]="
+          ('CONFERENCE.SPONSOR_MANAGE.AUTO_ALLOCATE_BUTTON' | translate: { sponsorType: sponsorType.name })
+        "
+        [loading]="isAllocationPending(sponsorType.id)"
+        [disabled]="isAllocationPending(sponsorType.id)"
+        (click)="onAutoAllocateBooths(sponsorType)"
+      ></button>
+      <span class="allocation-mode">
+        {{
+          'CONFERENCE.SPONSOR_MANAGE.AUTO_ALLOCATE_MODE' | translate: {
+            mode: boothAllocationModeLabel(sponsorType.boothAllocationMode)
+          }
+        }}
+      </span>
+    </div>
+    }
+  </div>
+  }
 
   <div class="sponsors-list">
     <p-dataview [value]="filteredSponsors()" layout="list">
@@ -104,7 +141,13 @@
                   </div>
                   <div class="sponsor-meta">
                     @if (sponsor.boothName) {
-                    <span>{{ sponsor.boothName }}</span>
+                    <span class="booth-badge">
+                      {{
+                        'CONFERENCE.SPONSOR_MANAGE.BOOTH_BADGE' | translate: {
+                          boothName: sponsor.boothName
+                        }
+                      }}
+                    </span>
                     }
                   </div>
                 </div>
