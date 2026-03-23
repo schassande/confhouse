@@ -240,6 +240,36 @@
                 <small>{{ 'CONFERENCE.SPONSOR_CONFIG.BOOTH_NAMES_HELP' | translate }}</small>
               </div>
 
+              <div class="field" formGroupName="templateEmail">
+                <div class="section-header quota-header">
+                  <h4>{{ 'CONFERENCE.SPONSOR_CONFIG.TEMPLATE_EMAILS' | translate }}</h4>
+                </div>
+                <small>{{ 'CONFERENCE.SPONSOR_CONFIG.TEMPLATE_EMAILS_HELP' | translate }}</small>
+
+                <div class="form-grid two-columns template-email-grid">
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_APPLICATION_CONFIRMATION_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailApplicationConfirmationTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_ORDER_FORM_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailOrderFormTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_INVOICE_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailInvoiceTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_PAYMENT_REMINDER_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailPaymentReminderTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_PAID_INVOICE_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailPaidInvoiceTemplateId" type="text" />
+                  </div>
+                </div>
+              </div>
+
               <div class="field">
                 <div class="section-header quota-header">
                   <h4>{{ 'CONFERENCE.SPONSOR_CONFIG.CONFERENCE_TICKET_QUOTAS' | translate }}</h4>

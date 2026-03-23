@@ -43,6 +43,22 @@ export interface SponsorConferenceTicketQuota {
 }
 
 /**
+ * Optional email template identifiers configured for one sponsor type.
+ */
+export interface SponsorTypeTemplateEmail {
+  /** Template identifier used for sponsor application confirmation emails. */
+  emailApplicationConfirmationTemplateId?: string;
+  /** Template identifier used for sponsor order form emails. */
+  emailOrderFormTemplateId?: string;
+  /** Template identifier used for sponsor invoice emails. */
+  emailInvoiceTemplateId?: string;
+  /** Template identifier used for sponsor payment reminder emails. */
+  emailPaymentReminderTemplateId?: string;
+  /** Template identifier used for sponsor paid invoice emails. */
+  emailPaidInvoiceTemplateId?: string;
+}
+
+/**
  * Sponsor offer definition configured on a conference.
  */
 export interface SponsorType extends WithId {
@@ -63,6 +79,8 @@ export interface SponsorType extends WithId {
   boothAllocationMode: BoothAllocationMode;
   /** List of conference ticket quotas for this sponsor type. */
   conferenceTicketQuotas: SponsorConferenceTicketQuota[];
+  /** Optional email template identifiers used for sponsor communications. */
+  templateEmail?: SponsorTypeTemplateEmail;
 }
 
 /**

@@ -1,8 +1,6 @@
 # TODO List
 
 ## Priority 1
-- Sponsor booth auto allocation
-  * Lock wishes when booth allocated
 - Improve sponsor emails => Mailjet
 - RGPD
 - BilletWeb integration

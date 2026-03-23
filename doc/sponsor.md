@@ -62,6 +62,15 @@ It contains at least:
 - a booth allocation mode
 - a list of available booth names
 - a list of conference ticket quotas
+- an optional `templateEmail` object containing email template identifiers per sponsor email type
+
+When configured, `SponsorType.templateEmail` can contain:
+
+- `emailApplicationConfirmationTemplateId`
+- `emailOrderFormTemplateId`
+- `emailInvoiceTemplateId`
+- `emailPaymentReminderTemplateId`
+- `emailPaidInvoiceTemplateId`
 
 `SponsorType.boothAllocationMode` defines how booths are assigned for that sponsorship offer.
 

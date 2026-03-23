@@ -285,6 +285,13 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 
 Actual sponsor applications and confirmed sponsors are stored separately in the `sponsor` collection and linked back through `conferenceId`.
 
+Each `conference.sponsoring.sponsorTypes[]` item can also carry an optional `templateEmail` object with provider-agnostic email template identifiers:
+- `emailApplicationConfirmationTemplateId`
+- `emailOrderFormTemplateId`
+- `emailInvoiceTemplateId`
+- `emailPaymentReminderTemplateId`
+- `emailPaidInvoiceTemplateId`
+
 ### ConferenceHallConfig (`conference-hall-config`)
 Per-conference integration settings for Conference Hall import, including `sessionTypeMappings` and `lastCommunication`.
 

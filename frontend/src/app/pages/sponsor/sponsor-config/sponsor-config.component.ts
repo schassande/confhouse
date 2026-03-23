@@ -29,7 +29,12 @@ import { ToastModule } from 'primeng/toast';
 import { forkJoin, take } from 'rxjs';
 import { BilletwebConfig } from '@shared/model/billetweb-config';
 import { Conference } from '@shared/model/conference.model';
-import { BoothAllocationMode, SponsorConferenceTicketQuota, SponsorType } from '@shared/model/sponsor.model';
+import {
+  BoothAllocationMode,
+  SponsorConferenceTicketQuota,
+  SponsorType,
+  SponsorTypeTemplateEmail,
+} from '@shared/model/sponsor.model';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 
@@ -401,6 +406,23 @@ export class SponsorConfigComponent {
       ],
       boothAllocationMode: [this.normalizeBoothAllocationMode(sponsorType?.boothAllocationMode)],
       boothNamesText: [Array.isArray(sponsorType?.boothNames) ? sponsorType?.boothNames.join('\n') : ''],
+      templateEmail: this.fb.group({
+        emailApplicationConfirmationTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailApplicationConfirmationTemplateId) ?? '',
+        ],
+        emailOrderFormTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailOrderFormTemplateId) ?? '',
+        ],
+        emailInvoiceTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailInvoiceTemplateId) ?? '',
+        ],
+        emailPaymentReminderTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailPaymentReminderTemplateId) ?? '',
+        ],
+        emailPaidInvoiceTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailPaidInvoiceTemplateId) ?? '',
+        ],
+      }),
       conferenceTicketQuotas: this.fb.array<FormGroup>(
         (sponsorType?.conferenceTicketQuotas ?? []).map((quota) => this.createConferenceTicketQuotaGroup(quota))
       ),
@@ -439,6 +461,7 @@ export class SponsorConfigComponent {
       descriptionFr?: string;
       boothAllocationMode?: BoothAllocationMode;
       boothNamesText?: string;
+      templateEmail?: SponsorTypeTemplateEmail;
       conferenceTicketQuotas?: Array<{
         conferenceTicketTypeId?: string;
         quota?: number;
@@ -476,6 +499,7 @@ export class SponsorConfigComponent {
       boothAllocationMode: this.normalizeBoothAllocationMode(groupValue.boothAllocationMode),
       boothNames,
       conferenceTicketQuotas,
+      templateEmail: this.normalizeTemplateEmail(groupValue.templateEmail),
     };
   }
 
@@ -517,6 +541,17 @@ export class SponsorConfigComponent {
   }
 
   /**
+   * Converts one optional string field to a trimmed persisted value.
+   *
+   * @param value Raw string value.
+   * @returns Trimmed string or `undefined`.
+   */
+  private normalizeOptionalString(value: unknown): string | undefined {
+    const normalized = String(value ?? '').trim();
+    return normalized || undefined;
+  }
+
+  /**
    * Normalizes a date field for HTML date inputs and persistence.
    *
    * @param value Raw date value.
@@ -548,6 +583,24 @@ export class SponsorConfigComponent {
       default:
         return 'MANUAL';
     }
+  }
+
+  /**
+   * Removes empty template identifiers and returns `undefined` when no template is configured.
+   *
+   * @param value Raw template email configuration.
+   * @returns Normalized template email configuration.
+   */
+  private normalizeTemplateEmail(value: SponsorTypeTemplateEmail | undefined): SponsorTypeTemplateEmail | undefined {
+    const normalized: SponsorTypeTemplateEmail = {
+      emailApplicationConfirmationTemplateId: this.normalizeOptionalString(value?.emailApplicationConfirmationTemplateId),
+      emailOrderFormTemplateId: this.normalizeOptionalString(value?.emailOrderFormTemplateId),
+      emailInvoiceTemplateId: this.normalizeOptionalString(value?.emailInvoiceTemplateId),
+      emailPaymentReminderTemplateId: this.normalizeOptionalString(value?.emailPaymentReminderTemplateId),
+      emailPaidInvoiceTemplateId: this.normalizeOptionalString(value?.emailPaidInvoiceTemplateId),
+    };
+
+    return Object.values(normalized).some((templateId) => templateId !== undefined) ? normalized : undefined;
   }
 
   /**
