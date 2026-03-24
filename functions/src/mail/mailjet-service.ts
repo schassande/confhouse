@@ -17,7 +17,7 @@ interface MailjetMessagePayload {
     Email: string;
     Name?: string;
   }>;
-  Subject: string;
+  Subject?: string;
   Variables?: Record<string, unknown>;
   TextPart?: string;
   HTMLPart?: string;
@@ -121,13 +121,14 @@ export class MailjetService {
         Email: recipient.email,
         Name: recipient.name,
       })),
-      Subject: payload.subject,
-      CustomID: payload.messageType,
+      CustomID: payload.messageType
     };
 
     if (payload.templateId) {
       message.TemplateID = payload.templateId;
       message.TemplateLanguage = true;
+    } else {
+      message.Subject = payload.subject;
     }
 
     if (payload.variables && Object.keys(payload.variables).length > 0) {

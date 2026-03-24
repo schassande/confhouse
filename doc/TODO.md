@@ -1,7 +1,6 @@
 # TODO List
 
 ## Priority 1
-- Improve sponsor emails => Mailjet
 - RGPD
 - BilletWeb integration
   * Billetweb for speaker: Use API to create/delete the ticket of the speaker (https://www.billetweb.fr/bo/api.php#/api/event/:id/add_order)

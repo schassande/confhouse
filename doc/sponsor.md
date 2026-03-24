@@ -494,7 +494,8 @@ Rules:
 
 - it is triggered by the explicit action "send invoice"
 - it must not be sent implicitly from a simple status change
-- it must follow document idempotence rules
+- each explicit send request must trigger a new send attempt, even if the same invoice was already sent before
+- each send attempt must create its own technical `mail_history` trace
 
 Attachment:
 
@@ -518,7 +519,8 @@ Rules:
 - it is triggered by the explicit action "send paid invoice"
 - it is only available when `paymentStatus = PAID`
 - it must not be sent implicitly from a simple status change
-- it must follow document idempotence rules
+- each explicit send request must trigger a new send attempt, even if the same paid invoice was already sent before
+- each send attempt must create its own technical `mail_history` trace
 
 Attachment:
 
@@ -594,6 +596,9 @@ The following rules apply to sponsor attachments:
 - PDFs are generated on the backend
 - attachments are linked to an explicit transactional email
 - attachments must remain consistent with sponsor data at send time
+- generated order form, invoice, and paid invoice filenames follow `<conferenceName> <conferenceEdition> - Sponsor <sponsorName> - <localizedDocumentType>.pdf`
+- the document type segment uses the sponsor communication language
+- invalid filesystem filename characters are replaced with spaces while keeping the visible filename readable
 
 The officially retained attachments at this stage are:
 

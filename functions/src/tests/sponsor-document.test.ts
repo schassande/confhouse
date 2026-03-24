@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload, buildSponsorPaidInvoicePayload } from '../documents/sponsor-document-builders';
+import { buildSponsorDocumentFilename } from '../documents/sponsor-document-filename';
 import { getSponsorDocumentDefinition, renderSponsorDocumentPdf } from '../documents/sponsor-document-renderer';
 import { formatAmount } from '../documents/sponsor-document-template-common';
 import {
@@ -99,6 +100,41 @@ test('buildSponsorPaidInvoicePayload uses the paid invoice issue date and invoic
 
   const definition = getSponsorDocumentDefinition(payload);
   assert.equal(definition.content[1].text, 'Facture acquittee');
+});
+
+test('buildSponsorDocumentFilename uses conference, sponsor, and localized document type labels', () => {
+  const frenchFilename = buildSponsorDocumentFilename(
+    buildSponsorPaidInvoicePayload(
+      SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
+      SAMPLE_SPONSOR_DOCUMENT_SPONSOR
+    )
+  );
+  const englishFilename = buildSponsorDocumentFilename(
+    buildSponsorOrderFormPayload(
+      SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
+      { ...SAMPLE_SPONSOR_DOCUMENT_SPONSOR, communicationLanguage: 'en' }
+    )
+  );
+
+  assert.equal(frenchFilename, 'Snowcamp 2026 - Sponsor Example Corp - Facture acquittee.pdf');
+  assert.equal(englishFilename, 'Snowcamp 2026 - Sponsor Example Corp - Order Form.pdf');
+});
+
+test('buildSponsorDocumentFilename removes invalid filename characters while keeping spaces', () => {
+  const filename = buildSponsorDocumentFilename(
+    buildSponsorInvoicePayload(
+      {
+        ...SAMPLE_SPONSOR_DOCUMENT_CONFERENCE,
+        name: 'Snow/camp: Europe',
+      },
+      {
+        ...SAMPLE_SPONSOR_DOCUMENT_SPONSOR,
+        name: 'Example <Corp> | France',
+      }
+    )
+  );
+
+  assert.equal(filename, 'Snow camp Europe 2026 - Sponsor Example Corp France - Facture.pdf');
 });
 
 test('formatAmount normalizes French currency spacing for PDF rendering', () => {

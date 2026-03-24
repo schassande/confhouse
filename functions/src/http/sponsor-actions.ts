@@ -27,6 +27,7 @@ import {
 import { createMailHistoryRecord, updateMailHistoryRecord } from '../mail/mail-history';
 import { MailjetService } from '../mail/mailjet-service';
 import { buildSponsorInvoicePayload, buildSponsorOrderFormPayload, buildSponsorPaidInvoicePayload } from '../documents/sponsor-document-builders';
+import { buildSponsorDocumentFilename } from '../documents/sponsor-document-filename';
 import { renderSponsorDocumentPdf } from '../documents/sponsor-document-renderer';
 import { MailAttachment, MailRecipient, TransactionalEmailPayload } from '../mail/mail-model';
 import { MAILJET_SECRETS } from '../mail/mailjet-secrets';
@@ -36,6 +37,12 @@ import {
   resolveSponsorCommunicationLanguage,
 } from '../sponsor/sponsor-communication';
 import { SponsorDocumentLocale, SponsorDocumentPayload } from '../documents/sponsor-document-model';
+import {
+  buildSponsorMailVariables,
+  parseMailjetTemplateId,
+  resolveSponsorMailTemplateId,
+  SponsorTemplateMessageType,
+} from '../sponsor/sponsor-mail-template';
 
 type SponsorActionOperation =
   | 'UPDATE_STATUS'
@@ -78,6 +85,8 @@ interface SendSponsorNotificationOptions {
   textPart: string;
   eventType?: SponsorBusinessEventType;
   idempotenceKey?: string;
+  templateId?: number;
+  variables?: Record<string, unknown>;
 }
 
 interface SendSponsorDocumentOptions {
@@ -111,6 +120,82 @@ type SponsorMailMessageType =
   | 'SPONSOR_APPLICATION_CONFIRMATION'
   | 'SPONSOR_ADMINISTRATIVE_SUMMARY';
 
+/**
+ * Resolves one optional Mailjet template transport payload from sponsor template configuration.
+ *
+ * @param context Authorized sponsor action context.
+ * @param messageType Sponsor email message type.
+ * @param recipients Resolved recipients.
+ * @param sender Resolved sender.
+ * @param documentPayload Optional normalized document payload.
+ * @returns Template transport configuration or an empty object when the fallback email body must be used.
+ */
+function resolveSponsorTemplateTransport(
+  context: AuthorizedSponsorContext,
+  messageType: SponsorTemplateMessageType,
+  recipients: { to: MailRecipient[]; cc: MailRecipient[] },
+  sender: { email: string; name?: string },
+  documentPayload?: SponsorDocumentPayload
+): Pick<TransactionalEmailPayload, 'templateId' | 'variables'> {
+  const rawTemplateId = resolveSponsorMailTemplateId(messageType, context.conferenceData as any, context.sponsorData as any);
+  if (!rawTemplateId) {
+    return {};
+  }
+
+  const templateId = parseMailjetTemplateId(rawTemplateId);
+  if (templateId === undefined) {
+    logger.warn('sponsor mail template ignored because the configured provider id is not a numeric Mailjet template id', {
+      conferenceId: context.conferenceId,
+      sponsorId: context.sponsorId,
+      messageType,
+      rawTemplateId,
+    });
+    return {};
+  }
+
+  return {
+    templateId,
+    variables: buildSponsorMailVariables({
+      messageType,
+      conference: context.conferenceData as any,
+      sponsor: context.sponsorData as any,
+      recipients,
+      sender,
+      documentPayload,
+    }),
+  };
+}
+
+/**
+ * Builds one sponsor notification option bag with optional template transport fallback.
+ *
+ * @param params Template-aware notification parameters.
+ * @returns Notification options ready for sending.
+ */
+function buildSponsorTemplateAwareNotificationOptions(params: {
+  context: AuthorizedSponsorContext;
+  messageType: SponsorTemplateMessageType;
+  locale: SponsorDocumentLocale;
+  textPart: string;
+  eventType?: SponsorBusinessEventType;
+}): SendSponsorNotificationOptions {
+  const recipients = resolveSponsorMailRecipients(params.context);
+  const sender = resolveSponsorMailSender(params.context.conferenceData);
+  const templateTransport = resolveSponsorTemplateTransport(
+    params.context,
+    params.messageType,
+    recipients,
+    sender
+  );
+
+  return {
+    messageType: params.messageType,
+    eventType: params.eventType,
+    subject: buildLocalizedSponsorMailSubject(params.messageType, params.locale, params.context.conferenceData),
+    textPart: params.textPart,
+    ...templateTransport,
+  };
+}
 /**
  * Updates sponsor business status through an organizer-only explicit backend action.
  */
@@ -332,13 +417,14 @@ export const sendSponsorPaymentReminder = onRequest(
   async (req, res) => {
     await handleSponsorAction(req, res, 'SEND_PAYMENT_REMINDER', async (context) => {
       const locale = resolveContextSponsorLocale(context);
-      return await sendSponsorNotificationEmail(context, {
+      return await sendSponsorNotificationEmail(context, buildSponsorTemplateAwareNotificationOptions({
+        context,
         messageType: 'SPONSOR_PAYMENT_REMINDER',
         eventType: 'PAYMENT_REMINDER_SENT',
-        subject: buildLocalizedSponsorMailSubject('SPONSOR_PAYMENT_REMINDER', locale, context.conferenceData),
+        locale,
         textPart: String(req.body?.textPart ?? '').trim()
           || buildLocalizedSponsorMailText('SPONSOR_PAYMENT_REMINDER', locale, context.conferenceData),
-      });
+      }));
     });
   }
 );
@@ -351,12 +437,13 @@ export const sendSponsorApplicationConfirmation = onRequest(
   async (req, res) => {
     await handleSponsorAction(req, res, 'SEND_APPLICATION_CONFIRMATION', async (context) => {
       const locale = resolveContextSponsorLocale(context);
-      return await sendSponsorNotificationEmail(context, {
+      return await sendSponsorNotificationEmail(context, buildSponsorTemplateAwareNotificationOptions({
+        context,
         messageType: 'SPONSOR_APPLICATION_CONFIRMATION',
-        subject: buildLocalizedSponsorMailSubject('SPONSOR_APPLICATION_CONFIRMATION', locale, context.conferenceData),
+        locale,
         textPart: String(req.body?.textPart ?? '').trim()
           || buildLocalizedSponsorMailText('SPONSOR_APPLICATION_CONFIRMATION', locale, context.conferenceData),
-      }, false);
+      }), false);
     });
   }
 );
@@ -474,8 +561,17 @@ async function sendSponsorDocumentEmail(
 ): Promise<SponsorActionReport> {
   const payload = options.buildPayload();
   const locale = payload.locale;
-  const attachment = await generateSponsorDocumentAttachment(payload, context.sponsorId, options.messageType);
+  const attachment = await generateSponsorDocumentAttachment(payload);
   const emailPayload = options.buildEmailPayload(attachment, locale);
+  const recipients = resolveSponsorMailRecipients(context);
+  const sender = resolveSponsorMailSender(context.conferenceData);
+  const templateTransport = resolveSponsorTemplateTransport(
+    context,
+    options.messageType as SponsorTemplateMessageType,
+    recipients,
+    sender,
+    payload
+  );
 
   return await sendSponsorNotificationEmail(context, {
     messageType: emailPayload.messageType,
@@ -483,6 +579,8 @@ async function sendSponsorDocumentEmail(
     subject: emailPayload.subject,
     textPart: emailPayload.textPart ?? '',
     idempotenceKey: options.buildIdempotenceKey(payload),
+    templateId: templateTransport.templateId,
+    variables: templateTransport.variables,
   }, true, emailPayload.attachments);
 }
 
@@ -522,15 +620,7 @@ async function handleSponsorDocumentDownload(
         ? buildSponsorInvoicePayload(context.conferenceData as any, context.sponsorData as any)
         : buildSponsorPaidInvoicePayload(context.conferenceData as any, context.sponsorData as any);
 
-    const document = await generateSponsorDocumentAttachment(
-      payload,
-      context.sponsorId,
-      documentType === 'ORDER_FORM'
-        ? 'SPONSOR_ORDER_FORM'
-        : documentType === 'INVOICE'
-          ? 'SPONSOR_INVOICE'
-          : 'SPONSOR_PAID_INVOICE'
-    );
+    const document = await generateSponsorDocumentAttachment(payload);
     logger.info('sponsor document regenerated for download', {
       operation,
       conferenceId: context.conferenceId,
@@ -566,18 +656,14 @@ async function handleSponsorDocumentDownload(
  * Generates one sponsor document attachment from a normalized payload.
  *
  * @param payload Normalized document payload.
- * @param sponsorId Sponsor identifier.
- * @param messageType Logical message type.
  * @returns Generated document attachment.
  */
 async function generateSponsorDocumentAttachment(
-  payload: SponsorDocumentPayload,
-  sponsorId: string,
-  messageType: string
+  payload: SponsorDocumentPayload
 ): Promise<GeneratedSponsorDocument> {
   const pdfBuffer = await renderSponsorDocumentPdf(payload);
   return {
-    filename: `${messageType.toLowerCase()}-${sponsorId}.pdf`,
+    filename: buildSponsorDocumentFilename(payload),
     contentType: 'application/pdf',
     base64Content: pdfBuffer.toString('base64'),
   };
@@ -599,10 +685,10 @@ async function sendSponsorNotificationEmail(
   writeBusinessEvent = true,
   attachments?: MailAttachment[]
 ): Promise<SponsorActionReport> {
-  const existingMail = options.idempotenceKey
-    ? await findExistingMailHistoryByIdempotenceKey(context.db, options.idempotenceKey)
+  const pendingMail = options.idempotenceKey
+    ? await findPendingMailHistoryByIdempotenceKey(context.db, options.idempotenceKey)
     : undefined;
-  if (existingMail?.status === 'PENDING') {
+  if (pendingMail) {
     throw new HttpError(
       409,
       'A matching document send is already in progress',
@@ -611,22 +697,9 @@ async function sendSponsorNotificationEmail(
         conferenceId: context.conferenceId,
         sponsorId: context.sponsorId,
         idempotenceKey: options.idempotenceKey,
-        mailHistoryId: existingMail.id,
+        mailHistoryId: pendingMail.id,
       }
     );
-  }
-  if (existingMail?.status === 'SENT') {
-    return {
-      sponsor: {
-        ...context.sponsorData,
-        id: context.sponsorId,
-      },
-      mailHistoryId: existingMail.id,
-      sendResult: {
-        ok: true,
-        messageId: existingMail.mailjetMessageId,
-      },
-    };
   }
 
   const recipients = resolveSponsorMailRecipients(context);
@@ -636,6 +709,8 @@ async function sendSponsorNotificationEmail(
     recipients: recipients.to,
     ccRecipients: recipients.cc,
     textPart: options.textPart,
+    templateId: options.templateId,
+    variables: options.variables,
     attachments,
     idempotenceKey: options.idempotenceKey,
     metadata: {
@@ -665,7 +740,21 @@ async function sendSponsorNotificationEmail(
   let sendResult;
   try {
     sendResult = await mailService.sendTransactionalEmail(payload);
+    if (options.messageType === 'SPONSOR_INVOICE') {
+      logger.info('sponsor invoice Mailjet response received', {
+        conferenceId: context.conferenceId,
+        sponsorId: context.sponsorId,
+        mailHistoryId,
+        templateId: payload.templateId,
+        attachmentCount: attachments?.length ?? 0,
+        ok: sendResult.ok,
+        messageId: sendResult.ok ? sendResult.messageId : undefined,
+        error: sendResult.ok ? undefined : sendResult.error,
+        rawResponse: sendResult.raw,
+      });
+    }
   } catch (error: unknown) {
+    console.error(error, payload);
     const message = error instanceof Error ? error.message : 'unknown error';
     await updateMailHistoryRecord(context.db, mailHistoryId, {
       status: 'FAILED',
@@ -1085,19 +1174,20 @@ function getPreviouslySentDocumentTimestamp(
 }
 
 /**
- * Searches one existing mail history record by idempotence key.
+ * Searches one in-progress mail history record by idempotence key.
  *
  * @param db Firestore instance.
  * @param idempotenceKey Deterministic idempotence key.
- * @returns Existing mail history record when found.
+ * @returns Pending mail history record when found.
  */
-async function findExistingMailHistoryByIdempotenceKey(
+async function findPendingMailHistoryByIdempotenceKey(
   db: admin.firestore.Firestore,
   idempotenceKey: string
 ): Promise<ExistingMailHistoryMatch | undefined> {
   const snapshot = await db
     .collection(FIRESTORE_COLLECTIONS.MAIL_HISTORY)
     .where('idempotenceKey', '==', idempotenceKey)
+    .where('status', '==', 'PENDING')
     .limit(1)
     .get();
   if (snapshot.empty) {
@@ -1232,3 +1322,7 @@ function removeUndefinedDeep(value: unknown): unknown {
   }
   return value;
 }
+
+
+
+
