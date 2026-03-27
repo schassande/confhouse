@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getDocs, query as fbQuery, where as fbWhere } from 'firebase/firestore';
 import { Observable, from, map, switchMap } from 'rxjs';
-import { BilletwebConfig } from '@shared/model/billetweb-config';
+import { ActivityTicketFieldMapping, BilletwebConfig } from '@shared/model/billetweb-config';
 import { FirestoreGenericService } from './firestore-generic.service';
 
 @Injectable({ providedIn: 'root' })
@@ -90,7 +90,31 @@ export class BilletwebConfigService extends FirestoreGenericService<BilletwebCon
         organizer: legacyTicketTypes?.organizer ?? { ticketTypeId: '', ticketTypeName: '' },
         sponsors,
       },
+      customFieldMappings: this.normalizeCustomFieldMappings(config.customFieldMappings),
     };
+  }
+
+  /**
+   * Normalizes BilletWeb custom field mappings by trimming persisted values.
+   *
+   * @param mappings Raw stored mappings.
+   * @returns Cleaned mappings list.
+   */
+  private normalizeCustomFieldMappings(
+    mappings: ActivityTicketFieldMapping[] | undefined
+  ): ActivityTicketFieldMapping[] {
+    return (mappings ?? [])
+      .map((mapping) => ({
+        activityId: String(mapping.activityId ?? '').trim(),
+        activityAttributeName: String(mapping.activityAttributeName ?? '').trim(),
+        billetwebCustomFieldId: String(mapping.billetwebCustomFieldId ?? '').trim(),
+      }))
+      .filter(
+        (mapping) =>
+          mapping.activityId.length > 0 &&
+          mapping.activityAttributeName.length > 0 &&
+          mapping.billetwebCustomFieldId.length > 0
+      );
   }
 }
 

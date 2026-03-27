@@ -567,7 +567,8 @@
         "STEPS": {
           "CONNECTION": "Connexion BilletWeb",
           "EVENT": "Choix de l événement",
-          "TICKETS": "Les types de ticket"
+          "TICKETS": "Les types de ticket",
+          "CUSTOM_FIELDS": "Custom field"
         },
         "API_URL": "API URL",
         "USER_ID": "User ID",
@@ -586,6 +587,17 @@
         "SPONSOR_TICKETS_HELP": "Ces types de ticket seront disponibles pour les quotas sponsor.",
         "SPONSOR_TICKETS_IN_USE_ERROR": "Impossible de désélectionner un type de ticket déjà utilisé dans un niveau de sponsor.",
         "TICKET_PLACEHOLDER": "Sélectionner un type de ticket",
+        "CUSTOM_FIELDS": {
+          "ADD": "Ajouter un mapping",
+          "EMPTY": "Aucun mapping de custom field configuré.",
+          "ACTIVITY": "Activité",
+          "ACTIVITY_PLACEHOLDER": "Sélectionner une activité",
+          "ATTRIBUTE": "Attribut de l'activité",
+          "ATTRIBUTE_PLACEHOLDER": "Sélectionner un attribut",
+          "ATTRIBUTE_SELECT_ACTIVITY": "Sélectionnez d'abord une activité",
+          "BILLETWEB_FIELD_ID": "Identifiant custom field BilletWeb",
+          "BILLETWEB_FIELD_ID_HELP": "Texte court de 10 caractères maximum."
+        },
         "PREVIOUS": "Précédent",
         "NEXT": "Suivant"
       },

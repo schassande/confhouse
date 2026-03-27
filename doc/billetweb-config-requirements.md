@@ -19,11 +19,12 @@ Creer une page de configuration `BilletWebConfig` permettant de parametrer l'acc
   - `ticketTypes.speaker`
   - `ticketTypes.organizer`
   - `ticketTypes.sponsors` comme tableau obligatoire de `BilletwebTicketType`
+  - `customFieldMappings` comme tableau optionnel de `ActivityTicketFieldMapping`
 - La cle API (`key`) est stockee dans un `ConferenceSecret` dedie.
 
 ## UI attendue
 - Formulaire PrimeNG avec internationalisation.
-- Stepper PrimeNG en 3 etapes.
+- Stepper PrimeNG en 4 etapes.
 - Boutons `Previous` / `Next`, puis `Cancel` / `Save`.
 
 ## Etape 1 - Connection BilletWeb
@@ -66,6 +67,22 @@ Regles metier :
 Persistance :
 - `speaker` et `organizer` stockent un `ticketTypeId` et un `ticketTypeName`.
 - `sponsors` stocke un tableau de `ticketTypeId` et `ticketTypeName`.
+
+## Etape 4 - Les custom fields
+Chargement des activites :
+- Les activites de la conference sont chargees une seule fois via `ActivityService.byConferenceId(conferenceId)`.
+
+Interface :
+- L'utilisateur peut ajouter, modifier et supprimer des lignes de mapping.
+- Chaque ligne permet de choisir :
+  - une activite de la conference (`activityId`)
+  - un attribut parmi les `specificAttributes` de cette activite (`activityAttributeName`)
+  - un identifiant de custom field BilletWeb (`billetwebCustomFieldId`)
+
+Regles de saisie :
+- La liste des activites vient uniquement de la conference courante.
+- La liste des attributs depend de l'activite selectionnee.
+- `billetwebCustomFieldId` est un texte court limite a 10 caracteres.
 
 ## Contrainte technique CORS
 - Aucun appel direct navigateur -> BilletWeb.

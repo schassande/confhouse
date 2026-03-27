@@ -1,7 +1,7 @@
 <section class="billetweb-config-container">
   <div class="header-row">
     <h1>
-      {{ conference()?.name }} {{ conference()?.edition }} - {{ 'CONFERENCE.CONFIG.BILLETWEB.TITLE' | translate }}
+      {{ 'CONFERENCE.CONFIG.BILLETWEB.TITLE' | translate }}
     </h1>
   </div>
 
@@ -14,11 +14,25 @@
           <p-step [value]="1">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.CONNECTION' | translate }}</p-step>
           <p-step [value]="2">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.EVENT' | translate }}</p-step>
           <p-step [value]="3">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.TICKETS' | translate }}</p-step>
+          <p-step [value]="4">{{ 'CONFERENCE.CONFIG.BILLETWEB.STEPS.CUSTOM_FIELDS' | translate }}</p-step>
         </p-step-list>
         <p-step-panels>
           <p-step-panel [value]="1">
             <ng-template #content>
               <div class="step-content">
+                <div class="step-nav">
+                  <span></span>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
+                    (click)="nextStep()"
+                    [disabled]="!canGoToStep2()"
+                  ></button>
+                </div>
+
                 <div class="field-grid">
                   <div class="field">
                     <label for="apiUrl">{{ 'CONFERENCE.CONFIG.BILLETWEB.API_URL' | translate }}</label>
@@ -55,18 +69,6 @@
                     {{ 'CONFERENCE.CONFIG.BILLETWEB.TEST_RESULT' | translate:{ count: connectionTestResultCount() } }}
                   </p>
                 }
-
-                <div class="step-nav step-nav-right">
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-arrow-right"
-                    iconPos="right"
-                    [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
-                    (click)="nextStep()"
-                    [disabled]="!canGoToStep2()"
-                  ></button>
-                </div>
               </div>
             </ng-template>
           </p-step-panel>
@@ -74,6 +76,26 @@
           <p-step-panel [value]="2">
             <ng-template #content>
               <div class="step-content">
+                <div class="step-nav">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.PREVIOUS' | translate"
+                    (click)="previousStep()"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
+                    (click)="nextStep()"
+                    [disabled]="!canGoToStep3()"
+                  ></button>
+                </div>
+
                 <div class="field full-width">
                   <label for="eventId">{{ 'CONFERENCE.CONFIG.BILLETWEB.EVENT_ID' | translate }}</label>
                   <p-select
@@ -97,7 +119,13 @@
                     [loading]="loadingEvents()"
                   ></button>
                 </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
+          <p-step-panel [value]="3">
+            <ng-template #content>
+              <div class="step-content">
                 <div class="step-nav">
                   <button
                     pButton
@@ -114,16 +142,9 @@
                     iconPos="right"
                     [label]="'CONFERENCE.CONFIG.BILLETWEB.NEXT' | translate"
                     (click)="nextStep()"
-                    [disabled]="!canGoToStep3()"
                   ></button>
                 </div>
-              </div>
-            </ng-template>
-          </p-step-panel>
 
-          <p-step-panel [value]="3">
-            <ng-template #content>
-              <div class="step-content">
                 @if (loadingTickets()) {
                   <p>{{ 'CONFERENCE.CONFIG.BILLETWEB.LOADING_TICKETS' | translate }}</p>
                 }
@@ -155,22 +176,30 @@
 
                   <div class="field">
                     <label for="sponsorTicketTypeIds">{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS' | translate }}</label>
-                    <p-multiselect
-                      inputId="sponsorTicketTypeIds"
-                      formControlName="sponsorTicketTypeIds"
-                      [options]="sponsorTicketOptions()"
-                      optionLabel="label"
-                      optionValue="value"
-                      optionDisabled="disabled"
-                      display="chip"
-                      [showToggleAll]="false"
-                      [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_PLACEHOLDER' | translate"
-                    ></p-multiselect>
-                    <small>{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_HELP' | translate }}</small>
+                    <div>
+                      <p-multiselect
+                        inputId="sponsorTicketTypeIds"
+                        formControlName="sponsorTicketTypeIds"
+                        [options]="sponsorTicketOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        optionDisabled="disabled"
+                        display="chip"
+                        [showToggleAll]="false"
+                        [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_PLACEHOLDER' | translate"
+                      ></p-multiselect>
+                      <div><small>{{ 'CONFERENCE.CONFIG.BILLETWEB.SPONSOR_TICKETS_HELP' | translate }}</small></div>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
-                <div class="step-nav step-nav-left">
+          <p-step-panel [value]="4">
+            <ng-template #content>
+              <div class="step-content">
+                <div class="step-nav">
                   <button
                     pButton
                     type="button"
@@ -179,7 +208,91 @@
                     [label]="'CONFERENCE.CONFIG.BILLETWEB.PREVIOUS' | translate"
                     (click)="previousStep()"
                   ></button>
+                  <span></span>
                 </div>
+
+                <div class="inline-actions inline-actions-left">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    [label]="'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ADD' | translate"
+                    (click)="addCustomFieldMapping()"
+                  ></button>
+                </div>
+
+                @if (customFieldMappingControls().length === 0) {
+                  <p class="help-message">
+                    {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.EMPTY' | translate }}
+                  </p>
+                } @else {
+                  <div class="mapping-list" formArrayName="customFieldMappings">
+                    @for (mappingControl of customFieldMappingControls(); track $index) {
+                      <div class="mapping-card" [formGroupName]="$index">
+                        <div class="field-grid">
+                          <div class="field">
+                            <label [for]="'mapping-activity-' + $index">
+                              {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ACTIVITY' | translate }}
+                            </label>
+                            <p-select
+                              [inputId]="'mapping-activity-' + $index"
+                              formControlName="activityId"
+                              [options]="activityOptions()"
+                              optionLabel="label"
+                              optionValue="value"
+                              [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ACTIVITY_PLACEHOLDER' | translate"
+                              [showClear]="true"
+                              (onChange)="onMappingActivityChange($index)"
+                            ></p-select>
+                          </div>
+
+                          <div class="field">
+                            <label [for]="'mapping-attribute-' + $index">
+                              {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ATTRIBUTE' | translate }}
+                            </label>
+                            <p-select
+                              [inputId]="'mapping-attribute-' + $index"
+                              formControlName="activityAttributeName"
+                              [options]="attributeOptionsForMapping($index)"
+                              optionLabel="label"
+                              optionValue="value"
+                              [placeholder]="attributePlaceholderForMapping($index)"
+                              [disabled]="!hasAttributeOptionsForMapping($index)"
+                              [showClear]="true"
+                            ></p-select>
+                          </div>
+
+                          <div class="field">
+                            <label [for]="'mapping-billetweb-field-' + $index">
+                              {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.BILLETWEB_FIELD_ID' | translate }}
+                            </label>
+                            <input
+                              [id]="'mapping-billetweb-field-' + $index"
+                              pInputText
+                              type="text"
+                              formControlName="billetwebCustomFieldId"
+                              maxlength="10"
+                            />
+                          </div>
+                        </div>
+
+                        <div class="mapping-card-actions">
+                          <small>
+                            {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.BILLETWEB_FIELD_ID_HELP' | translate }}
+                          </small>
+                          <button
+                            pButton
+                            type="button"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            [label]="'COMMON.REMOVE' | translate"
+                            (click)="removeCustomFieldMapping($index)"
+                          ></button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             </ng-template>
           </p-step-panel>

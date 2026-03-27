@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -9,11 +9,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { StepperModule } from 'primeng/stepper';
+import { Activity } from '@shared/model/activity.model';
 import { Conference } from '@shared/model/conference.model';
+import { ActivityService } from '../../../services/activity.service';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { BilletwebApiService, BilletwebEvent, BilletwebTicketTypeOption } from '../../../services/billetweb-api.service';
 import { ConferenceSecretService, BILLETWEB_KEY_SECRET_NAME } from '../../../services/conference-secret.service';
-import { BilletwebConfig, BilletwebTicketType } from '@shared/model/billetweb-config';
+import { ActivityTicketFieldMapping, BilletwebConfig, BilletwebTicketType } from '@shared/model/billetweb-config';
 import { ConferenceService } from '../../../services/conference.service';
 
 interface SelectOption {
@@ -45,6 +47,7 @@ export class BilletwebConfigComponent {
   private readonly fb = inject(FormBuilder);
   private readonly translateService = inject(TranslateService);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly activityService = inject(ActivityService);
   private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly conferenceSecretService = inject(ConferenceSecretService);
   private readonly billetwebApiService = inject(BilletwebApiService);
@@ -62,6 +65,7 @@ export class BilletwebConfigComponent {
 
   readonly events = signal<BilletwebEvent[]>([]);
   readonly tickets = signal<BilletwebTicketTypeOption[]>([]);
+  readonly activities = signal<Activity[]>([]);
   readonly selectedSponsorTicketTypeIds = signal<string[]>([]);
   readonly protectedSponsorTicketTypeIds = computed<string[]>(() => this.collectProtectedSponsorTicketTypeIds());
   private readonly eventsCache = new Map<string, BilletwebEvent[]>();
@@ -78,6 +82,7 @@ export class BilletwebConfigComponent {
     speakerTicketTypeId: ['', [Validators.required]],
     organizerTicketTypeId: ['', [Validators.required]],
     sponsorTicketTypeIds: this.fb.nonNullable.control<string[]>([], [Validators.required]),
+    customFieldMappings: this.fb.array([]),
   });
 
   readonly eventOptions = computed<SelectOption[]>(() =>
@@ -97,6 +102,15 @@ export class BilletwebConfigComponent {
       disabled: protectedIds.has(option.value) && selectedIds.has(option.value),
     }));
   });
+  readonly activityOptions = computed<SelectOption[]>(() =>
+    [...this.activities()]
+      .sort((left, right) => String(left.name ?? '').localeCompare(String(right.name ?? '')))
+      .map((activity) => ({
+        label: String(activity.name ?? '').trim(),
+        value: String(activity.id ?? '').trim(),
+      }))
+      .filter((option) => option.value.length > 0)
+  );
 
   constructor() {
     this.form.controls.eventId.valueChanges.subscribe((eventId) => {
@@ -195,6 +209,11 @@ export class BilletwebConfigComponent {
         return;
       }
       this.activeStep.set(3);
+      return;
+    }
+
+    if (step === 3) {
+      this.activeStep.set(4);
     }
   }
 
@@ -238,6 +257,7 @@ export class BilletwebConfigComponent {
           organizer: this.toTicketType(raw.organizerTicketTypeId),
           sponsors: this.toTicketTypes(raw.sponsorTicketTypeIds),
         },
+        customFieldMappings: this.extractCustomFieldMappings(),
       };
 
       await firstValueFrom(this.billetwebConfigService.saveByConferenceId(conferenceId, payload));
@@ -279,7 +299,9 @@ export class BilletwebConfigComponent {
 
     try {
       const conference = await firstValueFrom(this.conferenceService.byId(conferenceId));
+      const activities = await firstValueFrom(this.activityService.byConferenceId(conferenceId));
       this.conference.set(conference);
+      this.activities.set(activities ?? []);
 
       const config = await firstValueFrom(this.billetwebConfigService.findByConferenceId(conferenceId));
       const secret = await firstValueFrom(
@@ -296,6 +318,7 @@ export class BilletwebConfigComponent {
         },
         { emitEvent: false }
       );
+      this.setCustomFieldMappings(config?.customFieldMappings ?? []);
 
       if (config?.eventId) {
         await this.loadEvents();
@@ -542,6 +565,95 @@ export class BilletwebConfigComponent {
   }
 
   /**
+   * Returns the custom field mapping controls for template rendering.
+   *
+   * @returns Mapping form groups.
+   */
+  protected customFieldMappingControls(): FormGroup[] {
+    return this.customFieldMappingsArray().controls as FormGroup[];
+  }
+
+  /**
+   * Adds one empty custom field mapping row.
+   */
+  protected addCustomFieldMapping(): void {
+    this.customFieldMappingsArray().push(this.createCustomFieldMappingGroup());
+  }
+
+  /**
+   * Removes one custom field mapping row.
+   *
+   * @param index Row index.
+   */
+  protected removeCustomFieldMapping(index: number): void {
+    this.customFieldMappingsArray().removeAt(index);
+  }
+
+  /**
+   * Returns the available activity attributes for one mapping row.
+   *
+   * @param index Row index.
+   * @returns Select options for the selected activity.
+   */
+  protected attributeOptionsForMapping(index: number): SelectOption[] {
+    const formGroup = this.customFieldMappingControls()[index];
+    const activityId = String(formGroup?.get('activityId')?.value ?? '').trim();
+    if (!activityId) {
+      return [];
+    }
+    const activity = this.activities().find((entry) => String(entry.id ?? '').trim() === activityId);
+    return (activity?.specificAttributes ?? [])
+      .map((attribute) => String(attribute.attributeName ?? '').trim())
+      .filter((attributeName) => attributeName.length > 0)
+      .map((attributeName) => ({
+        label: attributeName,
+        value: attributeName,
+      }));
+  }
+
+  /**
+   * Returns whether one mapping row has attribute options available.
+   *
+   * @param index Row index.
+   * @returns `true` when the selected activity exposes at least one attribute.
+   */
+  protected hasAttributeOptionsForMapping(index: number): boolean {
+    return this.attributeOptionsForMapping(index).length > 0;
+  }
+
+  /**
+   * Resets the selected attribute when the activity changes to one that no longer exposes it.
+   *
+   * @param index Row index.
+   */
+  protected onMappingActivityChange(index: number): void {
+    const formGroup = this.customFieldMappingControls()[index];
+    if (!formGroup) {
+      return;
+    }
+    const currentAttributeName = String(formGroup.get('activityAttributeName')?.value ?? '').trim();
+    const validAttributeNames = new Set(this.attributeOptionsForMapping(index).map((option) => option.value));
+    if (currentAttributeName && !validAttributeNames.has(currentAttributeName)) {
+      formGroup.patchValue({ activityAttributeName: '' });
+    }
+  }
+
+  /**
+   * Returns the message shown when no activity is selected yet.
+   *
+   * @param index Row index.
+   * @returns Translation key result for the current row state.
+   */
+  protected attributePlaceholderForMapping(index: number): string {
+    const formGroup = this.customFieldMappingControls()[index];
+    const activityId = String(formGroup?.get('activityId')?.value ?? '').trim();
+    if (!activityId) {
+      return this.translateService.instant('CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ATTRIBUTE_SELECT_ACTIVITY');
+    }
+    return this.translateService.instant('CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.ATTRIBUTE_PLACEHOLDER');
+  }
+
+  /**
    * Collects sponsor ticket type ids already referenced by sponsor quotas.
    *
    * @returns Protected BilletWeb ticket type ids.
@@ -599,6 +711,65 @@ export class BilletwebConfigComponent {
    */
   protected canSave(): boolean {
     return this.form.valid && !this.saving();
+  }
+
+  /**
+   * Returns the form array used to edit BilletWeb custom field mappings.
+   *
+   * @returns Mapping form array.
+   */
+  private customFieldMappingsArray(): FormArray {
+    return this.form.get('customFieldMappings') as FormArray;
+  }
+
+  /**
+   * Replaces the current mapping rows with persisted values.
+   *
+   * @param mappings Stored mappings.
+   */
+  private setCustomFieldMappings(mappings: ActivityTicketFieldMapping[]): void {
+    const formArray = this.customFieldMappingsArray();
+    formArray.clear();
+    (mappings ?? []).forEach((mapping) => {
+      formArray.push(this.createCustomFieldMappingGroup(mapping));
+    });
+  }
+
+  /**
+   * Creates one reactive form group for a BilletWeb custom field mapping.
+   *
+   * @param mapping Initial mapping value.
+   * @returns Configured form group.
+   */
+  private createCustomFieldMappingGroup(mapping?: ActivityTicketFieldMapping): FormGroup {
+    return this.fb.group({
+      activityId: [String(mapping?.activityId ?? '').trim(), [Validators.required]],
+      activityAttributeName: [String(mapping?.activityAttributeName ?? '').trim(), [Validators.required]],
+      billetwebCustomFieldId: [
+        String(mapping?.billetwebCustomFieldId ?? '').trim(),
+        [Validators.required, Validators.maxLength(10)],
+      ],
+    });
+  }
+
+  /**
+   * Extracts the normalized mapping payload from the form array.
+   *
+   * @returns Persistable custom field mappings.
+   */
+  private extractCustomFieldMappings(): ActivityTicketFieldMapping[] {
+    return (this.customFieldMappingsArray().getRawValue() as ActivityTicketFieldMapping[])
+      .map((mapping) => ({
+        activityId: String(mapping.activityId ?? '').trim(),
+        activityAttributeName: String(mapping.activityAttributeName ?? '').trim(),
+        billetwebCustomFieldId: String(mapping.billetwebCustomFieldId ?? '').trim(),
+      }))
+      .filter(
+        (mapping) =>
+          mapping.activityId.length > 0 &&
+          mapping.activityAttributeName.length > 0 &&
+          mapping.billetwebCustomFieldId.length > 0
+      );
   }
 }
 
