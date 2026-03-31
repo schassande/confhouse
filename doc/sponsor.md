@@ -177,6 +177,7 @@ stateDiagram-v2
 - `CONFIRMED` does not depend on payment
 - `REJECTED` and `CANCELED` are closed states, but explicit reopening remains allowed
 - a sponsor in `REJECTED` or `CANCELED` must not be published as an active sponsor
+- once a sponsor reaches `CONFIRMED`, `sponsorTypeId` becomes locked and must no longer be changed from the organizer UI
 
 ## Financial Follow-up
 
@@ -278,27 +279,42 @@ Rules:
 
 ## Sponsor Tickets
 
-Sponsor tickets are stored in `Sponsor.conferenceTickets`.
+Sponsor ticket slots are stored in `Sponsor.participantTicketIds`.
 
-Each ticket contains:
+Each identifier points to one persisted `ParticipantBilletWebTicket`.
 
-- `conferenceTicketTypeId`
-- `email`
-- `ticketId`
-- `status`
+Each `ParticipantBilletWebTicket` contains at least:
 
-Allowed values for `ConferenceTicket.status` are:
+- `conferenceId`
+- `personId`
+- `ticketName`
+- `ticketInternalId`
+- `ticketExtenalId`
+- `ticketStatus`
+- `orderId`
+- `orderEmail`
+- `orderDate`
+- `downloadURL`
+- `manageURL`
 
-- `REQUESTED`
+Allowed values for `ParticipantBilletWebTicket.ticketStatus` are:
+
+- `NON_EXISTING`
 - `CREATED`
-- `SENT`
-- `CANCELED`
+- `DISABLED`
+- `DELETED`
 
 Rules:
 
-- available tickets must respect the quotas defined in the `SponsorType`
-- a canceled ticket keeps its business history
-- BilletWeb integration must respect this business state
+- sponsor tickets are managed only for sponsors with `status = CONFIRMED`
+- the organizer UI must keep the whole ticket tab disabled while the sponsor is not `CONFIRMED`
+- the number of ticket slots must follow the quotas defined in the selected `SponsorType`
+- when the persisted number of slots is lower than the expected quota, the missing `ParticipantBilletWebTicket` documents are created
+- when the persisted number of slots is higher than the expected quota, surplus slots are preserved and must not be deleted automatically
+- ticket synchronization updates the structure only; BilletWeb is called only for explicit create, update, and delete ticket actions
+- organizer UI can explicitly request BilletWeb to send or resend the ticket email for an already created sponsor ticket
+- `personId` is the persisted link to the participant identity; name, first name, email, and custom field values can be edited in a frontend view-model without being duplicated in `ParticipantBilletWebTicket`
+- custom fields are editable in the organizer UI even before a `personId` exists; they are persisted when the create or update ticket action resolves or creates the target `Person`
 
 ## Business History
 
@@ -393,7 +409,6 @@ documents?: {
 
 logistics?: {
   boothAssignedAt?: string;
-  ticketsAllocatedAt?: string;
 };
 ```
 
@@ -652,6 +667,7 @@ The following rules are mandatory:
 - `status` and `paymentStatus` changes must update their respective dates
 - significant business actions must be tracked in `businessEvents`
 - `documents` and `logistics` projections, when present, must remain consistent with history
+- every `Sponsor.participantTicketIds` entry must reference a `ParticipantBilletWebTicket` of the same conference
 
 ## Summary of Behavior
 

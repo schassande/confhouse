@@ -307,40 +307,16 @@
 
           <p-tabpanel [value]="3">
             <section class="panel-section">
-              @if (existingSponsor()?.conferenceTickets?.length) {
+              @if (existingSponsor()?.status !== 'CONFIRMED') {
+                <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_REQUIRES_CONFIRMED' | translate }}</div>
+              } @else if (existingSponsor()?.participantTicketIds?.length) {
                 @if (existingSponsor(); as sponsor) {
-                  @if (sponsor.logistics?.ticketsAllocatedAt) {
-                    <div class="inline-meta">
-                      <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKETS_ALLOCATED_AT' | translate }}</strong>
-                      <span>{{ formatLocalDateTime(sponsor.logistics?.ticketsAllocatedAt) }}</span>
-                    </div>
-                  }
-
-                  <div class="tickets-list">
-                    @for (ticket of sponsor.conferenceTickets ?? []; track ticket.ticketId + ticket.email + $index) {
-                      <div class="ticket-card">
-                        <div class="ticket-line">
-                          <span class="ticket-label">{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKET_TYPE' | translate }}</span>
-                          <span>{{ ticket.conferenceTicketTypeId }}</span>
-                        </div>
-                        <div class="ticket-line">
-                          <span class="ticket-label">{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_EMAIL' | translate }}</span>
-                          <span>{{ ticket.email || '-' }}</span>
-                        </div>
-                        <div class="ticket-line">
-                          <span class="ticket-label">{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_ID' | translate }}</span>
-                          <span>{{ ticket.ticketId || '-' }}</span>
-                        </div>
-                        <div class="ticket-line">
-                          <span class="ticket-label">{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_STATUS' | translate }}</span>
-                          <span>{{ conferenceTicketStatusLabel(ticket.status) }}</span>
-                        </div>
-                      </div>
-                    }
+                  <div class="empty-state">
+                    {{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_MANAGED_BY_ORGANIZER' | translate:{ count: sponsor.participantTicketIds.length } }}
                   </div>
                 }
               } @else {
-                <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.NO_CONFERENCE_TICKETS' | translate }}</div>
+                <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.NO_PARTICIPANT_TICKETS' | translate }}</div>
               }
             </section>
           </p-tabpanel>

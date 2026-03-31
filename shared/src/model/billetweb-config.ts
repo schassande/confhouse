@@ -47,3 +47,31 @@ export interface ActivityTicketFieldMapping {
   /** BilletWeb custom field identifier receiving the activity attribute value */
   billetwebCustomFieldId: string;
 }
+
+/**
+ * Store the information on a BilletWeb ticket of a conference participant.
+ */
+export interface ParticipantBilletWebTicket extends PersistentData {
+  /** Identifier of the conference */
+  conferenceId: string;
+  /** Identifier of the person, peut être vide si le billet n'est pas encore attribué. */
+  personId: string;
+  /** The name of the ticket. It is the ticket type. */
+  ticketName: string;
+  /** Internal billetweb identifier of the ticket/product used in the API */
+  ticketInternalId: string;
+  /** External billetweb identifier of the ticket/product visible on ticket (UUID format) */
+  ticketExtenalId: string;
+  /** Status of the billetweb ticket */
+  ticketStatus: 'NON_EXISTING' | 'CREATED' | 'DISABLED' | 'DELETED';
+  /** The order identifier when the ticket has been created */
+  orderId: string;
+  /** The email of the person who ordered the ticket */
+  orderEmail: string;
+  /** Order date ISO */
+  orderDate: string;
+  /** the URL to download the ticket (product) */
+  downloadURL: string;
+  /** The URL to go on the manage page of the ticket */
+  manageURL: string;
+}

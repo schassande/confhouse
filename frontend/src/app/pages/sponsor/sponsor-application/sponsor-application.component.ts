@@ -13,7 +13,7 @@ import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { Conference } from '@shared/model/conference.model';
-import { ConferenceTicket, Sponsor, SponsorBusinessEvent, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
+import { Sponsor, SponsorBusinessEvent, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
@@ -318,16 +318,6 @@ export class SponsorApplicationComponent {
     return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.EVENT_${eventType}`);
   }
 
-  /**
-   * Returns the translated label for one sponsor ticket lifecycle status.
-   *
-   * @param status Ticket lifecycle status.
-   * @returns Translated label.
-   */
-  conferenceTicketStatusLabel(status: ConferenceTicket['status']): string {
-    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.TICKET_${status}`);
-  }
-
   formatLocalDateTime(value: unknown): string {
     const normalized = String(value ?? '').trim();
     if (!normalized) {
@@ -462,10 +452,10 @@ export class SponsorApplicationComponent {
       boothWishes,
       boothWishesDate,
       adminEmails,
-      conferenceTickets: editingSponsor?.conferenceTickets,
       businessEvents: editingSponsor?.businessEvents,
       documents: editingSponsor?.documents,
       logistics: editingSponsor?.logistics,
+      participantTicketIds: editingSponsor?.participantTicketIds ?? [],
     };
 
     this.saving.set(true);

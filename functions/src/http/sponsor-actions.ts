@@ -3,13 +3,14 @@ import * as logger from 'firebase-functions/logger';
 import { admin } from '../common/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '../common/firestore-collections';
 import {
+  authorizeConferenceOrganizerRequest,
   ensurePostMethod,
   getRequesterEmailFromAuthorization,
   HttpError,
   isRequesterOrganizer,
   loadConference,
   parseConferenceId,
-  ensureRequesterIsOrganizer,
+  AuthorizedConferenceOrganizerContext,
 } from './conference-http-common';
 import {
   applySponsorPaymentStatusTransition,
@@ -69,12 +70,12 @@ interface SponsorActionReport {
 }
 
 interface AuthorizedSponsorContext {
-  db: admin.firestore.Firestore;
-  conferenceId: string;
+  db: AuthorizedConferenceOrganizerContext['db'];
+  conferenceId: AuthorizedConferenceOrganizerContext['conferenceId'];
   sponsorId: string;
-  requesterEmail: string;
-  conferenceRef: admin.firestore.DocumentReference;
-  conferenceData: Record<string, unknown>;
+  requesterEmail: AuthorizedConferenceOrganizerContext['requesterEmail'];
+  conferenceRef: AuthorizedConferenceOrganizerContext['conferenceRef'];
+  conferenceData: AuthorizedConferenceOrganizerContext['conferenceData'];
   sponsorRef: admin.firestore.DocumentReference;
   sponsorData: Record<string, unknown>;
 }
@@ -888,13 +889,9 @@ async function handleSponsorAction(
  * @returns Authorized sponsor context.
  */
 async function authorizeSponsorOrganizerRequest(req: any, operation: SponsorActionOperation): Promise<AuthorizedSponsorContext> {
-  ensurePostMethod(req.method, operation);
-  const db = admin.firestore();
-  const conferenceId = parseConferenceId(req.body, operation);
+  const organizerContext = await authorizeConferenceOrganizerRequest(req, operation);
+  const { db, conferenceId, requesterEmail, conferenceRef, conferenceData } = organizerContext;
   const sponsorId = parseSponsorId(req.body, operation);
-  const requesterEmail = await getRequesterEmailFromAuthorization(req.headers.authorization, conferenceId, operation);
-  const { conferenceRef, conferenceData } = await loadConference(db, conferenceId, operation);
-  ensureRequesterIsOrganizer(conferenceData, conferenceId, requesterEmail, operation);
   const sponsorRef = db.collection(FIRESTORE_COLLECTIONS.SPONSOR).doc(sponsorId);
   const sponsorSnap = await sponsorRef.get();
   if (!sponsorSnap.exists) {

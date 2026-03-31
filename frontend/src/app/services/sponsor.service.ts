@@ -4,13 +4,13 @@ import { Auth } from '@angular/fire/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { catchError, firstValueFrom, from, map, Observable, of } from 'rxjs';
 import {
-  ConferenceTicket,
   Sponsor,
   SponsorBusinessEvent,
   SponsorCommunicationLanguage,
   SponsorPaymentStatus,
   SponsorStatus,
 } from '@shared/model/sponsor.model';
+import { ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
 import { FirestoreGenericService } from './firestore-generic.service';
 import { functionBaseUrl } from './constantes';
 
@@ -22,6 +22,18 @@ export interface SponsorActionReport {
     messageId?: string;
     error?: string;
   };
+}
+
+export interface ParticipantTicketFieldInput {
+  activityId: string;
+  activityAttributeName: string;
+  billetwebCustomFieldId: string;
+  value: string;
+}
+
+export interface SponsorTicketActionReport extends SponsorActionReport {
+  participantTicket?: ParticipantBilletWebTicket;
+  participantTickets?: ParticipantBilletWebTicket[];
 }
 
 export interface SponsorDocumentDownload {
@@ -36,6 +48,10 @@ export interface SponsorDocumentDownload {
 interface SponsorOrganizerActionPayload {
   conferenceId: string;
   sponsorId: string;
+}
+
+interface SponsorParticipantTicketOrganizerActionPayload extends SponsorOrganizerActionPayload {
+  participantTicketId: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -196,19 +212,91 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    *
    * @param conferenceId Conference identifier.
    * @param sponsorId Sponsor identifier.
-   * @param conferenceTickets Ticket allocation payload.
    * @returns Backend sponsor action report.
    */
   async allocateSponsorTickets(
     conferenceId: string,
-    sponsorId: string,
-    conferenceTickets: ConferenceTicket[]
-  ): Promise<SponsorActionReport> {
+    sponsorId: string
+  ): Promise<SponsorTicketActionReport> {
     return await this.postSponsorOrganizerAction('allocateSponsorTickets', {
       conferenceId,
       sponsorId,
-      conferenceTickets,
     });
+  }
+
+  /**
+   * Creates or updates one sponsor participant ticket through the backend action layer.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @param participantTicketId Participant ticket identifier.
+   * @param firstName Participant first name.
+   * @param lastName Participant last name.
+   * @param email Participant email.
+   * @param customFields Submitted custom field values.
+   * @returns Backend sponsor ticket action report.
+   */
+  async upsertSponsorParticipantTicket(
+    conferenceId: string,
+    sponsorId: string,
+    participantTicketId: string,
+    firstName: string,
+    lastName: string,
+    email: string,
+    customFields: ParticipantTicketFieldInput[]
+  ): Promise<SponsorTicketActionReport> {
+    return await this.postSponsorOrganizerAction('upsertSponsorParticipantTicket', {
+      conferenceId,
+      sponsorId,
+      participantTicketId,
+      firstName,
+      lastName,
+      email,
+      customFields,
+    });
+  }
+
+  /**
+   * Deletes one sponsor participant ticket through the backend action layer.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @param participantTicketId Participant ticket identifier.
+   * @returns Backend sponsor ticket action report.
+   */
+  async deleteSponsorParticipantTicket(
+    conferenceId: string,
+    sponsorId: string,
+    participantTicketId: string
+  ): Promise<SponsorTicketActionReport> {
+    return await this.postSponsorOrganizerAction('deleteSponsorParticipantTicket', {
+      conferenceId,
+      sponsorId,
+      participantTicketId,
+    });
+  }
+
+  /**
+   * Sends or resends one sponsor participant ticket email through the backend action layer.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @param participantTicketId Participant ticket identifier.
+   * @returns Backend sponsor ticket action report.
+   */
+  async sendSponsorParticipantTicket(
+    conferenceId: string,
+    sponsorId: string,
+    participantTicketId: string
+  ): Promise<SponsorTicketActionReport> {
+    return await this.postSponsorOrganizerAction<SponsorParticipantTicketOrganizerActionPayload, SponsorTicketActionReport>(
+      'sendSponsorParticipantTicket',
+      {
+        conferenceId,
+        sponsorId,
+        participantTicketId,
+      }
+    );
   }
 
   /**
@@ -372,13 +460,16 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
    * @param payload Action payload.
    * @returns Backend sponsor action report.
    */
-  private async postSponsorOrganizerAction<T extends SponsorOrganizerActionPayload>(
+  private async postSponsorOrganizerAction<
+    TPayload extends SponsorOrganizerActionPayload,
+    TReport extends SponsorActionReport = SponsorActionReport,
+  >(
     actionName: string,
-    payload: T
-  ): Promise<SponsorActionReport> {
+    payload: TPayload
+  ): Promise<TReport> {
     const idToken = await this.getIdTokenOrThrow();
     const response = await firstValueFrom(
-      this.http.post<{ report: SponsorActionReport }>(
+      this.http.post<{ report: TReport }>(
         `${functionBaseUrl}${actionName}`,
         payload,
         {

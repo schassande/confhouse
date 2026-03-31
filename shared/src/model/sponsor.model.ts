@@ -94,15 +94,6 @@ export type BoothAllocationMode =
   | 'CONFIRMATION_DATE'  // Automatic allocation based on the confirmation date and the wishes
   | 'PAYMENT_DATE' // Automatic allocation based on the payment date and the wishes
 ;
-/**
- * One conference ticket allocated to a sponsor.
- */
-export interface ConferenceTicket {
-  conferenceTicketTypeId: string;
-  email: string;
-  ticketId: string;
-  status: ConferenceTicketStatus;
-}
 
 /**
  * One significant business event recorded on a sponsor.
@@ -129,7 +120,6 @@ export interface SponsorDocuments {
  */
 export interface SponsorLogistics {
   boothAssignedAt?: string;
-  ticketsAllocatedAt?: string;
 }
 
 /**
@@ -181,6 +171,6 @@ export interface Sponsor extends PersistentData {
   documents?: SponsorDocuments;
   /** Summary logistics projection derived from business history. */
   logistics?: SponsorLogistics;
-  /** Conference tickets allocated to the sponsor. */
-  conferenceTickets?: ConferenceTicket[];
+  /** List of identifier of ParticipantBilletWebTicket. It is the list of all ticket allowed for this sponsor. */
+  participantTicketIds: string[];
 }

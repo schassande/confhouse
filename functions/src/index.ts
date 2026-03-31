@@ -10,8 +10,11 @@ import { refreshVoxxrinOccupation } from './http/refresh-voxxrin-occupation';
 import { fetchBilletweb } from './http/fetch-billetweb';
 import { recomputeConferenceDashboardDaily } from './scheduler/recompute-conference-dashboard-daily';
 import { speakerSessionAction } from './http/speaker-session-action';
+import { allocateSponsorTickets } from './http/sponsor-ticket/allocate';
+import { deleteSponsorParticipantTicket } from './http/sponsor-ticket/delete';
+import { sendSponsorParticipantTicket } from './http/sponsor-ticket/send';
+import { upsertSponsorParticipantTicket } from './http/sponsor-ticket/upsert';
 import {
-  allocateSponsorTickets,
   assignSponsorBooth,
   downloadSponsorInvoice,
   downloadSponsorPaidInvoice,
@@ -43,6 +46,9 @@ export {
   updateSponsorPaymentStatus,
   assignSponsorBooth,
   allocateSponsorTickets,
+  upsertSponsorParticipantTicket,
+  deleteSponsorParticipantTicket,
+  sendSponsorParticipantTicket,
   downloadSponsorOrderForm,
   downloadSponsorInvoice,
   downloadSponsorPaidInvoice,

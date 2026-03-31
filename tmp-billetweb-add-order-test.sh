@@ -38,6 +38,7 @@ payload=$(cat <<JSON
       "email": "${email}",
       "request_id": "${order_request_id}",
       "payment_type": "${payment_type}",
+      "ship": 1,
       "products": [
         {
           "ticket": "${ticket}",

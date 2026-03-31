@@ -1,4 +1,4 @@
-import {
+﻿import {
   SponsorBusinessEvent,
   SponsorBusinessEventType,
   SponsorDocuments,
@@ -181,9 +181,7 @@ export function applySponsorLogisticsProjection(
   case 'BOOTH_CHANGED':
     nextLogistics.boothAssignedAt = eventAt;
     return nextLogistics;
-  case 'TICKETS_ALLOCATED':
-    nextLogistics.ticketsAllocatedAt = eventAt;
-    return nextLogistics;
+
   default:
     return logistics;
   }
@@ -249,4 +247,5 @@ export function applySuccessfulSponsorBusinessEvent<T extends SponsorRecord>(
     logistics: applySponsorLogisticsProjection(withEvent.logistics, event.type, event.at),
   };
 }
+
 

@@ -72,6 +72,9 @@
                   formControlName="sponsorTypeId"
                   class="w-full"
                 ></p-select>
+                @if (isSponsorTypeLocked()) {
+                  <small>{{ 'CONFERENCE.SPONSOR_MANAGE.SPONSOR_TYPE_LOCKED' | translate }}</small>
+                }
                 @if (currentEditingSponsor(); as editingSponsor) {
                   {{ 'CONFERENCE.SPONSOR_MANAGE.REGISTRATION_DATE' | translate }}: {{ formatLocalDateTime(editingSponsor.registrationDate) }}
                 }
@@ -392,86 +395,194 @@
 
         <p-tabpanel [value]="3">
           <section class="panel-section">
-            <div class="form-actions inline-actions">
-              <div class="inline-actions-buttons">
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-plus"
-                  class="p-button-secondary"
-                  [label]="'CONFERENCE.SPONSOR_MANAGE.ADD_CONFERENCE_TICKET' | translate"
-                  (click)="addConferenceTicket()"
-                ></button>
-                @if (isEditing()) {
-                <button
-                  pButton
-                  type="button"
-                  class="p-button-secondary"
-                  [label]="'CONFERENCE.SPONSOR_MANAGE.ALLOCATE_TICKETS' | translate"
-                  [loading]="isActionPending('tickets')"
-                  (click)="onAllocateTickets()"
-                ></button>
-                }
-              </div>
-            </div>
-
-            @if (conferenceTicketsArray.controls.length === 0) {
-            <small>{{ 'CONFERENCE.SPONSOR_MANAGE.NO_CONFERENCE_TICKETS' | translate }}</small>
+            @if (!isEditing()) {
+              <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_REQUIRES_SAVED_SPONSOR' | translate }}</div>
+            } @else if (!canManageTickets()) {
+              <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_REQUIRES_CONFIRMED' | translate }}</div>
             } @else {
-              @if (currentEditingSponsor(); as editingSponsor) {
-                <div>
-                  <strong>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKETS_ALLOCATED_AT' | translate }}</strong>
-                  <span style="margin-left: 5px;">{{ formatLocalDateTime(editingSponsor.logistics?.ticketsAllocatedAt) }}</span>
-                </div>
-              }
-            }
-
-            <div formArrayName="conferenceTickets" class="tickets-list">
-              @for (ticketGroup of conferenceTicketsArray.controls; track $index) {
-              <div class="form-row ticket-row" [formGroupName]="$index">
-                <div class="form-section">
-                  <label>{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKET_TYPE' | translate }}</label>
-                  <p-select
-                    [options]="conferenceTicketTypeOptions()"
-                    optionLabel="label"
-                    optionValue="value"
-                    [placeholder]="'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKET_TYPE_PLACEHOLDER' | translate"
-                    formControlName="conferenceTicketTypeId"
-                    class="w-full"
-                  ></p-select>
-                </div>
-                <div class="form-section">
-                  <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_EMAIL' | translate }}</label>
-                  <input pInputText formControlName="email" type="email" class="w-full" />
-                </div>
-                <div class="form-section">
-                  <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_ID' | translate }}</label>
-                  <input pInputText formControlName="ticketId" type="text" class="w-full" />
-                </div>
-                <div class="form-section">
-                  <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_STATUS' | translate }}</label>
-                  <p-select
-                    [options]="conferenceTicketStatusOptions()"
-                    optionLabel="label"
-                    optionValue="value"
-                    formControlName="status"
-                    class="w-full"
-                  ></p-select>
-                </div>
-                <div class="form-section ticket-delete">
-                  <label>{{ 'COMMON.REMOVE' | translate }}</label>
+              <div class="form-actions inline-actions">
+                <div class="inline-actions-buttons">
                   <button
                     pButton
                     type="button"
-                    icon="pi pi-trash"
-                    class="p-button-danger"
-                    [label]="'COMMON.REMOVE' | translate"
-                    (click)="removeConferenceTicket($index)"
+                    class="p-button-secondary"
+                    [label]="'CONFERENCE.SPONSOR_MANAGE.SYNC_PARTICIPANT_TICKETS' | translate"
+                    [loading]="ticketSectionLoading() || isActionPending('tickets')"
+                    (click)="onAllocateTickets()"
                   ></button>
                 </div>
               </div>
+
+              @if (ticketSectionLoading()) {
+                <div class="empty-state">{{ 'CONFERENCE.LOADING' | translate }}</div>
+              } @else if (ticketSectionError()) {
+                <div class="empty-state">{{ ticketSectionError() | translate }}</div>
+              } @else if (participantTicketCards().length === 0) {
+                <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.NO_PARTICIPANT_TICKETS' | translate }}</div>
+              } @else {
+                <p-dataview [value]="participantTicketCards()" layout="list" class="tickets-dataview">
+                  <ng-template #list let-items>
+                    @for (ticket of items; track ticket.ticket.id; let idx = $index) {
+                      <article class="ticket-card">
+                        <div class="ticket-card-header">
+                          <div>
+                            <h3>#{{idx+1}} {{ ticket.ticket.ticketName }}</h3>
+                          </div>
+                          <p-tag
+                            [value]="participantTicketStatusLabel(ticket.ticket.ticketStatus)"
+                            [severity]="participantTicketStatusSeverity(ticket.ticket.ticketStatus)"
+                          ></p-tag>
+                        </div>
+
+                        <div class="form-row">
+                          <div class="form-section">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_EMAIL' | translate }}</label>
+                            <input
+                              pInputText
+                              type="email"
+                              class="w-full"
+                              [value]="ticket.email"
+                              (input)="updateParticipantTicketField(ticket.ticket.id, 'email', $any($event.target).value)"
+                            />
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-section">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_FIRST_NAME' | translate }}</label>
+                            <input
+                              pInputText
+                              type="text"
+                              class="w-full"
+                              [value]="ticket.firstName"
+                              (input)="updateParticipantTicketField(ticket.ticket.id, 'firstName', $any($event.target).value)"
+                            />
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-section">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_LAST_NAME' | translate }}</label>
+                            <input
+                              pInputText
+                              type="text"
+                              class="w-full"
+                              [value]="ticket.lastName"
+                              (input)="updateParticipantTicketField(ticket.ticket.id, 'lastName', $any($event.target).value)"
+                            />
+                          </div>
+                        </div>
+
+                        @if (ticket.customFields.length > 0) {
+                          <div class="ticket-custom-fields">
+                            @for (field of ticket.customFields; track field.activityId + field.activityAttributeName + field.billetwebCustomFieldId) {
+                              <div class="form-section">
+                                <label>
+                                  {{ field.activityAttributeName }}
+                                  @if (field.attributeRequired) {<span class="required">*</span>}
+                                </label>
+                                @if (field.attributeType === 'LIST') {
+                                  <p-select
+                                    [options]="customFieldOptions(field)"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    class="w-full"
+                                    [ngModel]="field.value"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    (ngModelChange)="updateParticipantTicketCustomField(ticket.ticket.id, field.activityId + '::' + field.activityAttributeName + '::' + field.billetwebCustomFieldId, $event)"
+                                  ></p-select>
+                                } @else if (field.attributeType === 'BOOLEAN') {
+                                  <input
+                                    type="checkbox"
+                                    [checked]="field.value === 'true'"
+                                    (change)="updateParticipantTicketCustomField(ticket.ticket.id, field.activityId + '::' + field.activityAttributeName + '::' + field.billetwebCustomFieldId, $any($event.target).checked ? 'true' : 'false')"
+                                  />
+                                } @else if (field.attributeType === 'DATE') {
+                                  <input
+                                    pInputText
+                                    type="date"
+                                    class="w-full"
+                                    [value]="field.value"
+                                    (input)="updateParticipantTicketCustomField(ticket.ticket.id, field.activityId + '::' + field.activityAttributeName + '::' + field.billetwebCustomFieldId, $any($event.target).value)"
+                                  />
+                                } @else if (field.attributeType === 'INTEGER') {
+                                  <input
+                                    pInputText
+                                    type="number"
+                                    class="w-full"
+                                    [value]="field.value"
+                                    (input)="updateParticipantTicketCustomField(ticket.ticket.id, field.activityId + '::' + field.activityAttributeName + '::' + field.billetwebCustomFieldId, $any($event.target).value)"
+                                  />
+                                } @else {
+                                  <input
+                                    pInputText
+                                    type="text"
+                                    class="w-full"
+                                    [value]="field.value"
+                                    (input)="updateParticipantTicketCustomField(ticket.ticket.id, field.activityId + '::' + field.activityAttributeName + '::' + field.billetwebCustomFieldId, $any($event.target).value)"
+                                  />
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        <div class="">
+                          <div class="row">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_INTERNAL_ID' | translate }}: </label>
+                            <span>{{ ticket.ticket.ticketInternalId || '-' }}</span>
+                          </div>
+                          <div class="row">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_EXTERNAL_ID' | translate }}: </label>
+                            <span>{{ ticket.ticket.ticketExtenalId || '-' }}</span>
+                          </div>
+                          <div class="row">
+                            <label>{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_ORDER_DATE' | translate }}: </label>
+                            <span>{{ formatLocalDateTime(ticket.ticket.orderDate) }}</span>
+                          </div>
+                          <div class="row">
+                            @if (ticket.ticket.downloadURL) {
+                              <a [href]="ticket.ticket.downloadURL" target="_blank" rel="noopener noreferrer" style="margin-right: 10px;">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_DOWNLOAD_URL' | translate }}</a>
+                            }
+                            @if (ticket.ticket.manageURL) {
+                              <a [href]="ticket.ticket.manageURL" target="_blank" rel="noopener noreferrer">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_MANAGE_URL' | translate }}</a>
+                            }
+                          </div>
+                        </div>
+
+                        <div class="ticket-card-actions">
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-danger"
+                            [label]="'CONFERENCE.SPONSOR_MANAGE.DELETE_PARTICIPANT_TICKET' | translate"
+                            [disabled]="!canDeleteParticipantTicket(ticket)"
+                            [loading]="isTicketActionPending(ticket.ticket.id, 'delete')"
+                            (click)="onDeleteParticipantTicket(ticket)"
+                          ></button>
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-warning"
+                            [label]="'CONFERENCE.SPONSOR_MANAGE.SEND_PARTICIPANT_TICKET' | translate"
+                            [disabled]="!canSendParticipantTicket(ticket)"
+                            [loading]="isTicketActionPending(ticket.ticket.id, 'send')"
+                            (click)="onSendParticipantTicket(ticket)"
+                          ></button>
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-secondary"
+                            [label]="participantTicketSubmitLabel(ticket)"
+                            [disabled]="!canSubmitParticipantTicket(ticket)"
+                            [loading]="isTicketActionPending(ticket.ticket.id, 'upsert')"
+                            (click)="onUpsertParticipantTicket(ticket)"
+                          ></button>
+                        </div>
+                      </article>
+                    }
+                  </ng-template>
+                </p-dataview>
               }
-            </div>
+            }
           </section>
         </p-tabpanel>
 

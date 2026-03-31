@@ -69,6 +69,43 @@ export async function loadConference(
 }
 
 /**
+ * Shared organizer authorization flow for conference-scoped POST handlers.
+ *
+ * This helper:
+ * - validates the HTTP method
+ * - parses `conferenceId`
+ * - authenticates the caller from the bearer token
+ * - loads the conference document
+ * - verifies organizer access against the loaded conference
+ *
+ * @param req HTTP request.
+ * @param operationName Operation name used in error messages and logs.
+ * @returns Authorized organizer context scoped to one conference.
+ */
+export async function authorizeConferenceOrganizerRequest(
+  req: any,
+  operationName: string
+): Promise<AuthorizedConferenceOrganizerContext> {
+  ensurePostMethod(req.method, operationName);
+  const db = admin.firestore();
+  const conferenceId = parseConferenceId(req.body, operationName);
+  const requesterEmail = await getRequesterEmailFromAuthorization(
+    req.headers.authorization,
+    conferenceId,
+    operationName
+  );
+  const { conferenceRef, conferenceData } = await loadConference(db, conferenceId, operationName);
+  ensureRequesterIsOrganizer(conferenceData, conferenceId, requesterEmail, operationName);
+  return {
+    db,
+    conferenceId,
+    requesterEmail,
+    conferenceRef,
+    conferenceData,
+  };
+}
+
+/**
  * Parses a bearer token from Authorization header.
  * Returns empty string when header is missing or malformed.
  */
@@ -166,4 +203,20 @@ export function ensureRequesterIsOrganizer(
       }
     );
   }
+}
+
+/**
+ * Authorized organizer context resolved for one conference-scoped request.
+ */
+export interface AuthorizedConferenceOrganizerContext {
+  /** Firestore handle. */
+  db: admin.firestore.Firestore;
+  /** Conference identifier taken from the request. */
+  conferenceId: string;
+  /** Authenticated organizer email. */
+  requesterEmail: string;
+  /** Loaded conference document reference. */
+  conferenceRef: admin.firestore.DocumentReference;
+  /** Loaded conference payload. */
+  conferenceData: any;
 }

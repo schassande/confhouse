@@ -12,6 +12,7 @@ export const FIRESTORE_COLLECTIONS = {
   PERSON_EMAILS: 'person_emails',
   CONFERENCE_SPEAKER: 'conference-speaker',
   SPONSOR: 'sponsor',
+  PARTICIPANT_BILLETWEB_TICKET: 'participantBilletWebTicket',
   ACTIVITY: 'activity',
   ACTIVITY_PARTICIPATION: 'activityParticipation',
   SESSION_ALLOCATION: 'session-allocation',

@@ -8,22 +8,24 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DataViewModule } from 'primeng/dataview';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { forkJoin, take } from 'rxjs';
-import { BilletwebConfig } from '@shared/model/billetweb-config';
+import { firstValueFrom, forkJoin, take } from 'rxjs';
+import { ActivityTicketFieldMapping, BilletwebConfig, ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
+import { Activity, ActivityAttribute, ActivityParticipation, AttributeType } from '@shared/model/activity.model';
 import { Conference } from '@shared/model/conference.model';
 import {
-  ConferenceTicket,
   Sponsor,
   SponsorBusinessEvent,
   SponsorCommunicationLanguage,
@@ -31,14 +33,39 @@ import {
   SponsorStatus,
   SponsorType,
 } from '@shared/model/sponsor.model';
+import { Person } from '@shared/model/person.model';
+import { ActivityParticipationService } from '../../../services/activity-participation.service';
+import { ActivityService } from '../../../services/activity.service';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
-import { SponsorService } from '../../../services/sponsor.service';
+import { ParticipantBilletwebTicketService } from '../../../services/participant-billetweb-ticket.service';
+import { PersonService } from '../../../services/person.service';
+import { ParticipantTicketFieldInput, SponsorService, SponsorTicketActionReport } from '../../../services/sponsor.service';
 import { StepperModule } from 'primeng/stepper';
 
 interface SelectOption {
   label: string;
   value: string;
+}
+
+type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
+
+interface SponsorTicketCustomFieldVm {
+  activityId: string;
+  activityAttributeName: string;
+  billetwebCustomFieldId: string;
+  attributeType: AttributeType;
+  attributeRequired: boolean;
+  attributeAllowedValues: string[];
+  value: string;
+}
+
+interface SponsorParticipantTicketVm {
+  ticket: ParticipantBilletWebTicket;
+  firstName: string;
+  lastName: string;
+  email: string;
+  customFields: SponsorTicketCustomFieldVm[];
 }
 
 type SponsorEditMode = 'create' | 'edit';
@@ -49,14 +76,17 @@ type SponsorEditNotice = 'saved' | 'deleted';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ReactiveFormsModule,
     TranslateModule,
     ButtonModule,
     ConfirmDialogModule,
+    DataViewModule,
     InputTextModule,
     TextareaModule,
     ToastModule,
     SelectModule,
+    TagModule,
     TabsModule,
     StepperModule
   ],
@@ -69,8 +99,12 @@ export class SponsorEditComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly activityService = inject(ActivityService);
+  private readonly activityParticipationService = inject(ActivityParticipationService);
   private readonly conferenceService = inject(ConferenceService);
   private readonly billetwebConfigService = inject(BilletwebConfigService);
+  private readonly participantBilletwebTicketService = inject(ParticipantBilletwebTicketService);
+  private readonly personService = inject(PersonService);
   private readonly sponsorService = inject(SponsorService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -80,6 +114,7 @@ export class SponsorEditComponent implements OnInit {
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   readonly sponsorId = computed(() => this.route.snapshot.paramMap.get('sponsorId') ?? '');
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly activities = signal<Activity[]>([]);
   readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly sponsors = signal<Sponsor[]>([]);
   readonly sponsorTypes = signal<SponsorType[]>([]);
@@ -87,8 +122,12 @@ export class SponsorEditComponent implements OnInit {
   readonly loadError = signal('');
   readonly actionInProgress = signal<string | null>(null);
   readonly documentAction = signal<'order-form' | 'invoice' | 'paid-invoice' | null>(null);
+  readonly ticketActionInProgress = signal<string | null>(null);
   readonly mode = signal<SponsorEditMode>('create');
   readonly form = signal<FormGroup | null>(null);
+  readonly participantTicketCards = signal<SponsorParticipantTicketVm[]>([]);
+  readonly ticketSectionLoading = signal(false);
+  readonly ticketSectionError = signal('');
   readonly editingId = signal<string | null>(null);
   readonly isEditing = computed(() => this.mode() === 'edit' && this.editingId() !== null);
   readonly currentEditingSponsor = computed(() => {
@@ -119,34 +158,22 @@ export class SponsorEditComponent implements OnInit {
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_PAID'), value: 'PAID' },
     { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.PAYMENT_OVERDUE'), value: 'OVERDUE' },
   ]);
-  readonly conferenceTicketStatusOptions = computed<SelectOption[]>(() => [
-    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_REQUESTED'), value: 'REQUESTED' },
-    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_CREATED'), value: 'CREATED' },
-    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_SENT'), value: 'SENT' },
-    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_CANCELED'), value: 'CANCELED' },
-  ]);
   readonly sponsorTypeOptions = computed<SelectOption[]>(() =>
     this.sponsorTypes().map((type) => ({ label: type.name, value: type.id }))
-  );
-  readonly conferenceTicketTypeOptions = computed<SelectOption[]>(() =>
-    (this.billetwebConfig()?.ticketTypes?.sponsors ?? []).map((type) => ({
-      label: type.ticketTypeName,
-      value: type.ticketTypeId,
-    }))
   );
   readonly communicationLanguageOptions = computed<SelectOption[]>(() => [
     { label: this.translateService.instant('LANGUAGE.FR'), value: 'fr' },
     { label: this.translateService.instant('LANGUAGE.EN'), value: 'en' },
   ]);
+  readonly canManageTickets = computed(() =>
+    !!this.currentEditingSponsor()?.id && this.currentEditingSponsor()?.status === 'CONFIRMED'
+  );
+  readonly isSponsorTypeLocked = computed(() => this.currentEditingSponsor()?.status === 'CONFIRMED');
   readonly step = signal<number>(1);
 
   ngOnInit(): void {
     this.initializeMode();
     this.loadPageData();
-  }
-
-  get conferenceTicketsArray(): FormArray<FormGroup> {
-    return (this.form()?.get('conferenceTickets') as FormArray<FormGroup>) ?? this.fb.array<FormGroup>([]);
   }
 
   onCancel(): void {
@@ -192,7 +219,8 @@ export class SponsorEditComponent implements OnInit {
       return;
     }
 
-    const sponsorTypeId = String(form.value.sponsorTypeId ?? '').trim();
+    const rawValue = form.getRawValue();
+    const sponsorTypeId = String(rawValue.sponsorTypeId ?? '').trim();
     const sponsorType = this.sponsorTypes().find((type) => type.id === sponsorTypeId);
     if (!sponsorType) {
       this.messageService.add({
@@ -208,29 +236,29 @@ export class SponsorEditComponent implements OnInit {
       id: this.editingId() ?? '',
       lastUpdated: editingSponsor?.lastUpdated ?? '',
       conferenceId: this.conferenceId(),
-      name: String(form.value.name ?? '').trim(),
-      status: editingSponsor?.status ?? this.normalizeSponsorStatus(form.value.status),
+      name: String(rawValue.name ?? '').trim(),
+      status: editingSponsor?.status ?? this.normalizeSponsorStatus(rawValue.status),
       statusDate: editingSponsor?.statusDate ?? this.nowIsoDateTime(),
-      paymentStatus: editingSponsor?.paymentStatus ?? this.normalizePaymentStatus(form.value.paymentStatus),
+      paymentStatus: editingSponsor?.paymentStatus ?? this.normalizePaymentStatus(rawValue.paymentStatus),
       paymentStatusDate: editingSponsor?.paymentStatusDate ?? this.nowIsoDateTime(),
       description: this.extractLocalizedValues(form, 'description'),
       sponsorTypeId,
-      communicationLanguage: this.normalizeCommunicationLanguage(form.value.communicationLanguage),
-      purchaseOrder: String(form.value.purchaseOrder ?? '').trim() || undefined,
-      address: String(form.value.address ?? '').trim() || undefined,
+      communicationLanguage: this.normalizeCommunicationLanguage(rawValue.communicationLanguage),
+      purchaseOrder: String(rawValue.purchaseOrder ?? '').trim() || undefined,
+      address: String(rawValue.address ?? '').trim() || undefined,
       registrationDate: editingSponsor?.registrationDate ?? this.nowIsoDateTime(),
       acceptedNumber: editingSponsor?.acceptedNumber,
-      invoiceDueDate: this.normalizeOptionalDate(form.value.invoiceDueDate),
-      logo: String(form.value.logo ?? '').trim(),
+      invoiceDueDate: this.normalizeOptionalDate(rawValue.invoiceDueDate),
+      logo: String(rawValue.logo ?? '').trim(),
       website: this.extractLocalizedValues(form, 'website'),
-      boothName: editingSponsor?.boothName ?? String(form.value.boothName ?? '').trim(),
-      boothWishes: this.parseList(form.value.boothWishesText),
-      boothWishesDate: this.normalizeDateTime(form.value.boothWishesDate),
-      adminEmails: this.parseList(form.value.adminEmailsText),
-      conferenceTickets: editingSponsor?.conferenceTickets ?? this.extractConferenceTickets(form),
+      boothName: editingSponsor?.boothName ?? String(rawValue.boothName ?? '').trim(),
+      boothWishes: this.parseList(rawValue.boothWishesText),
+      boothWishesDate: this.normalizeDateTime(rawValue.boothWishesDate),
+      adminEmails: this.parseList(rawValue.adminEmailsText),
       businessEvents: editingSponsor?.businessEvents,
       documents: editingSponsor?.documents,
       logistics: editingSponsor?.logistics,
+      participantTicketIds: editingSponsor?.participantTicketIds ?? [],
     };
 
     this.sponsorService.save(payload).subscribe({
@@ -310,16 +338,11 @@ export class SponsorEditComponent implements OnInit {
    */
   async onAllocateTickets(): Promise<void> {
     const sponsor = this.currentEditingSponsor();
-    const form = this.form();
-    if (!sponsor || !form) {
+    if (!sponsor || !this.canManageTickets()) {
       return;
     }
-    await this.runSponsorAction('tickets', async () =>
-      await this.sponsorService.allocateSponsorTickets(
-        this.conferenceId(),
-        sponsor.id,
-        this.extractConferenceTickets(form) ?? []
-      )
+    await this.runTicketAction('tickets', async () =>
+      await this.sponsorService.allocateSponsorTickets(this.conferenceId(), sponsor.id)
     );
   }
 
@@ -451,20 +474,137 @@ export class SponsorEditComponent implements OnInit {
     return this.documentAction() === action;
   }
 
-  addConferenceTicket(): void {
-    const form = this.form();
-    if (!form) {
-      return;
-    }
-    (form.get('conferenceTickets') as FormArray<FormGroup>).push(this.createConferenceTicketGroup());
+  isTicketActionPending(ticketId: string, action: 'upsert' | 'send' | 'delete'): boolean {
+    return this.ticketActionInProgress() === `${action}:${ticketId}`;
   }
 
-  removeConferenceTicket(index: number): void {
-    const form = this.form();
-    if (!form) {
+  participantTicketStatusLabel(status: ParticipantBilletWebTicket['ticketStatus']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_${status}`);
+  }
+
+  participantTicketStatusSeverity(status: ParticipantBilletWebTicket['ticketStatus']): TagSeverity {
+    switch (status) {
+    case 'CREATED':
+      return 'success';
+    case 'NON_EXISTING':
+      return 'secondary';
+    case 'DISABLED':
+      return 'warn';
+    case 'DELETED':
+      return 'danger';
+    default:
+      return 'secondary';
+    }
+  }
+
+  canSubmitParticipantTicket(ticket: SponsorParticipantTicketVm): boolean {
+    return this.canManageTickets()
+      && ticket.firstName.trim().length > 0
+      && ticket.lastName.trim().length > 0
+      && ticket.email.trim().length > 0;
+  }
+
+  canDeleteParticipantTicket(ticket: SponsorParticipantTicketVm): boolean {
+    return this.canManageTickets() && ticket.ticket.ticketStatus === 'CREATED';
+  }
+
+  canSendParticipantTicket(ticket: SponsorParticipantTicketVm): boolean {
+    return this.canManageTickets()
+      && ticket.ticket.ticketStatus === 'CREATED'
+      && String(ticket.ticket.orderId ?? '').trim().length > 0
+      && String(ticket.ticket.orderEmail ?? '').trim().length > 0;
+  }
+
+  participantTicketSubmitLabel(ticket: SponsorParticipantTicketVm): string {
+    return this.translateService.instant(
+      ticket.ticket.ticketStatus === 'NON_EXISTING'
+        ? 'CONFERENCE.SPONSOR_MANAGE.CREATE_PARTICIPANT_TICKET'
+        : 'CONFERENCE.SPONSOR_MANAGE.UPDATE_PARTICIPANT_TICKET'
+    );
+  }
+
+  customFieldOptions(field: SponsorTicketCustomFieldVm): SelectOption[] {
+    return (field.attributeAllowedValues ?? []).map((value) => ({ label: value, value }));
+  }
+
+  updateParticipantTicketField(
+    ticketId: string,
+    field: 'firstName' | 'lastName' | 'email',
+    value: string
+  ): void {
+    this.participantTicketCards.update((tickets) =>
+      tickets.map((ticket) => ticket.ticket.id === ticketId ? { ...ticket, [field]: value } : ticket)
+    );
+  }
+
+  updateParticipantTicketCustomField(
+    ticketId: string,
+    fieldKey: string,
+    value: string
+  ): void {
+    this.participantTicketCards.update((tickets) =>
+      tickets.map((ticket) =>
+        ticket.ticket.id !== ticketId
+          ? ticket
+          : {
+            ...ticket,
+            customFields: ticket.customFields.map((field) =>
+              `${field.activityId}::${field.activityAttributeName}::${field.billetwebCustomFieldId}` === fieldKey
+                ? { ...field, value }
+                : field
+            ),
+          }
+      )
+    );
+  }
+
+  async onUpsertParticipantTicket(ticket: SponsorParticipantTicketVm): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor || !this.canSubmitParticipantTicket(ticket)) {
       return;
     }
-    (form.get('conferenceTickets') as FormArray<FormGroup>).removeAt(index);
+
+    await this.runTicketAction(`upsert:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.upsertSponsorParticipantTicket(
+        this.conferenceId(),
+        sponsor.id,
+        ticket.ticket.id,
+        ticket.firstName.trim(),
+        ticket.lastName.trim(),
+        ticket.email.trim(),
+        ticket.customFields.map((field) => this.toParticipantTicketFieldInput(field))
+      )
+    );
+  }
+
+  async onDeleteParticipantTicket(ticket: SponsorParticipantTicketVm): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor || !this.canDeleteParticipantTicket(ticket)) {
+      return;
+    }
+
+    await this.runTicketAction(`delete:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.deleteSponsorParticipantTicket(
+        this.conferenceId(),
+        sponsor.id,
+        ticket.ticket.id
+      )
+    );
+  }
+
+  async onSendParticipantTicket(ticket: SponsorParticipantTicketVm): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor || !this.canSendParticipantTicket(ticket)) {
+      return;
+    }
+
+    await this.runTicketAction(`send:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.sendSponsorParticipantTicket(
+        this.conferenceId(),
+        sponsor.id,
+        ticket.ticket.id
+      )
+    );
   }
 
   localizedFieldLabel(prefix: 'DESCRIPTION' | 'WEBSITE', language: string): string {
@@ -516,10 +656,11 @@ export class SponsorEditComponent implements OnInit {
 
     forkJoin({
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      activities: this.activityService.byConferenceId(conferenceId).pipe(take(1)),
       billetwebConfig: this.billetwebConfigService.findByConferenceId(conferenceId).pipe(take(1)),
       sponsors: this.sponsorService.byConferenceId(conferenceId).pipe(take(1)),
     }).subscribe({
-      next: ({ conference, billetwebConfig, sponsors }) => {
+      next: ({ conference, activities, billetwebConfig, sponsors }) => {
         if (!conference) {
           this.loadError.set('CONFERENCE.NOT_FOUND');
           this.loading.set(false);
@@ -528,6 +669,7 @@ export class SponsorEditComponent implements OnInit {
         }
 
         this.conference.set(conference);
+        this.activities.set(activities ?? []);
         this.billetwebConfig.set(billetwebConfig);
         this.sponsorTypes.set(conference.sponsoring?.sponsorTypes ?? []);
         this.sponsors.set(sponsors);
@@ -551,6 +693,7 @@ export class SponsorEditComponent implements OnInit {
     if (this.mode() === 'create') {
       this.form.set(this.createForm());
       this.editingId.set(null);
+      this.participantTicketCards.set([]);
       return;
     }
 
@@ -563,6 +706,7 @@ export class SponsorEditComponent implements OnInit {
 
     this.editingId.set(sponsor.id);
     this.form.set(this.createForm(sponsor));
+    void this.refreshParticipantTickets();
     if (sponsor.paymentStatus === 'PAID') {
       this.step.set(3);
     } else if (sponsor.documents?.orderFormSentAt) {
@@ -587,9 +731,6 @@ export class SponsorEditComponent implements OnInit {
       boothWishesText: [Array.isArray(sponsor?.boothWishes) ? sponsor.boothWishes.join('\n') : ''],
       boothWishesDate: [this.normalizeDateTimeInputValue(sponsor?.boothWishesDate ?? new Date().toISOString())],
       adminEmailsText: [Array.isArray(sponsor?.adminEmails) ? sponsor.adminEmails.join('\n') : ''],
-      conferenceTickets: this.fb.array<FormGroup>(
-        (sponsor?.conferenceTickets ?? []).map((ticket) => this.createConferenceTicketGroup(ticket))
-      ),
     };
 
     this.languageCodes().forEach((language) => {
@@ -611,16 +752,11 @@ export class SponsorEditComponent implements OnInit {
       ];
     });
 
-    return this.fb.group(controls);
-  }
-
-  private createConferenceTicketGroup(ticket?: ConferenceTicket): FormGroup {
-    return this.fb.group({
-      conferenceTicketTypeId: [String(ticket?.conferenceTicketTypeId ?? '').trim(), [Validators.required]],
-      email: [String(ticket?.email ?? '').trim()],
-      ticketId: [String(ticket?.ticketId ?? '').trim()],
-      status: [String(ticket?.status ?? 'REQUESTED').trim(), [Validators.required]],
-    });
+    const form = this.fb.group(controls);
+    if (sponsor?.status === 'CONFIRMED') {
+      form.get('sponsorTypeId')?.disable({ emitEvent: false });
+    }
+    return form;
   }
 
   private extractLocalizedValues(form: FormGroup, fieldPrefix: 'description' | 'website'): Record<string, string> {
@@ -633,24 +769,163 @@ export class SponsorEditComponent implements OnInit {
     }, {});
   }
 
-  private extractConferenceTickets(form: FormGroup): ConferenceTicket[] | undefined {
-    const values = (form.get('conferenceTickets') as FormArray<FormGroup>).getRawValue() as Array<{
-      conferenceTicketTypeId?: string;
-      email?: string;
-      ticketId?: string;
-      status?: ConferenceTicket['status'];
-    }>;
+  /**
+   * Reloads the participant ticket cards of the edited sponsor from the persisted model.
+   */
+  private async refreshParticipantTickets(report?: SponsorTicketActionReport): Promise<void> {
+    const sponsor = report?.sponsor ?? this.currentEditingSponsor();
+    console.log('[SponsorEdit] refreshParticipantTickets:start', {
+      conferenceId: this.conferenceId(),
+      sponsorId: sponsor?.id,
+      sponsorStatus: sponsor?.status,
+      participantTicketIds: sponsor?.participantTicketIds ?? [],
+      report,
+    });
 
-    const tickets = values
-      .map((ticket) => ({
-        conferenceTicketTypeId: String(ticket?.conferenceTicketTypeId ?? '').trim(),
-        email: String(ticket?.email ?? '').trim(),
-        ticketId: String(ticket?.ticketId ?? '').trim(),
-        status: this.normalizeConferenceTicketStatus(ticket?.status),
-      }))
-      .filter((ticket) => ticket.conferenceTicketTypeId.length > 0 || ticket.email.length > 0 || ticket.ticketId.length > 0);
+    if (!sponsor?.id || sponsor.status !== 'CONFIRMED') {
+      console.log('[SponsorEdit] refreshParticipantTickets:skipped', {
+        reason: !sponsor?.id ? 'missing-sponsor-id' : 'sponsor-not-confirmed',
+        sponsorId: sponsor?.id,
+        sponsorStatus: sponsor?.status,
+      });
+      this.participantTicketCards.set([]);
+      this.ticketSectionError.set('');
+      return;
+    }
 
-    return tickets.length > 0 ? tickets : undefined;
+    this.ticketSectionLoading.set(true);
+    this.ticketSectionError.set('');
+    try {
+      const synchronizedReport = report?.participantTickets
+        ? report
+        : await this.sponsorService.allocateSponsorTickets(this.conferenceId(), sponsor.id);
+
+      console.log('[SponsorEdit] refreshParticipantTickets:synchronizedReport', {
+        sponsorId: sponsor.id,
+        inputParticipantTicketIds: sponsor.participantTicketIds ?? [],
+        synchronizedSponsor: synchronizedReport.sponsor,
+        synchronizedParticipantTickets: synchronizedReport.participantTickets ?? [],
+      });
+
+      this.applyUpdatedSponsor(synchronizedReport.sponsor);
+      const participantTickets = synchronizedReport.participantTickets
+        ?? await this.participantBilletwebTicketService.byIds(synchronizedReport.sponsor.participantTicketIds ?? []);
+
+      console.log('[SponsorEdit] refreshParticipantTickets:loadedTickets', {
+        sponsorId: sponsor.id,
+        requestedIds: synchronizedReport.sponsor.participantTicketIds ?? [],
+        loadedIds: participantTickets.map((ticket) => ticket.id),
+        loadedTickets: participantTickets,
+      });
+
+      const viewModels = await Promise.all(
+        participantTickets.map(async (ticket) => await this.buildParticipantTicketVm(ticket))
+      );
+
+      console.log('[SponsorEdit] refreshParticipantTickets:viewModels', {
+        sponsorId: sponsor.id,
+        viewModelCount: viewModels.length,
+        viewModels,
+      });
+
+      this.participantTicketCards.set(viewModels);
+    } catch (error) {
+      console.error('Error loading participant tickets:', error);
+      this.ticketSectionError.set('CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_LOAD_ERROR');
+      this.participantTicketCards.set([]);
+    } finally {
+      this.ticketSectionLoading.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async buildParticipantTicketVm(ticket: ParticipantBilletWebTicket): Promise<SponsorParticipantTicketVm> {
+    const personId = String(ticket.personId ?? '').trim();
+    const person = personId
+      ? await firstValueFrom(this.personService.byId(personId).pipe(take(1)))
+      : undefined;
+    const participations = personId
+      ? await firstValueFrom(this.activityParticipationService.byConferenceAndPersonId(this.conferenceId(), personId).pipe(take(1)))
+      : [];
+
+    const viewModel: SponsorParticipantTicketVm = {
+      ticket,
+      firstName: String(person?.firstName ?? '').trim(),
+      lastName: String(person?.lastName ?? '').trim(),
+      email: String(person?.email ?? '').trim(),
+      customFields: this.buildParticipantTicketCustomFields(participations),
+    };
+
+    console.log('[SponsorEdit] buildParticipantTicketVm', {
+      ticketId: ticket.id,
+      personId,
+      person,
+      participations,
+      viewModel,
+    });
+
+    return viewModel;
+  }
+
+  private buildParticipantTicketCustomFields(participations: ActivityParticipation[]): SponsorTicketCustomFieldVm[] {
+    const participationsByActivity = new Map<string, ActivityParticipation>(
+      (participations ?? []).map((participation) => [String(participation.activityId ?? '').trim(), participation])
+    );
+    const attributesByActivity = new Map<string, Map<string, ActivityAttribute>>();
+    for (const activity of this.conferenceActivities()) {
+      attributesByActivity.set(
+        String(activity.id ?? '').trim(),
+        new Map(
+          (activity.specificAttributes ?? []).map((attribute) => [
+            String(attribute.attributeName ?? '').trim(),
+            attribute,
+          ])
+        )
+      );
+    }
+
+    return this.ticketFieldMappings().map((mapping) => {
+      const activityId = String(mapping.activityId ?? '').trim();
+      const attributeName = String(mapping.activityAttributeName ?? '').trim();
+      const attribute = attributesByActivity.get(activityId)?.get(attributeName);
+      const participation = participationsByActivity.get(activityId);
+      const value = participation?.attributes?.find((item) => String(item.name ?? '').trim() === attributeName)?.value ?? '';
+      return {
+        activityId,
+        activityAttributeName: attributeName,
+        billetwebCustomFieldId: String(mapping.billetwebCustomFieldId ?? '').trim(),
+        attributeType: attribute?.attributeType ?? 'TEXT',
+        attributeRequired: !!attribute?.attributeRequired,
+        attributeAllowedValues: attribute?.attributeAllowedValues ?? [],
+        value: String(value ?? ''),
+      };
+    });
+  }
+
+  private conferenceActivities(): Activity[] {
+    return this.activities();
+  }
+
+  private ticketFieldMappings(): ActivityTicketFieldMapping[] {
+    return Array.isArray(this.billetwebConfig()?.customFieldMappings)
+      ? this.billetwebConfig()?.customFieldMappings ?? []
+      : [];
+  }
+
+  private toParticipantTicketFieldInput(field: SponsorTicketCustomFieldVm): ParticipantTicketFieldInput {
+    return {
+      activityId: field.activityId,
+      activityAttributeName: field.activityAttributeName,
+      billetwebCustomFieldId: field.billetwebCustomFieldId,
+      value: this.normalizeCustomFieldValue(field),
+    };
+  }
+
+  private normalizeCustomFieldValue(field: SponsorTicketCustomFieldVm): string {
+    if (field.attributeType === 'BOOLEAN') {
+      return String(field.value).toLowerCase() === 'true' ? 'true' : 'false';
+    }
+    return String(field.value ?? '').trim();
   }
 
   private parseList(raw: string | undefined): string[] {
@@ -723,14 +998,6 @@ export class SponsorEditComponent implements OnInit {
     return allowed.includes(normalized as SponsorPaymentStatus) ? (normalized as SponsorPaymentStatus) : 'PENDING';
   }
 
-  private normalizeConferenceTicketStatus(value: unknown): ConferenceTicket['status'] {
-    const normalized = String(value ?? '').trim();
-    const allowed: ConferenceTicket['status'][] = ['REQUESTED', 'CREATED', 'SENT', 'CANCELED'];
-    return allowed.includes(normalized as ConferenceTicket['status'])
-      ? (normalized as ConferenceTicket['status'])
-      : 'REQUESTED';
-  }
-
   /**
    * Normalizes one sponsor communication language to the supported set.
    *
@@ -752,6 +1019,11 @@ export class SponsorEditComponent implements OnInit {
     try {
       const report = await action();
       this.applyUpdatedSponsor(report.sponsor);
+      if (report.sponsor.status === 'CONFIRMED') {
+        await this.refreshParticipantTickets();
+      } else {
+        this.participantTicketCards.set([]);
+      }
       this.messageService.add({
         severity: 'success',
         summary: this.translateService.instant('COMMON.SUCCESS'),
@@ -767,6 +1039,43 @@ export class SponsorEditComponent implements OnInit {
       });
     } finally {
       this.actionInProgress.set(null);
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * Executes one sponsor ticket action and reconciles the updated ticket cards in the UI.
+   *
+   * @param actionKey UI action key.
+   * @param action Backend action callback.
+   */
+  private async runTicketAction(
+    actionKey: string,
+    action: () => Promise<SponsorTicketActionReport>
+  ): Promise<void> {
+    this.ticketActionInProgress.set(actionKey);
+    try {
+      const report = await action();
+      this.applyUpdatedSponsor(report.sponsor);
+      if (report.participantTickets) {
+        await this.refreshParticipantTickets(report);
+      } else if (report.participantTicket) {
+        await this.refreshParticipantTickets();
+      }
+      this.messageService.add({
+        severity: 'success',
+        summary: this.translateService.instant('COMMON.SUCCESS'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.ACTION_SUCCESS'),
+      });
+    } catch (error) {
+      console.error('Error running participant ticket action:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translateService.instant('COMMON.ERROR'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.ACTION_ERROR'),
+      });
+    } finally {
+      this.ticketActionInProgress.set(null);
       this.cdr.markForCheck();
     }
   }

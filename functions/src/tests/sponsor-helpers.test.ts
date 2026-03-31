@@ -93,12 +93,12 @@ test('applySuccessfulSponsorBusinessEvent updates booth projection with latest b
   assert.equal(changed.businessEvents?.length, 2);
 });
 
-test('applySuccessfulSponsorBusinessEvent updates ticket allocation projection', () => {
+test('applySuccessfulSponsorBusinessEvent keeps logistics unchanged for ticket allocation', () => {
   const next = applySuccessfulSponsorBusinessEvent(buildSponsorRecord(), {
     type: 'TICKETS_ALLOCATED',
     at: '2026-03-15T08:00:00.000Z',
     by: 'organizer@example.com',
   });
 
-  assert.equal(next.logistics?.ticketsAllocatedAt, '2026-03-15T08:00:00.000Z');
+  assert.equal(next.logistics, undefined);
 });
