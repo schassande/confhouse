@@ -308,13 +308,23 @@ Rules:
 
 - sponsor tickets are managed only for sponsors with `status = CONFIRMED`
 - the organizer UI must keep the whole ticket tab disabled while the sponsor is not `CONFIRMED`
+- in the organizer sponsor edit page, the ticket tab lists one card per `Sponsor.participantTicketIds` entry and does not expose manual add or delete slot actions
 - the number of ticket slots must follow the quotas defined in the selected `SponsorType`
 - when the persisted number of slots is lower than the expected quota, the missing `ParticipantBilletWebTicket` documents are created
 - when the persisted number of slots is higher than the expected quota, surplus slots are preserved and must not be deleted automatically
 - ticket synchronization updates the structure only; BilletWeb is called only for explicit create, update, and delete ticket actions
+- ticket synchronization is typically triggered when the organizer opens the ticket tab and after a sponsor type change while the sponsor is still editable
+- when the sponsor type changes, already `CREATED` tickets keep their current `ticketName` to avoid implicit BilletWeb changes; only tickets that are not yet created can be realigned automatically to the new quota
 - organizer UI can explicitly request BilletWeb to send or resend the ticket email for an already created sponsor ticket
 - `personId` is the persisted link to the participant identity; name, first name, email, and custom field values can be edited in a frontend view-model without being duplicated in `ParticipantBilletWebTicket`
 - custom fields are editable in the organizer UI even before a `personId` exists; they are persisted when the create or update ticket action resolves or creates the target `Person`
+- the organizer card for one ticket shows the ticket type, participant identity fields, custom fields, current ticket status, BilletWeb internal and external ids, and the download and management links when available
+- the create or update action is enabled only when first name, last name, and email are available in the organizer view-model
+- the create action first resolves the `Person` by email or creates it, then creates or updates the relevant `ActivityParticipation` records for mapped custom fields, then calls BilletWeb and stores the returned identifiers on `ParticipantBilletWebTicket`
+- after BilletWeb ticket creation, an attendee lookup is used when needed to enrich the persisted ticket with BilletWeb fields that are not present in the initial create response
+- the delete action is available only when `ticketStatus = CREATED`
+- deleting a sponsor ticket removes the BilletWeb order, sets `ticketStatus = DELETED`, clears BilletWeb identifiers and links, and keeps the ticket slot itself available for later reuse
+- resending a sponsor ticket email uses BilletWeb `update_order` with the persisted `orderId` and `orderEmail`; the exact BilletWeb payload remains a documented implementation hypothesis until validated in a real BilletWeb environment
 
 ## Business History
 

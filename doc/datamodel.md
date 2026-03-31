@@ -9,6 +9,7 @@ Main collections:
 - `slot-type`
 - `conference`
 - `sponsor`
+- `participantBilletWebTicket`
 - `conference-hall-config`
 - `voxxrin-config`
 - `conferenceSecret`
@@ -120,7 +121,23 @@ erDiagram
         SponsorBusinessEvent[] businessEvents
         SponsorDocuments documents
         SponsorLogistics logistics
-        ConferenceTicket[] conferenceTickets
+        string[] participantTicketIds FK
+        string lastUpdated
+    }
+
+    PARTICIPANT_BILLETWEB_TICKET {
+        string id PK
+        string conferenceId FK
+        string personId FK
+        string ticketName
+        string ticketInternalId
+        string ticketExtenalId
+        string ticketStatus
+        string orderId
+        string orderEmail
+        string orderDate
+        string downloadURL
+        string manageURL
         string lastUpdated
     }
 
@@ -244,11 +261,13 @@ erDiagram
     CONFERENCE ||--o{ ACTIVITY : "conferenceId"
     CONFERENCE ||--o{ ACTIVITY_PARTICIPATION : "conferenceId"
     CONFERENCE ||--|| CONFERENCE_DASHBOARD : "conferenceId / doc id"
+    CONFERENCE ||--o{ PARTICIPANT_BILLETWEB_TICKET : "conferenceId"
 
     PERSON ||--|| PERSON_EMAILS : "person_emails.personId"
     PERSON ||--o{ SESSION : "speaker1Id / speaker2Id / speaker3Id"
     PERSON ||--o{ CONFERENCE_SPEAKER : "personId"
     PERSON ||--o{ ACTIVITY_PARTICIPATION : "personId"
+    PERSON ||--o{ PARTICIPANT_BILLETWEB_TICKET : "personId"
 
     SESSION_TYPE ||--o{ SESSION : "conference.sessionTypeId"
     TRACK ||--o{ SESSION : "conference.trackId"
@@ -258,6 +277,7 @@ erDiagram
     SLOT ||--o{ SESSION_ALLOCATION : "slotId (+ dayId, roomId)"
 
     ACTIVITY ||--o{ ACTIVITY_PARTICIPATION : "activityId"
+    SPONSOR ||--o{ PARTICIPANT_BILLETWEB_TICKET : "participantTicketIds[]"
 
     CONFERENCE_DASHBOARD ||--o{ CONFERENCE_DASHBOARD_HISTORY : "subcollection history"
 ```
@@ -315,7 +335,7 @@ It stores:
 - sponsor administrators (`adminEmails`)
 - business history (`businessEvents`)
 - optional read projections for UI and filters (`documents`, `logistics`)
-- allocated conference tickets (`conferenceTickets`)
+- allocated sponsor ticket slots (`participantTicketIds`)
 
 This entity is not embedded in `Conference`.
 `Conference` stores sponsorship configuration, while `Sponsor` stores each actual sponsor application or sponsorship record.
@@ -333,6 +353,24 @@ Rules:
 - `documents` and `logistics` remain derived summary projections when present
 
 This avoids turning document sending, stand assignment, and ticket allocation into extra lifecycle statuses.
+
+### ParticipantBilletWebTicket (`participantBilletWebTicket`)
+Persistent BilletWeb-backed sponsor ticket slot linked to one conference.
+
+It stores:
+- the owning conference (`conferenceId`)
+- the linked person when one has been resolved or created (`personId`)
+- the ticket type label used for the sponsor quota (`ticketName`)
+- BilletWeb identifiers and links (`ticketInternalId`, `ticketExtenalId`, `orderId`, `downloadURL`, `manageURL`)
+- BilletWeb order metadata (`orderEmail`, `orderDate`)
+- ticket lifecycle state (`ticketStatus`)
+
+Rules:
+- documents in this collection are referenced from `Sponsor.participantTicketIds`
+- the organizer workflow creates missing documents when the sponsor quota expects more slots than currently persisted
+- surplus documents remain referenced and are not deleted automatically when the quota decreases
+- `personId` is the only persisted identity link; editable name, first name, email, and custom field values stay in the organizer view-model until an explicit ticket create or update action persists them through `Person` and `ActivityParticipation`
+- allowed `ticketStatus` values are `NON_EXISTING`, `CREATED`, `DISABLED`, and `DELETED`
 
 ### Person (`person`)
 Represents a user/speaker identity. Contains account flags, speaker profile details, and search/index fields.

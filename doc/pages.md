@@ -394,12 +394,22 @@ Navigation:
 ### 28. Sponsor Edit (`/conference/:conferenceId/sponsors/manage/:sponsorId`)
 Purpose:
 - Full-page sponsor editing and operational actions for one sponsor.
+- Includes a ticket tab dedicated to sponsor participant tickets managed through BilletWeb.
 
 Access:
 - Authenticated + organizer + valid conference context.
 
 Navigation:
 - Returns to `/conference/:conferenceId/sponsors/manage` after save, delete, or cancel.
+
+Ticket tab behavior:
+- The whole tab stays disabled while `Sponsor.status` is not `CONFIRMED`.
+- When enabled, the page synchronizes `Sponsor.participantTicketIds` with the selected sponsor type quota by creating missing persistent ticket slots and preserving any surplus slots.
+- The tab displays one ticket card per persisted `ParticipantBilletWebTicket`; there is no manual add or delete slot action.
+- Each card exposes organizer editing for participant name, first name, email, and mapped custom fields, while BilletWeb ids, links, and ticket status remain read-only feedback fields.
+- The primary action creates the BilletWeb ticket when the slot is still `NON_EXISTING`, or updates it otherwise.
+- The delete action is available only for tickets currently in `CREATED` status and keeps the slot for future reuse after BilletWeb deletion.
+- A dedicated organizer action can request BilletWeb to send or resend the ticket email for a created ticket.
 
 ### 29. Publish (`/conference/:conferenceId/publish`)
 Purpose:
