@@ -20,6 +20,20 @@ Frontend-only helpers or view models must stay in feature folders or services in
 
 Cloud Functions import shared models directly from `shared/src/model`.
 
+The backend source tree is now organized by business domain directly under `functions/src` instead of a catch-all `http/` folder.
+
+Current conventions:
+
+- `conference/` contains conference lifecycle, dashboard, and speaker-related handlers
+- `integrations/` contains external system integrations such as Conference Hall and Voxxrin
+- `person/` contains person-oriented handlers and persistence helpers
+- `sponsor/` contains sponsor status, communication, and document endpoints
+- `ticket/` contains ticket workflows and the BilletWeb integration
+- `scheduler/` contains scheduled jobs
+- `common/` contains shared low-level backend utilities
+
+Each public Cloud Function must still be exposed from its own file, even when the implementation reuses shared helpers from the same domain.
+
 When the backend only needs a subset of a persisted entity, derive a backend-specific type from the shared contract with `Pick<>` or `Omit<>` instead of redefining the structure manually.
 
 Example:

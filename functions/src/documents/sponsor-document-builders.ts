@@ -217,6 +217,11 @@ function getSponsorType(
   sponsor: SponsorDocumentSponsorSource
 ): SponsorDocumentSponsorTypeSource {
   const sponsorTypeId = String(sponsor.sponsorTypeId ?? '').trim();
+  /**
+   * Sponsor type.
+   * @param conference.sponsoring?.sponsorTypes ?? [] Conference.sponsoring?.sponsor types ?? [].
+   * @returns Computed result.
+   */
   const sponsorType = (conference.sponsoring?.sponsorTypes ?? []).find((item) => item.id === sponsorTypeId);
   if (!sponsorType) {
     throw new Error(`Sponsor type not found for sponsorTypeId=${sponsorTypeId}`);

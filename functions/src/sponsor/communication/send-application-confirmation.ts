@@ -1,0 +1,1 @@
+export { sendSponsorApplicationConfirmation } from '../common';

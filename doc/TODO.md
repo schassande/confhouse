@@ -12,6 +12,7 @@
     - When speaker/session removed/cancelled/... remove the ticket
   * Billetweb for organiser: Use API to create/delete the ticket of the organiser
   * Billetweb for sponsor: Use API to create/delete the ticket of the sponsor
+    - permit to the sponsor to manage his tickets
 - Edit Speaker: Cancel speaker by organizer
 - Edit Speaker: s'assurer que la disponibilité est suffisante pour couvrir au moins un slot compatible pour chaque session du speaker.
 

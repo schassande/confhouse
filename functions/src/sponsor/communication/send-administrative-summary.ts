@@ -1,0 +1,1 @@
+export { sendSponsorAdministrativeSummary } from '../common';

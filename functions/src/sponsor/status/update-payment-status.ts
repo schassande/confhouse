@@ -1,0 +1,1 @@
+export { updateSponsorPaymentStatus } from '../common';

@@ -112,6 +112,11 @@ export function buildSponsorCommunicationRecipients(
   cc: Array<{ email: string; name?: string }>;
 } {
   const sponsorName = String(sponsor.name ?? '').trim() || undefined;
+  /**
+   * Converts to.
+   * @param Array.isArray(sponsor.adminEmails) ? sponsor.adminEmails Array.is array(sponsor.admin emails) ? sponsor.admin emails.
+   * @returns Computed result.
+   */
   const to = (Array.isArray(sponsor.adminEmails) ? sponsor.adminEmails : [])
     .map((email) => String(email ?? '').trim())
     .filter((email) => email.length > 0)

@@ -106,6 +106,11 @@ async function resolveRemoteImageNode(node: Record<string, unknown>): Promise<Re
     throw new Error(`Unable to fetch remote image: ${imageUrl} (${response.status})`);
   }
 
+  /**
+   * Content type.
+   * @param response.headers.get('content-type') || 'image/png' Response.headers.get('content-type') || 'image/png'.
+   * @returns Computed result.
+   */
   const contentType = (response.headers.get('content-type') || 'image/png').toLowerCase();
   if (contentType.includes('image/svg+xml')) {
     const svgMarkup = await response.text();
