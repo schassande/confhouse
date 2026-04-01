@@ -48,6 +48,8 @@ export interface Conference extends PersistentData {
     sponsorBoothMaps: string[];
     startDate: string; // ISO 8601
     endDate: string;   // ISO 8601
+    /** Optional last day when sponsor self-service ticket administration remains editable. */
+    ticketEndDate?: string;
     /** Last allocated sponsor acceptance number. */
     counter?: number;
     /** Legal entity name used as the issuer on generated sponsor documents. */

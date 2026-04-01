@@ -12,6 +12,7 @@ import { recomputeConferenceDashboardDaily } from './scheduler/conference/recomp
 import { speakerSessionAction } from './conference/speakers/session-action';
 import { allocateSponsorTickets } from './ticket/sponsor/allocate';
 import { deleteSponsorParticipantTicket } from './ticket/sponsor/delete';
+import { listSponsorParticipantTickets } from './ticket/sponsor/list';
 import { sendSponsorParticipantTicket } from './ticket/sponsor/send';
 import { upsertSponsorParticipantTicket } from './ticket/sponsor/upsert';
 import { assignSponsorBooth } from './sponsor/status/assign-booth';
@@ -44,6 +45,7 @@ export {
   updateSponsorPaymentStatus,
   assignSponsorBooth,
   allocateSponsorTickets,
+  listSponsorParticipantTickets,
   upsertSponsorParticipantTicket,
   deleteSponsorParticipantTicket,
   sendSponsorParticipantTicket,

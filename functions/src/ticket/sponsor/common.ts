@@ -1,8 +1,14 @@
 import * as logger from 'firebase-functions/logger';
+import { admin } from '../../common/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '../../common/firestore-collections';
 import {
   authorizeConferenceOrganizerRequest,
+  ensurePostMethod,
+  getRequesterEmailFromAuthorization,
   HttpError,
+  isRequesterOrganizer,
+  loadConference,
+  parseConferenceId,
 } from '../../conference/common';
 import type { Sponsor } from '../../../../shared/src/model/sponsor.model';
 import type { ParticipantBilletWebTicket } from '../../../../shared/src/model/billetweb-config';
@@ -14,7 +20,7 @@ import type {
 } from '../common/types';
 
 /**
- * Executes one organizer-only sponsor ticket action and maps failures to HTTP responses.
+ * Executes one sponsor ticket action and maps failures to HTTP responses.
  */
 export async function handleSponsorTicketAction(
   req: any,
@@ -24,13 +30,14 @@ export async function handleSponsorTicketAction(
 ): Promise<void> {
   const startedAt = Date.now();
   try {
-    const context = await authorizeSponsorOrganizerRequest(req, operation);
+    const context = await authorizeSponsorTicketRequest(req, operation);
     const report = await action(context);
     logger.info('sponsor ticket action completed', {
       operation,
       conferenceId: context.conferenceId,
       sponsorId: context.sponsorId,
       requesterEmail: context.requesterEmail,
+      requesterRole: context.requesterRole,
       elapsedMs: Date.now() - startedAt,
     });
     res.status(200).send({ report });
@@ -56,15 +63,60 @@ export async function handleSponsorTicketAction(
 }
 
 /**
- * Authenticates the requester, verifies organizer access, and loads the target conference and sponsor.
+ * Authenticates the requester, verifies the allowed role for the current operation,
+ * and loads the target conference and sponsor.
  */
-export async function authorizeSponsorOrganizerRequest(
+export async function authorizeSponsorTicketRequest(
   req: any,
   operation: SponsorTicketActionOperation
 ): Promise<AuthorizedSponsorContext> {
-  const organizerContext = await authorizeConferenceOrganizerRequest(req, operation);
-  const { db, conferenceId, requesterEmail, conferenceRef, conferenceData } = organizerContext;
-  const sponsorId = parseSponsorId(req.body, operation);
+  if (operation === 'ALLOCATE_TICKETS') {
+    const organizerContext = await authorizeConferenceOrganizerRequest(req, operation);
+    const { db, conferenceId, requesterEmail, conferenceRef, conferenceData } = organizerContext;
+    return await loadAuthorizedSponsorContext(
+      db,
+      conferenceId,
+      requesterEmail,
+      'organizer',
+      conferenceRef,
+      conferenceData,
+      req.body,
+      operation
+    );
+  }
+
+  ensurePostMethod(req.method, operation);
+  const db = admin.firestore();
+  const conferenceId = parseConferenceId(req.body, operation);
+  const requesterEmail = await getRequesterEmailFromAuthorization(req.headers.authorization, conferenceId, operation);
+  const { conferenceRef, conferenceData } = await loadConference(db, conferenceId, operation);
+  const requesterRole = isRequesterOrganizer(conferenceData, requesterEmail) ? 'organizer' : 'sponsor-admin';
+  return await loadAuthorizedSponsorContext(
+    db,
+    conferenceId,
+    requesterEmail,
+    requesterRole,
+    conferenceRef,
+    conferenceData,
+    req.body,
+    operation
+  );
+}
+
+/**
+ * Loads the sponsor targeted by the request and verifies sponsor-admin access when needed.
+ */
+async function loadAuthorizedSponsorContext(
+  db: FirebaseFirestore.Firestore,
+  conferenceId: string,
+  requesterEmail: string,
+  requesterRole: 'organizer' | 'sponsor-admin',
+  conferenceRef: FirebaseFirestore.DocumentReference,
+  conferenceData: Record<string, unknown>,
+  body: any,
+  operation: SponsorTicketActionOperation
+): Promise<AuthorizedSponsorContext> {
+  const sponsorId = parseSponsorId(body, operation);
   const sponsorRef = db.collection(FIRESTORE_COLLECTIONS.SPONSOR).doc(sponsorId);
   const sponsorSnap = await sponsorRef.get();
   if (!sponsorSnap.exists) {
@@ -82,11 +134,28 @@ export async function authorizeSponsorOrganizerRequest(
     });
   }
 
+  if (requesterRole === 'sponsor-admin') {
+    const adminEmails = normalizeStringArray(sponsorData.adminEmails).map((email) => email.toLowerCase());
+    if (!adminEmails.includes(requesterEmail.toLowerCase())) {
+      throw new HttpError(
+        403,
+        'Requester is neither a sponsor admin nor a conference organizer',
+        `${operation} rejected: requester is neither sponsor admin nor organizer`,
+        {
+          conferenceId,
+          sponsorId,
+          requesterEmail,
+        }
+      );
+    }
+  }
+
   return {
     db,
     conferenceId,
     sponsorId,
     requesterEmail,
+    requesterRole,
     conferenceRef,
     conferenceData: conferenceData as Record<string, unknown>,
     sponsorRef,

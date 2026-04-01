@@ -411,6 +411,24 @@ Ticket tab behavior:
 - The delete action is available only for tickets currently in `CREATED` status and keeps the slot for future reuse after BilletWeb deletion.
 - A dedicated organizer action can request BilletWeb to send or resend the ticket email for a created ticket.
 
+### Sponsor Self-service Application (`/conference/:conferenceId/sponsor-application`)
+Purpose:
+- Sponsor self-service creation and update of the sponsor record.
+- Sponsor self-service download of already sent official documents.
+- Sponsor self-service administration of already prepared sponsor tickets.
+
+Access:
+- Authenticated + valid conference context.
+- Ticket actions are authorized only for users listed in `Sponsor.adminEmails` or conference organizers.
+
+Ticket tab behavior:
+- The tab stays informational while the sponsor is not `CONFIRMED`.
+- When `Sponsor.participantTicketIds` is empty, the tab explains that ticket configuration is not yet available because organizers have not prepared the ticket slots.
+- The page never synchronizes ticket slots and never creates missing `ParticipantBilletWebTicket` documents.
+- When ticket slots exist, the tab displays one card per persisted sponsor ticket with participant identity, mapped custom fields, BilletWeb status, and useful links, without exposing technical identifiers such as `personId` or BilletWeb internal/external ticket ids.
+- Sponsor users can create, update, delete, and resend only their own sponsor tickets.
+- When `Conference.sponsoring.ticketEndDate` is configured and passed, ticket cards remain visible but sponsor-side ticket actions become read-only.
+
 ### 29. Publish (`/conference/:conferenceId/publish`)
 Purpose:
 - Publishing hub.

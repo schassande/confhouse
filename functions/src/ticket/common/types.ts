@@ -1,9 +1,11 @@
 import { admin } from '../../common/firebase-admin';
 import type { ParticipantBilletWebTicket } from '../../../../shared/src/model/billetweb-config';
+import type { AttributeType } from '../../../../shared/src/model/activity.model';
 import type { Sponsor } from '../../../../shared/src/model/sponsor.model';
 import type { AuthorizedConferenceOrganizerContext } from '../../conference/common';
 
 export type SponsorTicketActionOperation =
+  | 'LIST_PARTICIPANT_TICKETS'
   | 'ALLOCATE_TICKETS'
   | 'UPSERT_PARTICIPANT_TICKET'
   | 'DELETE_PARTICIPANT_TICKET'
@@ -21,6 +23,8 @@ export interface AuthorizedSponsorContext {
   sponsorId: string;
   /** Authenticated organizer email. */
   requesterEmail: AuthorizedConferenceOrganizerContext['requesterEmail'];
+  /** Requester role resolved for the current operation. */
+  requesterRole: 'organizer' | 'sponsor-admin';
   /** Loaded conference document reference. */
   conferenceRef: AuthorizedConferenceOrganizerContext['conferenceRef'];
   /** Loaded conference payload. */
@@ -41,6 +45,52 @@ export interface SponsorTicketActionReport {
   participantTicket?: ParticipantBilletWebTicket;
   /** Updated participant tickets when the action synchronizes the whole sponsor allocation. */
   participantTickets?: ParticipantBilletWebTicket[];
+}
+
+/**
+ * One editable custom field value returned to sponsor ticket UIs.
+ */
+export interface SponsorParticipantTicketFieldView {
+  /** Activity identifier owning the source attribute. */
+  activityId: string;
+  /** Activity attribute name linked to the ticket field. */
+  activityAttributeName: string;
+  /** BilletWeb custom field identifier receiving the value. */
+  billetwebCustomFieldId: string;
+  /** Attribute type configured on the source activity. */
+  attributeType: AttributeType;
+  /** Whether the attribute is required on the activity. */
+  attributeRequired: boolean;
+  /** Allowed values for LIST attributes. */
+  attributeAllowedValues: string[];
+  /** Current persisted value. */
+  value: string;
+}
+
+/**
+ * Ticket view model returned by backend sponsor self-service endpoints.
+ */
+export interface SponsorParticipantTicketView {
+  /** Persisted sponsor participant ticket slot. */
+  ticket: ParticipantBilletWebTicket;
+  /** Resolved participant first name. */
+  firstName: string;
+  /** Resolved participant last name. */
+  lastName: string;
+  /** Resolved participant email. */
+  email: string;
+  /** Editable custom fields linked to BilletWeb mappings. */
+  customFields: SponsorParticipantTicketFieldView[];
+}
+
+/**
+ * Response payload returned by sponsor ticket list endpoint.
+ */
+export interface SponsorParticipantTicketListReport {
+  /** Current sponsor payload. */
+  sponsor: Sponsor;
+  /** Ordered ticket cards ready for UI rendering. */
+  participantTicketViews: SponsorParticipantTicketView[];
 }
 
 /**

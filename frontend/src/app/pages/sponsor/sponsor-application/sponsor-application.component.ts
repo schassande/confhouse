@@ -1,21 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { DataViewModule } from 'primeng/dataview';
 import { InputTextModule } from 'primeng/inputtext';
 import { OrderListModule } from 'primeng/orderlist';
 import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { Conference } from '@shared/model/conference.model';
+import { ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
 import { Sponsor, SponsorBusinessEvent, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
 import { ConferenceService } from '../../../services/conference.service';
-import { SponsorService } from '../../../services/sponsor.service';
+import {
+  ParticipantTicketFieldInput,
+  SponsorParticipantTicketFieldView,
+  SponsorParticipantTicketListReport,
+  SponsorParticipantTicketView,
+  SponsorService,
+} from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
 
 interface SelectOption {
@@ -27,6 +36,8 @@ interface BoothWishItem {
   name: string;
 }
 
+type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
+
 /**
  * Allows an authenticated sponsor admin to create or edit a sponsorship application.
  */
@@ -36,11 +47,14 @@ interface BoothWishItem {
   imports: [
     ButtonModule,
     CommonModule,
+    DataViewModule,
+    FormsModule,
     InputTextModule,
     OrderListModule,
     ReactiveFormsModule,
     RouterModule,
     SelectModule,
+    TagModule,
     TabsModule,
     TextareaModule,
     ToastModule,
@@ -81,9 +95,13 @@ export class SponsorApplicationComponent {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly documentAction = signal<'order-form' | 'invoice' | 'paid-invoice' | null>(null);
+  readonly ticketAction = signal<string | null>(null);
+  readonly ticketSectionLoading = signal(false);
+  readonly ticketSectionError = signal('');
   readonly adminEmailsVersion = signal(0);
   readonly boothWishItemsState = signal<BoothWishItem[]>([]);
   readonly selectedBoothWishItems = signal<BoothWishItem[]>([]);
+  readonly participantTicketCards = signal<SponsorParticipantTicketView[]>([]);
   readonly form = signal<FormGroup | null>(null);
   readonly formGroup = computed(() => this.form());
   readonly isEditing = computed(() => !!this.existingSponsor()?.id);
@@ -97,6 +115,9 @@ export class SponsorApplicationComponent {
     this.adminEmailsVersion();
     return this.adminEmailsControlValue();
   });
+  readonly canManageParticipantTickets = computed(() =>
+    this.existingSponsor()?.status === 'CONFIRMED' && this.isTicketManagementOpen()
+  );
 
   constructor() {
     this.loadData();
@@ -127,6 +148,7 @@ export class SponsorApplicationComponent {
             const form = this.createForm(sponsor);
             this.applyFormInteractivity(form);
             this.form.set(form);
+            void this.refreshParticipantTickets(sponsor);
             this.loading.set(false);
           },
           error: (error) => {
@@ -134,6 +156,7 @@ export class SponsorApplicationComponent {
             const form = this.createForm();
             this.applyFormInteractivity(form);
             this.form.set(form);
+            this.participantTicketCards.set([]);
             this.loading.set(false);
           },
         });
@@ -465,6 +488,7 @@ export class SponsorApplicationComponent {
         const nextForm = this.createForm(savedSponsor);
         this.applyFormInteractivity(nextForm);
         this.form.set(nextForm);
+        void this.refreshParticipantTickets(savedSponsor);
         this.saving.set(false);
         this.messageService.add({
           severity: 'success',
@@ -539,6 +563,90 @@ export class SponsorApplicationComponent {
   }
 
   /**
+   * Loads the sponsor participant ticket cards without triggering slot synchronization.
+   *
+   * @param sponsor Sponsor owning the tickets.
+   */
+  private async refreshParticipantTickets(sponsor: Sponsor | undefined): Promise<void> {
+    if (!sponsor?.id || sponsor.status !== 'CONFIRMED' || (sponsor.participantTicketIds?.length ?? 0) === 0) {
+      this.participantTicketCards.set([]);
+      this.ticketSectionError.set('');
+      return;
+    }
+
+    this.ticketSectionLoading.set(true);
+    this.ticketSectionError.set('');
+    try {
+      const report = await this.sponsorService.listSponsorParticipantTickets(this.conferenceId(), sponsor.id);
+      this.existingSponsor.set(report.sponsor);
+      this.participantTicketCards.set(report.participantTicketViews ?? []);
+    } catch (error) {
+      console.error('Error loading sponsor participant tickets:', error);
+      this.ticketSectionError.set('CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_LOAD_ERROR');
+      this.participantTicketCards.set([]);
+    } finally {
+      this.ticketSectionLoading.set(false);
+    }
+  }
+
+  /**
+   * Executes one sponsor ticket action then reloads the ticket cards.
+   *
+   * @param actionKey Running action key.
+   * @param action Backend callback.
+   */
+  private async runTicketAction(
+    actionKey: string,
+    action: () => Promise<unknown>
+  ): Promise<void> {
+    this.ticketAction.set(actionKey);
+    try {
+      await action();
+      await this.refreshParticipantTickets(this.existingSponsor());
+      this.messageService.add({
+        severity: 'success',
+        summary: this.translateService.instant('COMMON.SUCCESS'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.ACTION_SUCCESS'),
+      });
+    } catch (error) {
+      console.error('Error running sponsor participant ticket action:', error);
+      this.showError('CONFERENCE.SPONSOR_MANAGE.ACTION_ERROR');
+    } finally {
+      this.ticketAction.set(null);
+    }
+  }
+
+  /**
+   * Returns whether sponsor ticket management is still editable.
+   *
+   * @returns `true` when ticket editing is still open.
+   */
+  private isTicketManagementOpen(): boolean {
+    const ticketEndDate = String(this.conference()?.sponsoring?.ticketEndDate ?? '').trim();
+    if (!ticketEndDate) {
+      return true;
+    }
+    return this.todayIsoDate() <= ticketEndDate;
+  }
+
+  /**
+   * Maps one ticket custom field VM to the backend payload.
+   *
+   * @param field Custom field view.
+   * @returns Backend field payload.
+   */
+  private toParticipantTicketFieldInput(field: SponsorParticipantTicketFieldView): ParticipantTicketFieldInput {
+    return {
+      activityId: field.activityId,
+      activityAttributeName: field.activityAttributeName,
+      billetwebCustomFieldId: field.billetwebCustomFieldId,
+      value: field.attributeType === 'BOOLEAN'
+        ? (String(field.value).toLowerCase() === 'true' ? 'true' : 'false')
+        : String(field.value ?? '').trim(),
+    };
+  }
+
+  /**
    * Downloads the regenerated sponsor order form when it was previously sent.
    */
   async onDownloadOrderForm(): Promise<void> {
@@ -574,6 +682,128 @@ export class SponsorApplicationComponent {
     }
     await this.downloadSponsorDocument('paid-invoice', () =>
       this.sponsorService.downloadSponsorPaidInvoice(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  participantTicketStatusLabel(status: ParticipantBilletWebTicket['ticketStatus']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKET_${status}`);
+  }
+
+  participantTicketStatusSeverity(status: ParticipantBilletWebTicket['ticketStatus']): TagSeverity {
+    switch (status) {
+      case 'CREATED':
+        return 'success';
+      case 'DISABLED':
+        return 'warn';
+      case 'DELETED':
+        return 'danger';
+      case 'NON_EXISTING':
+      default:
+        return 'secondary';
+    }
+  }
+
+  participantTicketSubmitLabel(ticket: SponsorParticipantTicketView): string {
+    return this.translateService.instant(
+      ticket.ticket.ticketStatus === 'CREATED'
+        ? 'CONFERENCE.SPONSOR_MANAGE.UPDATE_PARTICIPANT_TICKET'
+        : 'CONFERENCE.SPONSOR_MANAGE.CREATE_PARTICIPANT_TICKET'
+    );
+  }
+
+  customFieldOptions(field: SponsorParticipantTicketFieldView): SelectOption[] {
+    return (field.attributeAllowedValues ?? []).map((value) => ({ label: value, value }));
+  }
+
+  canSubmitParticipantTicket(ticket: SponsorParticipantTicketView): boolean {
+    return this.canManageParticipantTickets()
+      && ticket.firstName.trim().length > 0
+      && ticket.lastName.trim().length > 0
+      && ticket.email.trim().length > 0;
+  }
+
+  canDeleteParticipantTicket(ticket: SponsorParticipantTicketView): boolean {
+    return this.canManageParticipantTickets() && ticket.ticket.ticketStatus === 'CREATED';
+  }
+
+  canSendParticipantTicket(ticket: SponsorParticipantTicketView): boolean {
+    return this.canManageParticipantTickets()
+      && ticket.ticket.ticketStatus === 'CREATED'
+      && String(ticket.ticket.orderId ?? '').trim().length > 0
+      && String(ticket.ticket.orderEmail ?? '').trim().length > 0;
+  }
+
+  isTicketActionPending(ticketId: string, action: 'upsert' | 'delete' | 'send'): boolean {
+    return this.ticketAction() === `${action}:${ticketId}`;
+  }
+
+  updateParticipantTicketField(
+    ticketId: string,
+    field: 'firstName' | 'lastName' | 'email',
+    value: string
+  ): void {
+    this.participantTicketCards.update((tickets) =>
+      tickets.map((ticket) => ticket.ticket.id === ticketId ? { ...ticket, [field]: value } : ticket)
+    );
+  }
+
+  updateParticipantTicketCustomField(ticketId: string, fieldKey: string, value: string): void {
+    this.participantTicketCards.update((tickets) =>
+      tickets.map((ticket) =>
+        ticket.ticket.id !== ticketId
+          ? ticket
+          : {
+            ...ticket,
+            customFields: ticket.customFields.map((field) =>
+              this.participantTicketFieldKey(field) === fieldKey ? { ...field, value } : field
+            ),
+          }
+      )
+    );
+  }
+
+  participantTicketFieldKey(field: SponsorParticipantTicketFieldView): string {
+    return `${field.activityId}::${field.activityAttributeName}::${field.billetwebCustomFieldId}`;
+  }
+
+  async onUpsertParticipantTicket(ticket: SponsorParticipantTicketView): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !this.canSubmitParticipantTicket(ticket)) {
+      return;
+    }
+
+    await this.runTicketAction(`upsert:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.upsertSponsorParticipantTicket(
+        this.conferenceId(),
+        sponsor.id,
+        ticket.ticket.id,
+        ticket.firstName.trim(),
+        ticket.lastName.trim(),
+        ticket.email.trim(),
+        ticket.customFields.map((field) => this.toParticipantTicketFieldInput(field))
+      )
+    );
+  }
+
+  async onDeleteParticipantTicket(ticket: SponsorParticipantTicketView): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !this.canDeleteParticipantTicket(ticket)) {
+      return;
+    }
+
+    await this.runTicketAction(`delete:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.deleteSponsorParticipantTicket(this.conferenceId(), sponsor.id, ticket.ticket.id)
+    );
+  }
+
+  async onSendParticipantTicket(ticket: SponsorParticipantTicketView): Promise<void> {
+    const sponsor = this.existingSponsor();
+    if (!sponsor?.id || !this.canSendParticipantTicket(ticket)) {
+      return;
+    }
+
+    await this.runTicketAction(`send:${ticket.ticket.id}`, async () =>
+      await this.sponsorService.sendSponsorParticipantTicket(this.conferenceId(), sponsor.id, ticket.ticket.id)
     );
   }
 

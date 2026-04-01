@@ -99,6 +99,18 @@ Rules:
 - outside this period, sponsor users cannot create or update a sponsorship application
 - organizers can still view and manage sponsors outside the period
 
+### Sponsor Ticket Self-service Window
+
+Sponsor ticket self-service editability is optionally bounded by:
+
+- `Conference.sponsoring.ticketEndDate`
+
+Rules:
+
+- when `ticketEndDate` is empty, sponsor ticket self-service remains editable as long as the sponsor ticket slots exist
+- when `ticketEndDate` is set and the current date is after it, sponsor ticket cards remain visible but sponsor-side ticket actions become read-only
+- this limit applies only to sponsor self-service ticket administration, not to organizer ticket administration
+
 ## `Sponsor` Entity
 
 A `Sponsor` represents one sponsor record linked to one conference.
@@ -308,6 +320,9 @@ Rules:
 
 - sponsor tickets are managed only for sponsors with `status = CONFIRMED`
 - the organizer UI must keep the whole ticket tab disabled while the sponsor is not `CONFIRMED`
+- the sponsor self-service UI exposes the same BilletWeb ticket actions as the organizer, but only on the ticket slots already linked to that sponsor
+- sponsor self-service never triggers ticket synchronization and never creates missing `ParticipantBilletWebTicket` slots by itself
+- when `Sponsor.participantTicketIds` is still empty, sponsor self-service must show that ticket configuration is not yet available because an organizer has not prepared the slots yet
 - in the organizer sponsor edit page, the ticket tab lists one card per `Sponsor.participantTicketIds` entry and does not expose manual add or delete slot actions
 - the number of ticket slots must follow the quotas defined in the selected `SponsorType`
 - when the persisted number of slots is lower than the expected quota, the missing `ParticipantBilletWebTicket` documents are created
@@ -316,9 +331,13 @@ Rules:
 - ticket synchronization is typically triggered when the organizer opens the ticket tab and after a sponsor type change while the sponsor is still editable
 - when the sponsor type changes, already `CREATED` tickets keep their current `ticketName` to avoid implicit BilletWeb changes; only tickets that are not yet created can be realigned automatically to the new quota
 - organizer UI can explicitly request BilletWeb to send or resend the ticket email for an already created sponsor ticket
+- sponsor self-service can explicitly request BilletWeb to send or resend the ticket email for an already created sponsor ticket
 - `personId` is the persisted link to the participant identity; name, first name, email, and custom field values can be edited in a frontend view-model without being duplicated in `ParticipantBilletWebTicket`
 - custom fields are editable in the organizer UI even before a `personId` exists; they are persisted when the create or update ticket action resolves or creates the target `Person`
+- the same editable participant identity and custom field model is used in sponsor self-service
 - the organizer card for one ticket shows the ticket type, participant identity fields, custom fields, current ticket status, BilletWeb internal and external ids, and the download and management links when available
+- the sponsor self-service card hides technical identifiers such as `personId` and BilletWeb internal and external ticket ids, while still exposing the participant fields, ticket status, and useful links
+- sponsor-side actions are disabled after `Conference.sponsoring.ticketEndDate` when this limit is configured
 - the create or update action is enabled only when first name, last name, and email are available in the organizer view-model
 - the create action first resolves the `Person` by email or creates it, then creates or updates the relevant `ActivityParticipation` records for mapped custom fields, then calls BilletWeb and stores the returned identifiers on `ParticipantBilletWebTicket`
 - after BilletWeb ticket creation, an attendee lookup is used when needed to enrich the persisted ticket with BilletWeb fields that are not present in the initial create response

@@ -112,6 +112,7 @@ export class SponsorConfigComponent {
   readonly form = this.fb.group({
     startDate: [''],
     endDate: [''],
+    ticketEndDate: [''],
     counter: [0],
     legalEntity: [''],
     address: [''],
@@ -308,6 +309,7 @@ export class SponsorConfigComponent {
       sponsoring: {
         startDate: this.normalizeDateValue(this.form.get('startDate')?.value),
         endDate: this.normalizeDateValue(this.form.get('endDate')?.value),
+        ticketEndDate: this.normalizeOptionalDateValue(this.form.get('ticketEndDate')?.value),
         counter: Math.max(0, Number(this.form.get('counter')?.value ?? 0)),
         legalEntity: String(this.form.get('legalEntity')?.value ?? '').trim() || undefined,
         address: String(this.form.get('address')?.value ?? '').trim() || undefined,
@@ -358,6 +360,7 @@ export class SponsorConfigComponent {
     this.form.patchValue({
       startDate: this.normalizeDateValue(conference?.sponsoring?.startDate),
       endDate: this.normalizeDateValue(conference?.sponsoring?.endDate),
+      ticketEndDate: this.normalizeDateValue(conference?.sponsoring?.ticketEndDate),
       counter: Math.max(0, Number(conference?.sponsoring?.counter ?? 0)),
       legalEntity: String(conference?.sponsoring?.legalEntity ?? '').trim(),
       address: String(conference?.sponsoring?.address ?? '').trim(),
@@ -563,6 +566,17 @@ export class SponsorConfigComponent {
       return '';
     }
     return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
+  }
+
+  /**
+   * Normalizes an optional persisted date field.
+   *
+   * @param value Raw date value.
+   * @returns ISO date string or `undefined`.
+   */
+  private normalizeOptionalDateValue(value: unknown): string | undefined {
+    const normalized = this.normalizeDateValue(value);
+    return normalized || undefined;
   }
 
   /**

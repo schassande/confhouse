@@ -298,6 +298,7 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 - `sponsorBoothMaps`
 - `startDate`
 - `endDate`
+- optional `ticketEndDate`
 - `counter`
 - optional `ccEmail`
 - optional `bankDetails.iban`

@@ -11,6 +11,7 @@ import {
   SponsorStatus,
 } from '@shared/model/sponsor.model';
 import { ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
+import { AttributeType } from '@shared/model/activity.model';
 import { FirestoreGenericService } from './firestore-generic.service';
 import { functionBaseUrl } from './constantes';
 
@@ -34,6 +35,29 @@ export interface ParticipantTicketFieldInput {
 export interface SponsorTicketActionReport extends SponsorActionReport {
   participantTicket?: ParticipantBilletWebTicket;
   participantTickets?: ParticipantBilletWebTicket[];
+}
+
+export interface SponsorParticipantTicketFieldView {
+  activityId: string;
+  activityAttributeName: string;
+  billetwebCustomFieldId: string;
+  attributeType: AttributeType;
+  attributeRequired: boolean;
+  attributeAllowedValues: string[];
+  value: string;
+}
+
+export interface SponsorParticipantTicketView {
+  ticket: ParticipantBilletWebTicket;
+  firstName: string;
+  lastName: string;
+  email: string;
+  customFields: SponsorParticipantTicketFieldView[];
+}
+
+export interface SponsorParticipantTicketListReport {
+  sponsor: Sponsor;
+  participantTicketViews: SponsorParticipantTicketView[];
 }
 
 export interface SponsorDocumentDownload {
@@ -222,6 +246,26 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
       conferenceId,
       sponsorId,
     });
+  }
+
+  /**
+   * Loads sponsor participant ticket cards through the backend action layer.
+   *
+   * @param conferenceId Conference identifier.
+   * @param sponsorId Sponsor identifier.
+   * @returns Backend ticket list report.
+   */
+  async listSponsorParticipantTickets(
+    conferenceId: string,
+    sponsorId: string
+  ): Promise<SponsorParticipantTicketListReport> {
+    return await this.postSponsorOrganizerAction<SponsorOrganizerActionPayload, SponsorParticipantTicketListReport>(
+      'listSponsorParticipantTickets',
+      {
+        conferenceId,
+        sponsorId,
+      }
+    );
   }
 
   /**
