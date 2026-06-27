@@ -66,6 +66,7 @@ It contains at least:
 
 When configured, `SponsorType.templateEmail` can contain:
 
+- `emailManagerNotificationTemplateId`
 - `emailApplicationConfirmationTemplateId`
 - `emailOrderFormTemplateId`
 - `emailInvoiceTemplateId`
@@ -482,12 +483,29 @@ General rules:
 
 The initially retained sponsor email types are:
 
+- manager notification
 - application confirmation
 - order form
 - invoice
 - paid invoice
 - payment reminder
 - administrative summary
+
+## Manager Notification
+
+Manager notification is an internal email sent automatically when a new `Sponsor` document is created.
+
+Rules:
+
+- this email is sent by a Firestore `onCreate` backend trigger
+- updates to an existing sponsor do not trigger this email
+- the recipient is `Conference.sponsoring.email`
+- the email content is rendered by the Mailjet template configured with `SponsorType.templateEmail.emailManagerNotificationTemplateId`
+- the template receives at least the sponsor name, requested sponsor type, submission date, and sponsor administration URL
+- the administration URL is built from the server `ADMIN_BASE_URL` environment variable
+- missing configuration or Mailjet failures are logged but do not block the sponsor application
+- this email is independent from `SPONSOR_APPLICATION_CONFIRMATION`
+- no `SponsorBusinessEvent` is recorded for this notification
 
 ## Application Confirmation
 
@@ -625,6 +643,7 @@ The following table defines the reference sponsor emails:
 
 | Sponsor email | Trigger | Attachment | Business event |
 | --- | --- | --- | --- |
+| Manager notification | Firestore sponsor creation trigger | None required | None required |
 | Application confirmation | Explicit application notification action | None required | None required |
 | Order form | "send order form" action | Order form PDF | `ORDER_FORM_SENT` |
 | Invoice | "send invoice" action | Invoice PDF | `INVOICE_SENT` |

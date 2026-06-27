@@ -46,6 +46,8 @@ export interface SponsorConferenceTicketQuota {
  * Optional email template identifiers configured for one sponsor type.
  */
 export interface SponsorTypeTemplateEmail {
+  /** Template identifier used to notify the sponsor manager when a sponsor is created. */
+  emailManagerNotificationTemplateId?: string;
   /** Template identifier used for sponsor application confirmation emails. */
   emailApplicationConfirmationTemplateId?: string;
   /** Template identifier used for sponsor order form emails. */

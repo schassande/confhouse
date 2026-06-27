@@ -300,6 +300,7 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 - `endDate`
 - optional `ticketEndDate`
 - `counter`
+- optional `email`, used as sponsor contact/sender email and as the internal recipient for new sponsor application manager notifications
 - optional `ccEmail`
 - optional `bankDetails.iban`
 - optional `bankDetails.bic`
@@ -307,6 +308,7 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 Actual sponsor applications and confirmed sponsors are stored separately in the `sponsor` collection and linked back through `conferenceId`.
 
 Each `conference.sponsoring.sponsorTypes[]` item can also carry an optional `templateEmail` object with provider-agnostic email template identifiers:
+- `emailManagerNotificationTemplateId`
 - `emailApplicationConfirmationTemplateId`
 - `emailOrderFormTemplateId`
 - `emailInvoiceTemplateId`

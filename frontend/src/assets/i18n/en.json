@@ -398,6 +398,7 @@
       "BOOTH_NAMES_HELP": "One name per line (or comma separated).",
       "TEMPLATE_EMAILS": "Email templates",
       "TEMPLATE_EMAILS_HELP": "Set the email template identifiers for this sponsor type. Leave empty when no template provider is used.",
+      "EMAIL_MANAGER_NOTIFICATION_TEMPLATE_ID": "Manager notification template ID",
       "EMAIL_APPLICATION_CONFIRMATION_TEMPLATE_ID": "Sponsor confirmation template ID",
       "EMAIL_ORDER_FORM_TEMPLATE_ID": "Order form template ID",
       "EMAIL_INVOICE_TEMPLATE_ID": "Invoice template ID",

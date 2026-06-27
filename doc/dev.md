@@ -88,12 +88,14 @@ For local development, define these environment variables before starting the Fu
 
 - `MAILJET_API_KEY`
 - `MAILJET_SECRET_KEY`
+- `ADMIN_BASE_URL`
 
 PowerShell example:
 
 ```powershell
 $env:MAILJET_API_KEY="your_mailjet_api_key"
 $env:MAILJET_SECRET_KEY="your_mailjet_secret_key"
+$env:ADMIN_BASE_URL="http://localhost:4200"
 firebase emulators:start --only functions,firestore,storage
 ```
 
@@ -102,6 +104,7 @@ Bash example:
 ```bash
 export MAILJET_API_KEY="your_mailjet_api_key"
 export MAILJET_SECRET_KEY="your_mailjet_secret_key"
+export ADMIN_BASE_URL="http://localhost:4200"
 firebase emulators:start --only functions,firestore,storage
 ```
 
@@ -109,16 +112,40 @@ If these variables are missing locally, Mailjet-based sponsor actions will fail 
 
 #### Production configuration
 
-In production, the same values must be configured as Firebase Functions secrets with these exact names:
+Production requires both Mailjet secrets and the public administration base URL.
+
+Configure Mailjet credentials as Firebase Functions secrets with these exact names:
 
 - `MAILJET_API_KEY`
 - `MAILJET_SECRET_KEY`
 
-Commands:
+Mailjet secret commands:
 
 ```sh
 firebase functions:secrets:set MAILJET_API_KEY
 firebase functions:secrets:set MAILJET_SECRET_KEY
+```
+
+Configure `ADMIN_BASE_URL` as a Firebase Functions environment variable:
+
+- `ADMIN_BASE_URL`
+
+`ADMIN_BASE_URL` is not secret. It must be stored in the production Firebase dotenv file used by the Functions deployment, for example `functions/.env.prod` when the Firebase project alias is `prod`.
+
+PowerShell example:
+
+```powershell
+Set-Content -Path functions/.env.prod -Value 'ADMIN_BASE_URL=https://conf.snowcamp.org'
+firebase use prod
+firebase deploy --only functions
+```
+
+Bash example:
+
+```bash
+printf 'ADMIN_BASE_URL=https://conf.snowcamp.org\n' > functions/.env.prod
+firebase use prod
+firebase deploy --only functions
 ```
 
 After setting or rotating the secrets, redeploy the Functions:

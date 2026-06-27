@@ -410,6 +410,9 @@ export class SponsorConfigComponent {
       boothAllocationMode: [this.normalizeBoothAllocationMode(sponsorType?.boothAllocationMode)],
       boothNamesText: [Array.isArray(sponsorType?.boothNames) ? sponsorType?.boothNames.join('\n') : ''],
       templateEmail: this.fb.group({
+        emailManagerNotificationTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailManagerNotificationTemplateId) ?? '',
+        ],
         emailApplicationConfirmationTemplateId: [
           this.normalizeOptionalString(sponsorType?.templateEmail?.emailApplicationConfirmationTemplateId) ?? '',
         ],
@@ -607,6 +610,7 @@ export class SponsorConfigComponent {
    */
   private normalizeTemplateEmail(value: SponsorTypeTemplateEmail | undefined): SponsorTypeTemplateEmail | undefined {
     const normalized: SponsorTypeTemplateEmail = {
+      emailManagerNotificationTemplateId: this.normalizeOptionalString(value?.emailManagerNotificationTemplateId),
       emailApplicationConfirmationTemplateId: this.normalizeOptionalString(value?.emailApplicationConfirmationTemplateId),
       emailOrderFormTemplateId: this.normalizeOptionalString(value?.emailOrderFormTemplateId),
       emailInvoiceTemplateId: this.normalizeOptionalString(value?.emailInvoiceTemplateId),

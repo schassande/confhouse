@@ -8,6 +8,22 @@ A chaque etape realisee, le fichier doit etre mis a jour pour indiquer la nouvel
 
 Lorsque l'implementation sera terminee, le contenu utile de ce fichier devra etre deplace dans un fichier dedie sous `/doc/changes` pour conserver la trace de l'evolution. Le fichier `/doc/WIP.md` pourra ensuite etre nettoye ou reutilise pour le prochain chantier.
 
+## Statut d'implementation
+
+- Specification initiale redigee.
+- Decision mise a jour : `Conference.sponsoring.email` est le destinataire de la notification interne.
+- Decision ajoutee : `ADMIN_BASE_URL` fournit l'URL publique de l'administration.
+- Modele partage mis a jour avec `SponsorTypeTemplateEmail.emailManagerNotificationTemplateId`.
+- Formulaire de configuration sponsor mis a jour pour saisir le template de notification gestionnaire.
+- Cloud Function Firestore `notifyManagerOnSponsorCreate` ajoutee dans `functions/src/sponsor/communication/notify-manager-on-sponsor-create.ts`.
+- Export Functions ajoute dans `functions/src/index.ts`.
+- Documentation mise a jour dans `doc/sponsor.md`, `doc/datamodel.md`, `doc/mailjet.md` et `doc/dev.md`.
+- Tests unitaires ajoutes pour la construction de l'URL admin et du payload Mailjet.
+- Verification terminee : `npm --prefix functions test`.
+- Verification terminee : `npm --prefix frontend run build`.
+- Contenu utile depose dans `doc/changes/sponsor-manager-notification.md`.
+- Statut : implementation terminee.
+
 ## Objectif
 
 Envoyer une notification interne au gestionnaire sponsors lorsqu'une nouvelle candidature sponsor est creee.
