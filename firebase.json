@@ -19,6 +19,7 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      { "source": "/api/sponsors", "function": "listPublicSponsors" },
       { "source": "**", "destination": "/index.html" }
     ]
   },

@@ -705,6 +705,32 @@ For publication or business usage:
 - sponsors in `CANDIDATE` and `WAITING_LIST` remain internal records
 - sponsors in `REJECTED` and `CANCELED` remain available for history and audit
 
+## Public Sponsors API
+
+The application exposes a public sponsor list endpoint:
+
+```text
+GET /api/sponsors
+```
+
+Rules:
+
+- the endpoint is public and does not require authentication
+- it returns sponsors for the current conference only
+- only sponsors with `status = CONFIRMED` are returned
+- the response is a narrow public DTO, not the persisted `Sponsor` document
+- private fields such as administrator emails, payment status, business events, documents, ticket allocation, and workflow metadata are never exposed
+- `sponsorTypeName` is resolved from the matching `Conference.sponsoring.sponsorTypes[]` item
+- missing localized public text or website values are returned as empty strings
+- missing `registrationDate` and empty `boothName` values are omitted
+
+Current conference resolution:
+
+- when platform single-conference mode is enabled, `PlatformConfig.singleConferenceId` is used
+- otherwise, the latest visible conference is used, sorted by highest `edition`
+
+The returned sponsors are sorted by sponsor type configuration order, then by registration date, then by name.
+
 ## Consistency Rules
 
 The following rules are mandatory:

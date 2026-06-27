@@ -34,6 +34,12 @@ Current conventions:
 
 Each public Cloud Function must still be exposed from its own file, even when the implementation reuses shared helpers from the same domain.
 
+Public HTTP APIs exposed through Firebase Hosting rewrites:
+
+- `GET /api/sponsors` rewrites to the `listPublicSponsors` Cloud Function and returns confirmed sponsors for the current conference
+
+Current-conference public APIs resolve the conference from `PlatformConfig.singleConferenceId` when single-conference mode is enabled. When no explicit current conference is configured, they fall back to the visible conference with the highest `edition`.
+
 When the backend only needs a subset of a persisted entity, derive a backend-specific type from the shared contract with `Pick<>` or `Omit<>` instead of redefining the structure manually.
 
 Example:

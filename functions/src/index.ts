@@ -28,6 +28,7 @@ import { sendSponsorPaidInvoice } from './sponsor/communication/send-paid-invoic
 import { sendSponsorOrderForm } from './sponsor/communication/send-order-form';
 import { sendSponsorPaymentReminder } from './sponsor/communication/send-payment-reminder';
 import { notifyManagerOnSponsorCreate } from './sponsor/communication/notify-manager-on-sponsor-create';
+import { listPublicSponsors } from './sponsor/public-list';
 
 setGlobalOptions({ maxInstances: 10 });
 
@@ -60,5 +61,6 @@ export {
   sendSponsorApplicationConfirmation,
   sendSponsorAdministrativeSummary,
   notifyManagerOnSponsorCreate,
+  listPublicSponsors,
   recomputeConferenceDashboardDaily,
 };
