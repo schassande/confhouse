@@ -509,6 +509,7 @@
         "SORT_PAYMENT_DATE": "Payment date",
         "SORT_BOOTH": "Booth",
         "COUNT": "{{filtered}} / {{total}} sponsors",
+        "CONFIRMED_BY_TYPE": "Confirmed sponsors by level:",
       "CONFIRM_DELETE": "Do you confirm sponsor deletion?",
       "MISSING_TYPE": "A sponsor type is required.",
       "UNKNOWN_TYPE": "Unknown type",

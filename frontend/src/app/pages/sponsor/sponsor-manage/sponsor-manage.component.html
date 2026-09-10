@@ -10,6 +10,20 @@
   } @else if (loadError()) {
   <div class="loading-state">{{ loadError() | translate }}</div>
   } @else {
+  <div class="confirmed-sponsors-info" role="status">
+    <span class="confirmed-sponsors-label">
+      {{ 'CONFERENCE.SPONSOR_MANAGE.CONFIRMED_BY_TYPE' | translate }}
+    </span>
+    @for (sponsorCount of confirmedSponsorsByType(); track sponsorCount.sponsorType.id; let isFirst = $first) {
+    @if (!isFirst) {
+    <span aria-hidden="true"> · </span>
+    }
+    <span class="confirmed-sponsor-count">
+      <strong>{{ sponsorCount.sponsorType.name }}</strong>: {{ sponsorCount.count }}
+    </span>
+    }
+  </div>
+
   <div class="toolbar">
     <div class="filters">
       <p-select

@@ -861,6 +861,7 @@
       "SORT_PAYMENT_DATE": "Date de paiement",
       "SORT_BOOTH": "Stand",
       "COUNT": "{{filtered}} / {{total}} sponsors",
+      "CONFIRMED_BY_TYPE": "Sponsors confirmés par niveau :",
       "CONFIRM_DELETE": "Confirmez-vous la suppression du sponsor ?",
       "MISSING_TYPE": "Le type de sponsor est obligatoire.",
       "UNKNOWN_TYPE": "Type inconnu",

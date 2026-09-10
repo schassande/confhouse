@@ -17,6 +17,13 @@ Sponsor management covers:
 This document does not specify the technical implementation details of Mailjet sending or BilletWeb integration.
 It defines the functional rules those integrations must follow.
 
+## Sponsor Management List State
+
+The sponsor management page retains the selected sponsor type, sponsor status, payment status, and sort mode
+when the organizer opens a sponsor and returns to the list. These values are held in an Angular service in
+memory, scoped to the conference. They are not persisted in local storage, Firestore, or any other server-side
+storage, and therefore reset when the application is reloaded.
+
 ## Separation of Responsibilities
 
 Sponsor management is based on three distinct data levels:

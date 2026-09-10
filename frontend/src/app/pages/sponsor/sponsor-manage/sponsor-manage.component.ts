@@ -26,14 +26,24 @@ import { BilletwebConfigService } from '../../../services/billetweb-config.servi
 import { SponsorBoothAllocationService } from '../../../services/sponsor-booth-allocation.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { SponsorService } from '../../../services/sponsor.service';
+import {
+  SponsorManageStateService,
+  SponsorSortMode,
+} from '../../../services/sponsor-manage-state.service';
 
 interface SelectOption {
   label: string;
   value: string;
 }
 
+/** Number of confirmed sponsors for one configured sponsor type. */
+interface ConfirmedSponsorCount {
+  sponsorType: SponsorType;
+  count: number;
+}
+
+/** Number of confirmed sponsors for one configured sponsor type. */
 type SponsorTagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
-type SponsorSortMode = 'NAME' | 'REGISTRATION_DATE' | 'CONFIRMATION_DATE' | 'PAYMENT_DATE' | 'BOOTH';
 
 @Component({
   selector: 'app-sponsor-manage',
@@ -61,6 +71,7 @@ export class SponsorManageComponent implements OnInit {
   private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly sponsorService = inject(SponsorService);
   private readonly sponsorBoothAllocationService = inject(SponsorBoothAllocationService);
+  private readonly sponsorManageStateService = inject(SponsorManageStateService);
   private readonly messageService = inject(MessageService);
   private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -73,10 +84,20 @@ export class SponsorManageComponent implements OnInit {
   readonly sponsors = signal<Sponsor[]>([]);
   readonly sponsorTypes = signal<SponsorType[]>([]);
   readonly allocationInProgressTypeId = signal<string | null>(null);
-  readonly selectedTypeId = signal<string>('ALL');
-  readonly selectedSponsorStatus = signal<string>('ALL');
-  readonly selectedPaymentStatus = signal<string>('ALL');
-  readonly selectedSortMode = signal<SponsorSortMode>('NAME');
+  private readonly initialManageState = this.sponsorManageStateService.getState(this.conferenceId());
+  readonly selectedTypeId = signal<string>(this.initialManageState.typeId);
+  readonly selectedSponsorStatus = signal<string>(this.initialManageState.sponsorStatus);
+  readonly selectedPaymentStatus = signal<string>(this.initialManageState.paymentStatus);
+  readonly selectedSortMode = signal<SponsorSortMode>(this.initialManageState.sortMode);
+  readonly confirmedSponsorsByType = computed<ConfirmedSponsorCount[]>(() => {
+    const sponsors = this.sponsors();
+    return this.sponsorTypes().map((sponsorType) => ({
+      sponsorType,
+      count: sponsors.filter(
+        (sponsor) => sponsor.sponsorTypeId === sponsorType.id && sponsor.status === 'CONFIRMED'
+      ).length,
+    }));
+  });
   readonly autoAllocatableSponsorTypes = computed(() =>
     this.sponsorTypes().filter(
       (sponsorType) => sponsorType.boothAllocationMode !== 'MANUAL' && this.hasBooths(sponsorType)
@@ -174,18 +195,22 @@ export class SponsorManageComponent implements OnInit {
 
   onFilterTypeChange(value: string): void {
     this.selectedTypeId.set(String(value ?? 'ALL'));
+    this.saveManageState();
   }
 
   onFilterSponsorStatusChange(value: string): void {
     this.selectedSponsorStatus.set(String(value ?? 'ALL'));
+    this.saveManageState();
   }
 
   onFilterPaymentStatusChange(value: string): void {
     this.selectedPaymentStatus.set(String(value ?? 'ALL'));
+    this.saveManageState();
   }
 
   onSortModeChange(value: string): void {
     this.selectedSortMode.set(this.normalizeSortMode(value));
+    this.saveManageState();
   }
 
   onAddNew(): void {
@@ -386,6 +411,16 @@ export class SponsorManageComponent implements OnInit {
       severity: 'success',
       summary: this.translateService.instant('COMMON.SUCCESS'),
       detail: this.translateService.instant(detailKey),
+    });
+  }
+
+  /** Saves the current sponsor list criteria in the in-memory state service. */
+  private saveManageState(): void {
+    this.sponsorManageStateService.setState(this.conferenceId(), {
+      typeId: this.selectedTypeId(),
+      sponsorStatus: this.selectedSponsorStatus(),
+      paymentStatus: this.selectedPaymentStatus(),
+      sortMode: this.selectedSortMode(),
     });
   }
 
