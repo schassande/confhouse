@@ -30,7 +30,9 @@
         <p-tab [value]="0">{{ 'CONFERENCE.SPONSOR_MANAGE.GENERAL_INFO' | translate }}</p-tab>
         <p-tab [value]="1">{{ 'CONFERENCE.SPONSOR_MANAGE.INVOICING' | translate }}</p-tab>
         <p-tab [value]="2">{{ 'CONFERENCE.SPONSOR_MANAGE.BOOTH' | translate }}</p-tab>
-        <p-tab [value]="3">{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKETS' | translate }}</p-tab>
+        @if (billetwebConfig()) {
+          <p-tab [value]="3">{{ 'CONFERENCE.SPONSOR_MANAGE.CONFERENCE_TICKETS' | translate }}</p-tab>
+        }
         <p-tab [value]="4">{{ 'CONFERENCE.SPONSOR_MANAGE.BUSINESS_HISTORY' | translate }}</p-tab>
       </p-tablist>
       <p-tabpanels>
@@ -393,6 +395,7 @@
           </section>
         </p-tabpanel>
 
+        @if (billetwebConfig()) {
         <p-tabpanel [value]="3">
           <section class="panel-section">
             @if (!isEditing()) {
@@ -407,6 +410,7 @@
                     type="button"
                     class="p-button-secondary"
                     [label]="'CONFERENCE.SPONSOR_MANAGE.SYNC_PARTICIPANT_TICKETS' | translate"
+                    [disabled]="!billetwebConfig()"
                     [loading]="ticketSectionLoading() || isActionPending('tickets')"
                     (click)="onAllocateTickets()"
                   ></button>
@@ -585,6 +589,7 @@
             }
           </section>
         </p-tabpanel>
+        }
 
         <p-tabpanel [value]="4">
           <section class="panel-section">

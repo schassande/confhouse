@@ -21,10 +21,9 @@ export class BilletwebConfigService extends FirestoreGenericService<BilletwebCon
     ).pipe(
       map((qs) => {
         const first = qs.docs[0];
-        if (!first) {
-          return undefined;
-        }
-        return this.normalizeConfig({ ...(first.data() as BilletwebConfig), id: first.id });
+        return first
+          ? this.normalizeConfig({ ...(first.data() as BilletwebConfig), id: first.id })
+          : undefined;
       })
     );
   }

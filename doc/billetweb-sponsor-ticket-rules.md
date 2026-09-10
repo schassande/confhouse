@@ -5,6 +5,7 @@ This note documents how sponsor ticket types are configured and reused across th
 
 ## Configuration source
 - `BilletwebConfig.ticketTypes.sponsors` is the single source of truth for sponsor ticket types.
+- The frontend finds the configuration by its `conferenceId` field. The backend also supports legacy documents whose document ID is the conference ID.
 - Each entry stores:
   - `ticketTypeId`
   - `ticketTypeName`
@@ -20,3 +21,4 @@ This note documents how sponsor ticket types are configured and reused across th
 
 ## Sponsor management UI
 - Sponsor ticket allocation uses the same BilletWeb sponsor ticket catalog so labels stay consistent with quotas and persisted ticket ids.
+- When BilletWeb is not configured, the sponsor edit page hides the ticket tab and does not call the allocation endpoint.

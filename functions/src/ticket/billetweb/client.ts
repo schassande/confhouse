@@ -37,7 +37,11 @@ export async function loadBilletwebConfig(
     .limit(1)
     .get();
 
-  if (snapshot.empty) {
+  const configSnapshot = snapshot.empty
+    ? await db.collection(FIRESTORE_COLLECTIONS.BILLETWEB_CONFIG).doc(conferenceId).get()
+    : snapshot.docs[0];
+
+  if (!configSnapshot.exists) {
     throw new HttpError(
       400,
       'BilletWeb configuration not found',
@@ -46,7 +50,7 @@ export async function loadBilletwebConfig(
     );
   }
 
-  return { ...(snapshot.docs[0].data() as BilletwebConfig), id: snapshot.docs[0].id };
+  return { ...(configSnapshot.data() as BilletwebConfig), id: configSnapshot.id };
 }
 
 /**

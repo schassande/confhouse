@@ -793,6 +793,12 @@ export class SponsorEditComponent implements OnInit {
       return;
     }
 
+    if (!this.billetwebConfig()) {
+      this.participantTicketCards.set([]);
+      this.ticketSectionError.set('');
+      return;
+    }
+
     this.ticketSectionLoading.set(true);
     this.ticketSectionError.set('');
     try {

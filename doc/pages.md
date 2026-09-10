@@ -410,6 +410,8 @@ Ticket tab behavior:
 - The primary action creates the BilletWeb ticket when the slot is still `NON_EXISTING`, or updates it otherwise.
 - The delete action is available only for tickets currently in `CREATED` status and keeps the slot for future reuse after BilletWeb deletion.
 - A dedicated organizer action can request BilletWeb to send or resend the ticket email for a created ticket.
+- BilletWeb configuration is read using both the `conferenceId` field and the legacy convention where the document ID is the conference ID, so existing conferences remain usable.
+- If no BilletWeb configuration exists, the BilletWeb ticket tab is hidden and no synchronization request is made.
 
 ### Sponsor Self-service Application (`/conference/:conferenceId/sponsor-application`)
 Purpose:
