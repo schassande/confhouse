@@ -275,6 +275,18 @@ In case of retry:
 - the new attempt must be traceable
 - the system must be able to distinguish attempts
 
+The Mailjet transport applies a bounded network retry policy:
+
+- the initial request can be followed by at most three additional attempts
+- the total is therefore limited to four attempts
+- retries apply to transient socket, DNS, connection and timeout errors only
+- the delays are 250 ms, 1 s and 3 s
+- each attempt has a 15-second timeout
+- HTTP responses are not retried by the transport; Mailjet's response is treated as definitive
+- the final failure remains recorded in the mail history as `FAILED`
+
+Because a connection can be reset after Mailjet has accepted a message, a retry can theoretically produce a duplicate email. Callers must therefore keep using a stable idempotence key for logical messages, and operational reconciliation remains necessary for ambiguous provider outcomes.
+
 ## Mailjet Webhooks
 
 Mailjet webhooks can be used to enrich technical delivery tracking.

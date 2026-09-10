@@ -3,6 +3,18 @@ import { resolveMailjetCredentials } from './mailjet-config';
 import { MailSendResult, TransactionalEmailPayload } from './mail-model';
 
 const MAILJET_SEND_API_URL = 'https://api.mailjet.com/v3.1/send';
+const MAILJET_MAX_ATTEMPTS = 4;
+const MAILJET_REQUEST_TIMEOUT_MS = 15_000;
+const MAILJET_RETRY_DELAYS_MS = [250, 1_000, 3_000];
+const RETRYABLE_NETWORK_ERROR_CODES = new Set([
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'EAI_AGAIN',
+  'ENOTFOUND',
+]);
 
 interface MailjetMessagePayload {
   From: {
@@ -67,14 +79,14 @@ export class MailjetService {
       credentialSource: credentials.source,
     });
 
-    const response = await fetch(MAILJET_SEND_API_URL, {
+    const response = await this.fetchWithNetworkRetry(MAILJET_SEND_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
-    });
+    }, payload.messageType);
 
     const rawResponse = await response.json().catch(() => undefined);
     if (!response.ok) {
@@ -103,6 +115,57 @@ export class MailjetService {
       messageId,
       raw: rawResponse,
     };
+  }
+
+  /**
+   * Executes the Mailjet request with a bounded retry policy for transport errors.
+   * HTTP responses are returned immediately because Mailjet has already processed
+   * the request far enough to provide a definitive provider result.
+   *
+   * @param url Mailjet endpoint URL.
+   * @param init Request options.
+   * @param messageType Logical message type used in operational logs.
+   * @returns Mailjet HTTP response.
+   * @throws The last network error when all attempts fail.
+   */
+  private async fetchWithNetworkRetry(
+    url: string,
+    init: RequestInit,
+    messageType: string
+  ): Promise<Response> {
+    for (let attempt = 1; attempt <= MAILJET_MAX_ATTEMPTS; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), MAILJET_REQUEST_TIMEOUT_MS);
+
+      try {
+        return await fetch(url, { ...init, signal: controller.signal });
+      } catch (error: unknown) {
+        if (!isRetryableNetworkError(error) || attempt === MAILJET_MAX_ATTEMPTS) {
+          logger.error('mailjet network request failed', {
+            messageType,
+            attempt,
+            maxAttempts: MAILJET_MAX_ATTEMPTS,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          throw error;
+        }
+
+        const delayMs = MAILJET_RETRY_DELAYS_MS[attempt - 1];
+        logger.warn('mailjet network request retry scheduled', {
+          messageType,
+          attempt,
+          nextAttempt: attempt + 1,
+          maxAttempts: MAILJET_MAX_ATTEMPTS,
+          delayMs,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        await delay(delayMs);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    throw new Error('Mailjet network request exhausted retry attempts');
   }
 
   /**
@@ -176,4 +239,32 @@ export class MailjetService {
     const value = response?.Messages?.[0]?.To?.[0]?.MessageID;
     return String(value ?? '').trim();
   }
+}
+
+/**
+ * Determines whether an error is a transient network failure.
+ *
+ * @param error Unknown error thrown by fetch or its underlying TLS/socket layer.
+ * @returns `true` when retrying the request is appropriate.
+ */
+function isRetryableNetworkError(error: unknown): boolean {
+  let current: unknown = error;
+  while (current instanceof Error || (typeof current === 'object' && current !== null)) {
+    const candidate = current as { code?: unknown; name?: unknown };
+    if (candidate.name === 'AbortError' || RETRYABLE_NETWORK_ERROR_CODES.has(String(candidate.code ?? ''))) {
+      return true;
+    }
+    current = 'cause' in candidate ? (candidate as { cause?: unknown }).cause : undefined;
+  }
+  return false;
+}
+
+/**
+ * Waits before a retry.
+ *
+ * @param milliseconds Delay duration.
+ * @returns Promise resolved after the delay.
+ */
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
