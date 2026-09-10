@@ -136,21 +136,21 @@ Configure `ADMIN_BASE_URL` as a Firebase Functions environment variable:
 
 - `ADMIN_BASE_URL`
 
-`ADMIN_BASE_URL` is not secret. It must be stored in the production Firebase dotenv file used by the Functions deployment, for example `functions/.env.prod` when the Firebase project alias is `prod`.
+`ADMIN_BASE_URL` is not secret. It must be stored in the Firebase dotenv file used by the Functions deployment. Firebase loads a project-specific file named `functions/.env.<project-id>` (or an alias-specific `.env.<alias>`). For the deployed project in this repository, the file is `functions/.env.conference-manager-007`.
 
 PowerShell example:
 
 ```powershell
-Set-Content -Path functions/.env.prod -Value 'ADMIN_BASE_URL=https://conf.snowcamp.org'
-firebase use prod
+Set-Content -Path functions/.env.conference-manager-007 -Value 'ADMIN_BASE_URL=https://conf.snowcamp.io'
+firebase use conference-manager-007
 firebase deploy --only functions
 ```
 
 Bash example:
 
 ```bash
-printf 'ADMIN_BASE_URL=https://conf.snowcamp.org\n' > functions/.env.prod
-firebase use prod
+printf 'ADMIN_BASE_URL=https://conf.snowcamp.io\n' > functions/.env.conference-manager-007
+firebase use conference-manager-007
 firebase deploy --only functions
 ```
 
