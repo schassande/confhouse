@@ -254,7 +254,7 @@ export class SponsorEditComponent implements OnInit {
       boothName: editingSponsor?.boothName ?? String(rawValue.boothName ?? '').trim(),
       boothWishes: this.parseList(rawValue.boothWishesText),
       boothWishesDate: this.normalizeDateTime(rawValue.boothWishesDate),
-      adminEmails: this.parseList(rawValue.adminEmailsText),
+      adminEmails: this.normalizeEmailList(rawValue.adminEmailsText),
       businessEvents: editingSponsor?.businessEvents,
       documents: editingSponsor?.documents,
       logistics: editingSponsor?.logistics,
@@ -767,6 +767,20 @@ export class SponsorEditComponent implements OnInit {
       }
       return acc;
     }, {});
+  }
+
+  /**
+   * Normalizes sponsor administrator emails before they are persisted.
+   *
+   * @param value Multiline email input from the sponsor form.
+   * @returns Trimmed, lowercase, unique email addresses.
+   */
+  private normalizeEmailList(value: unknown): string[] {
+    return Array.from(new Set(
+      this.parseList(String(value ?? ''))
+        .map((email) => email.toLowerCase())
+        .filter((email) => email.length > 0)
+    ));
   }
 
   /**

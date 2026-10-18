@@ -295,6 +295,7 @@ Rules:
 
 - this list identifies the users allowed to manage the sponsor application
 - one sponsor can have multiple administrators
+- administrator emails are persisted trimmed and in lowercase so sponsor lookup is case-insensitive in practice
 - sponsor lookup for sponsor users relies on `conferenceId` and `adminEmails`
 
 ## Sponsor Tickets

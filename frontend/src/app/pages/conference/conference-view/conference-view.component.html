@@ -89,30 +89,32 @@
     @if (conf.description[lang()]) {
       <div class="info-row">
         <fa-icon [icon]="faCircleInfo" />
-        <strong>{{ 'CONFERENCE.DESCRIPTION' | translate }}:</strong>
+        <strong>{{ 'CONFERENCE.DESCRIPTION' | translate }}: </strong>
         <span>{{ conf.description[lang()] }}</span>
       </div>
     }
     @if (conf.website) {
       <div class="website info-row">
         <fa-icon [icon]="faGlobe" />
-        <span>{{ 'CONFERENCE.VIEW.WEBSITE' | translate }}:</span>
+        <span>{{ 'CONFERENCE.VIEW.WEBSITE' | translate }}: </span>
         <a [href]="conf.website" target="_blank" rel="noopener noreferrer">{{ conf.website }}</a>
       </div>
     }
     <div class="cfp">
       @if (cfpDateRange(conf); as cfpRange) {
         <div class="cfp-dates">
-          <strong>{{ 'CONFERENCE.VIEW.CFP' | translate }}:</strong>
+          <strong>{{ 'CONFERENCE.VIEW.CFP' | translate }}: </strong>
           {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
         </div>
       }
       @if (conf.cfp.website) {
-        <a [href]="conf.cfp.website" target="_blank" rel="noopener noreferrer">{{ conf.cfp.website }}</a>
+        <div class="cfp-website">
+          <a [href]="conf.cfp.website" target="_blank" rel="noopener noreferrer">{{ conf.cfp.website }}</a>
+        </div>
       }
     </div>
 
-    @if (canApplyAsSponsor()) {
+    @if (currentPerson() && canApplyAsSponsor()) {
       <div class="sponsor-cta">
         <p-button
           [label]="'CONFERENCE.VIEW.BECOME_SPONSOR' | translate"
