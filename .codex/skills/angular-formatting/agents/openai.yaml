@@ -1,0 +1,4 @@
+interface:
+  display_name: "Angular formatting"
+  short_description: "Apply project Angular and TypeScript formatting rules"
+  default_prompt: "Use $angular-formatting whenever creating or modifying Angular code in this project."

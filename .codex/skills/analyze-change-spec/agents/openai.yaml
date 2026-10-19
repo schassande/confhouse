@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Analyser et compléter une spec"
+  short_description: "Vérifier et compléter les specs de doc/changes"
+  default_prompt: "Use $analyze-change-spec to analyser la spec indiquée, poser les questions manquantes une par une, puis la mettre à jour en anglais, structurée et datée."
