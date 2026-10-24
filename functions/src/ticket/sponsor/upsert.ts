@@ -1,7 +1,7 @@
 import { onRequest } from 'firebase-functions/https';
 import { buildBilletwebCustomPayload, createBilletwebTicket, findOrCreatePersonByEmail, loadBilletwebConfig, loadBilletwebCredentials, updateBilletwebTicket, upsertActivityParticipations } from '../billetweb/client';
 import { handleSponsorTicketAction, loadOwnedParticipantTicket, parseParticipantTicketFieldInputs, parseParticipantTicketId, requiredText } from './common';
-import { saveParticipantTicket } from './sync';
+import { calculateSponsorTicketCompletion, saveParticipantTicket } from './sync';
 import type { ParticipantBilletWebTicket } from '../../../../shared/src/model/billetweb-config';
 import type { AuthorizedSponsorContext, SponsorTicketActionReport } from '../common/types';
 
@@ -70,9 +70,11 @@ async function upsertSponsorParticipantTicketAction(
   };
 
   await saveParticipantTicket(context.db, nextTicket);
+  const allTicketsCreated = await calculateSponsorTicketCompletion(context);
+  await context.sponsorRef.set({ allTicketsCreated }, { merge: true });
 
   return {
-    sponsor: context.sponsorData,
+    sponsor: { ...context.sponsorData, allTicketsCreated },
     participantTicket: nextTicket,
   };
 }

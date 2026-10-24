@@ -21,7 +21,7 @@ import { ToastModule } from 'primeng/toast';
 import { firstValueFrom, forkJoin, take } from 'rxjs';
 import { BilletwebConfig } from '@shared/model/billetweb-config';
 import { Conference } from '@shared/model/conference.model';
-import { BoothAllocationMode, Sponsor, SponsorPaymentStatus, SponsorStatus, SponsorType } from '@shared/model/sponsor.model';
+import { BoothAllocationMode, Sponsor, SponsorType } from '@shared/model/sponsor.model';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { SponsorBoothAllocationService } from '../../../services/sponsor-booth-allocation.service';
 import { ConferenceService } from '../../../services/conference.service';
@@ -44,6 +44,16 @@ interface ConfirmedSponsorCount {
 
 /** Number of confirmed sponsors for one configured sponsor type. */
 type SponsorTagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
+
+type SponsorWorkflowState =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'ORDER_FORM_SENT'
+  | 'INVOICE_SENT'
+  | 'PAID_INVOICE_SENT'
+  | 'PAID'
+  | 'TICKETS_CREATED'
+  | 'CANCELED';
 
 @Component({
   selector: 'app-sponsor-manage',
@@ -88,6 +98,8 @@ export class SponsorManageComponent implements OnInit {
   readonly selectedTypeId = signal<string>(this.initialManageState.typeId);
   readonly selectedSponsorStatus = signal<string>(this.initialManageState.sponsorStatus);
   readonly selectedPaymentStatus = signal<string>(this.initialManageState.paymentStatus);
+  readonly selectedTicketState = signal<string>('ALL');
+  readonly ticketActionInProgress = signal<string | null>(null);
   readonly selectedSortMode = signal<SponsorSortMode>(this.initialManageState.sortMode);
   readonly confirmedSponsorsByType = computed<ConfirmedSponsorCount[]>(() => {
     const sponsors = this.sponsors();
@@ -149,6 +161,24 @@ export class SponsorManageComponent implements OnInit {
       value: 'OVERDUE',
     },
   ]);
+  readonly ticketStateFilterOptions = computed<SelectOption[]>(() => [
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_TICKETS_ALL'), value: 'ALL' },
+    { label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.FILTER_TICKETS_TODO'), value: 'TODO' },
+  ]);
+  readonly pendingPaidTicketCount = computed(() =>
+    this.sponsors().filter(
+      (sponsor) => sponsor.status === 'CONFIRMED' && sponsor.paymentStatus === 'PAID' && sponsor.allTicketsCreated === 'TODO'
+    ).length
+  );
+  readonly pendingUnpaidTicketCount = computed(() =>
+    this.sponsors().filter(
+      (sponsor) => sponsor.status === 'CONFIRMED' && sponsor.paymentStatus !== 'PAID' && sponsor.allTicketsCreated === 'TODO'
+    ).length
+  );
+  readonly ticketEmailsOpen = computed(() => {
+    const startDate = String(this.conference()?.sponsoring?.ticketStartDate ?? '').slice(0, 10);
+    return !!startDate && startDate <= new Date().toISOString().slice(0, 10);
+  });
   readonly sortOptions = computed<SelectOption[]>(() => [
     {
       label: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.SORT_NAME'),
@@ -180,6 +210,7 @@ export class SponsorManageComponent implements OnInit {
       .filter((sponsor) => selectedType === 'ALL' || sponsor.sponsorTypeId === selectedType)
       .filter((sponsor) => selectedSponsorStatus === 'ALL' || sponsor.status === selectedSponsorStatus)
       .filter((sponsor) => selectedPaymentStatus === 'ALL' || sponsor.paymentStatus === selectedPaymentStatus)
+      .filter((sponsor) => this.selectedTicketState() === 'ALL' || sponsor.allTicketsCreated === this.selectedTicketState())
       .sort((a, b) => this.compareSponsors(a, b, selectedSortMode));
   });
   readonly filteredCountLabel = computed(() =>
@@ -211,6 +242,56 @@ export class SponsorManageComponent implements OnInit {
   onSortModeChange(value: string): void {
     this.selectedSortMode.set(this.normalizeSortMode(value));
     this.saveManageState();
+  }
+
+  /** Changes the ticket completion filter. */
+  onFilterTicketStateChange(value: string): void {
+    this.selectedTicketState.set(String(value ?? 'ALL'));
+  }
+
+  /** Sends ticket-opening notifications to every eligible sponsor. */
+  async onNotifyTickets(): Promise<void> {
+    await this.sendTicketEmails('opened', this.sponsors());
+  }
+
+  /** Sends ticket reminders to every sponsor with pending tickets. */
+  async onRemindTickets(): Promise<void> {
+    await this.sendTicketEmails(
+      'reminder',
+      this.sponsors().filter((sponsor) => sponsor.paymentStatus === 'PAID' && sponsor.allTicketsCreated === 'TODO')
+    );
+  }
+
+  /** Sends one ticket email per sponsor and reports the aggregate result. */
+  private async sendTicketEmails(kind: 'opened' | 'reminder', sponsors: Sponsor[]): Promise<void> {
+    if (!this.ticketEmailsOpen() || this.ticketActionInProgress()) {
+      return;
+    }
+    this.ticketActionInProgress.set(kind);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (const sponsor of sponsors) {
+        try {
+          const report = kind === 'opened'
+            ? await this.sponsorService.sendSponsorTicketOpened(this.conferenceId(), sponsor.id)
+            : await this.sponsorService.sendSponsorTicketReminder(this.conferenceId(), sponsor.id);
+          this.applyUpdatedSponsors([report.sponsor]);
+          success += 1;
+        } catch (error) {
+          console.error(`Unable to send sponsor ticket ${kind} email`, sponsor.id, error);
+          failed += 1;
+        }
+      }
+      this.messageService.add({
+        severity: failed > 0 ? 'warn' : 'success',
+        summary: this.translateService.instant('COMMON.SUCCESS'),
+        detail: this.translateService.instant('CONFERENCE.SPONSOR_MANAGE.TICKET_EMAIL_SUMMARY', { success, failed }),
+      });
+    } finally {
+      this.ticketActionInProgress.set(null);
+      this.cdr.markForCheck();
+    }
   }
 
   onAddNew(): void {
@@ -309,37 +390,67 @@ export class SponsorManageComponent implements OnInit {
     };
   }
 
-  sponsorStatusLabel(status: SponsorStatus): string {
-    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.STATUS_${status}`);
-  }
-
-  paymentStatusLabel(status: SponsorPaymentStatus): string {
-    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.PAYMENT_${status}`);
-  }
-
-  sponsorStatusSeverity(status: SponsorStatus): SponsorTagSeverity {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'success';
-      case 'CANDIDATE':
-      case 'WAITING_LIST':
-        return 'warn';
-      case 'REJECTED':
-      case 'CANCELED':
-        return 'danger';
-      case 'POTENTIAL':
-      default:
-        return 'secondary';
+  /**
+   * Returns the single workflow state displayed on the sponsor management card.
+   *
+   * @param sponsor Sponsor whose workflow state is displayed.
+   * @returns The highest-priority state reached by the sponsor.
+   */
+  sponsorWorkflowState(sponsor: Sponsor): SponsorWorkflowState {
+    if (sponsor.status === 'CANCELED') {
+      return 'CANCELED';
     }
+    if (sponsor.status !== 'CONFIRMED') {
+      return 'PENDING';
+    }
+    if (sponsor.paymentStatus === 'PAID' && sponsor.allTicketsCreated === 'DONE') {
+      return 'TICKETS_CREATED';
+    }
+    if (sponsor.paymentStatus === 'PAID') {
+      return 'PAID';
+    }
+    if (sponsor.documents?.invoicePaidSentAt) {
+      return 'PAID_INVOICE_SENT';
+    }
+    if (sponsor.documents?.invoiceSentAt) {
+      return 'INVOICE_SENT';
+    }
+    if (sponsor.documents?.orderFormSentAt) {
+      return 'ORDER_FORM_SENT';
+    }
+    return 'CONFIRMED';
   }
 
-  paymentStatusSeverity(status: SponsorPaymentStatus): SponsorTagSeverity {
-    switch (status) {
+  /**
+   * Returns the translated label for the sponsor workflow state.
+   *
+   * @param sponsor Sponsor whose state is displayed.
+   * @returns Translated workflow label.
+   */
+  sponsorWorkflowStateLabel(sponsor: Sponsor): string {
+    return this.translateService.instant(
+      `CONFERENCE.SPONSOR_MANAGE.WORKFLOW_${this.sponsorWorkflowState(sponsor)}`
+    );
+  }
+
+  /**
+   * Returns the visual severity for the sponsor workflow state.
+   *
+   * @param sponsor Sponsor whose state is displayed.
+   * @returns PrimeNG tag severity.
+   */
+  sponsorWorkflowStateSeverity(sponsor: Sponsor): SponsorTagSeverity {
+    switch (this.sponsorWorkflowState(sponsor)) {
+      case 'TICKETS_CREATED':
       case 'PAID':
         return 'success';
-      case 'OVERDUE':
+      case 'CANCELED':
         return 'danger';
       case 'PENDING':
+      case 'CONFIRMED':
+      case 'ORDER_FORM_SENT':
+      case 'INVOICE_SENT':
+      case 'PAID_INVOICE_SENT':
       default:
         return 'warn';
     }

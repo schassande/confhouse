@@ -1,6 +1,6 @@
 # Sponsor ticket email notification and reminder
 
-Last updated: 2026-10-19
+Last updated: 2026-10-24
 
 ## Objective
 
@@ -44,6 +44,7 @@ Emails must be sent through the existing backend Mailjet integration using templ
 - Successful sends record `TICKET_OPENED` or `TICKET_REMINDER` in `Sponsor.businessEvents`.
 - Failed sends must not create success events or update last-send projections.
 - `allTicketsCreated` is recalculated whenever a sponsor ticket is created or deleted.
+- When the sponsor edit page already loads participant tickets, it recalculates `allTicketsCreated` from those tickets and persists the result only when the field is missing or differs from the recalculated value.
 - Values are `NO_TICKET`, `TODO`, and `DONE`.
 - `NO_TICKET` means the sponsor has no ticket quota.
 - `TODO` means the sponsor has at least one quota and has not created all allocated tickets, including the case where zero tickets have been created.
@@ -96,6 +97,8 @@ The existing `Sponsor.businessEvents` history remains the audit source. Projecti
 - Reuse existing sponsor Mailjet template resolution and backend communication services.
 - Add typed backend actions under the existing sponsor communication area; keep handlers small and authorize in the backend.
 - Recalculate `allTicketsCreated` in the ticket create/delete workflows using quotas and persisted ticket references.
+- Reconcile `allTicketsCreated` during sponsor edit ticket loading without adding a separate ticket-loading backend call; use the existing loaded tickets and write only when the persisted value is absent or stale.
+- Use `ParticipantBilletWebTicket.ticketStatus === 'CREATED'` consistently in shared and backend/frontend completion calculations.
 - Update shared models, backend mappings, frontend models, translations, and Firestore/documentation contracts.
 - Add tests for date gating, authorization, eligibility, event/projection updates, single sends, bulk sends, partial failures, missing configuration, and ticket create/delete recalculation.
 
@@ -107,6 +110,8 @@ The existing `Sponsor.businessEvents` history remains the audit source. Projecti
 - The correct sponsor-type Mailjet template is selected.
 - Filter, badge, and TODO statistic reflect persisted ticket state.
 - `allTicketsCreated` remains correct after ticket creation and deletion.
+- Opening a sponsor edit page repairs a missing or stale `allTicketsCreated` value when participant tickets are loaded.
+- Opening a sponsor edit page does not write `allTicketsCreated` when the persisted value already matches the recalculated value.
 - Last successful send dates do not advance on failed sends.
 - Non-administrators cannot invoke the actions.
 - Existing sponsor email workflows continue to work.

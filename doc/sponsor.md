@@ -24,6 +24,24 @@ when the organizer opens a sponsor and returns to the list. These values are hel
 memory, scoped to the conference. They are not persisted in local storage, Firestore, or any other server-side
 storage, and therefore reset when the application is reloaded.
 
+## Sponsor Management Workflow Badge
+
+The sponsor management list displays one workflow badge per sponsor instead of separate badges for
+the sponsor status, payment, sent documents, and tickets. The badge represents the furthest state
+reached in the sponsor workflow, using this priority order:
+
+1. `Annulé` when `Sponsor.status` is `CANCELED`
+2. `Demande à traiter` when the sponsor is neither confirmed nor canceled
+3. `Billets tous créés` when the sponsor is confirmed, paid, and `allTicketsCreated` is `DONE`
+4. `Payé` when the sponsor is confirmed and `paymentStatus` is `PAID`
+5. `Facture payée envoyée` when `documents.invoicePaidSentAt` exists
+6. `Facture envoyée` when `documents.invoiceSentAt` exists
+7. `Bon de commande envoyé` when `documents.orderFormSentAt` exists
+8. `Confirmé` for every other confirmed sponsor
+
+The payment state takes precedence over document sending states. Ticket completion takes precedence
+over payment. The existing filters remain available independently of the displayed workflow badge.
+
 ## Separation of Responsibilities
 
 Sponsor management is based on three distinct data levels:
@@ -112,11 +130,13 @@ Rules:
 Sponsor ticket self-service editability is optionally bounded by:
 
 - `Conference.sponsoring.ticketEndDate`
+- `Conference.sponsoring.ticketStartDate`
 
 Rules:
 
 - when `ticketEndDate` is empty, sponsor ticket self-service remains editable as long as the sponsor ticket slots exist
 - when `ticketEndDate` is set and the current date is after it, sponsor ticket cards remain visible but sponsor-side ticket actions become read-only
+- when `ticketStartDate` is set to today or an earlier date in the conference timezone, organizer ticket opening notifications and reminders are available
 - this limit applies only to sponsor self-service ticket administration, not to organizer ticket administration
 
 ## `Sponsor` Entity
@@ -385,6 +405,8 @@ The initially retained business event types are:
 - `BOOTH_ASSIGNED`
 - `BOOTH_CHANGED`
 - `TICKETS_ALLOCATED`
+- `TICKET_OPENED`
+- `TICKET_REMINDER`
 
 ### Event Structure
 
@@ -486,6 +508,20 @@ General rules:
 - a successful sponsor email must produce the corresponding business event in `Sponsor.businessEvents`
 - if `Conference.sponsoring.ccEmail` is configured, every sponsor email includes this address in CC
 - the language of the email and any generated attachment is taken from `Sponsor.communicationLanguage`
+
+## Sponsor Ticket Availability Notifications
+
+The ticket-opening and ticket-reminder emails notify a sponsor that its conference
+tickets can be prepared or that tickets are still missing.
+
+Rules:
+
+- both notifications are available only when `Sponsor.paymentStatus = PAID`
+- the backend enforces this rule for direct HTTP calls as well as for the organizer UI
+- the organizer UI displays pending-ticket sponsors as `A + B`: `A` is the number of confirmed, paid sponsors with pending tickets and `B` is the number of confirmed, unpaid sponsors with pending tickets
+- the ticket window must also be open (`Conference.sponsoring.ticketStartDate` is not in the future)
+- a reminder additionally requires that the sponsor still has pending ticket slots
+- an unpaid sponsor (`PENDING` or `OVERDUE`) receives an HTTP conflict response and no email is sent
 
 ## Sponsor Email Types
 

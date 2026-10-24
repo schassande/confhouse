@@ -403,8 +403,25 @@
             } @else if (!canManageTickets()) {
               <div class="empty-state">{{ 'CONFERENCE.SPONSOR_MANAGE.PARTICIPANT_TICKETS_REQUIRES_CONFIRMED' | translate }}</div>
             } @else {
+              <div class="ticket-completion-status">
+                <span>{{ 'CONFERENCE.SPONSOR_MANAGE.TICKET_COMPLETION_STATUS' | translate }}</span>
+                <p-tag
+                  [value]="ticketCompletionLabel(currentEditingSponsor()?.allTicketsCreated)"
+                  [severity]="ticketCompletionSeverity(currentEditingSponsor()?.allTicketsCreated)"
+                ></p-tag>
+              </div>
               <div class="form-actions inline-actions">
                 <div class="inline-actions-buttons">
+                  @if (ticketEmailsOpen()) {
+                  <button pButton type="button" class="p-button-outlined"
+                    [label]="'CONFERENCE.SPONSOR_MANAGE.NOTIFY_TICKETS' | translate"
+                    [loading]="isActionPending('mail-ticket-opened')" (click)="onSendTicketOpened()"></button>
+                  <button pButton type="button" class="p-button-outlined"
+                    [label]="'CONFERENCE.SPONSOR_MANAGE.REMIND_TICKETS' | translate"
+                    [disabled]="currentEditingSponsor()?.allTicketsCreated !== 'TODO'"
+                    [loading]="isActionPending('mail-ticket-reminder')" (click)="onSendTicketReminder()"></button>
+                  <small>{{ currentEditingSponsor()?.ticketOpenedEmailSentAt || currentEditingSponsor()?.ticketReminderEmailSentAt }}</small>
+                  }
                   <button
                     pButton
                     type="button"

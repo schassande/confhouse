@@ -67,6 +67,8 @@
 
             <div class="form-grid two-columns">
               <div class="field">
+                <label for="ticketStartDate">{{ 'CONFERENCE.SPONSOR_CONFIG.TICKET_START_DATE' | translate }}</label>
+                <input id="ticketStartDate" pInputText formControlName="ticketStartDate" type="date" />
                 <label for="ticketEndDate">{{ 'CONFERENCE.SPONSOR_CONFIG.TICKET_END_DATE' | translate }}</label>
                 <input id="ticketEndDate" pInputText formControlName="ticketEndDate" type="date" />
               </div>
@@ -283,6 +285,14 @@
                   <div class="field">
                     <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_PAID_INVOICE_TEMPLATE_ID' | translate }}</label>
                     <input pInputText formControlName="emailPaidInvoiceTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_TICKET_OPENED_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailTicketOpenedTemplateId" type="text" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'CONFERENCE.SPONSOR_CONFIG.EMAIL_TICKET_REMINDER_TEMPLATE_ID' | translate }}</label>
+                    <input pInputText formControlName="emailTicketReminderTemplateId" type="text" />
                   </div>
                 </div>
               </div>

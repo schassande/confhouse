@@ -27,6 +27,7 @@ import { sendSponsorInvoice } from './sponsor/communication/send-invoice';
 import { sendSponsorPaidInvoice } from './sponsor/communication/send-paid-invoice';
 import { sendSponsorOrderForm } from './sponsor/communication/send-order-form';
 import { sendSponsorPaymentReminder } from './sponsor/communication/send-payment-reminder';
+import { sendSponsorTicketOpened, sendSponsorTicketReminder } from './sponsor/common';
 import { notifyManagerOnSponsorCreate } from './sponsor/communication/notify-manager-on-sponsor-create';
 import { listPublicSponsors } from './sponsor/public-list';
 
@@ -58,6 +59,8 @@ export {
   sendSponsorInvoice,
   sendSponsorPaidInvoice,
   sendSponsorPaymentReminder,
+  sendSponsorTicketOpened,
+  sendSponsorTicketReminder,
   sendSponsorApplicationConfirmation,
   sendSponsorAdministrativeSummary,
   notifyManagerOnSponsorCreate,

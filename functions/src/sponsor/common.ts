@@ -54,6 +54,8 @@ type SponsorActionOperation =
   | 'SEND_INVOICE'
   | 'SEND_PAID_INVOICE'
   | 'SEND_PAYMENT_REMINDER'
+  | 'SEND_TICKET_OPENED'
+  | 'SEND_TICKET_REMINDER'
   | 'SEND_APPLICATION_CONFIRMATION'
   | 'SEND_ADMINISTRATIVE_SUMMARY';
 
@@ -119,6 +121,8 @@ type SponsorMailMessageType =
   | 'SPONSOR_PAID_INVOICE'
   | 'SPONSOR_PAYMENT_REMINDER'
   | 'SPONSOR_APPLICATION_CONFIRMATION'
+  | 'SPONSOR_TICKET_OPENED'
+  | 'SPONSOR_TICKET_REMINDER'
   | 'SPONSOR_ADMINISTRATIVE_SUMMARY';
 
 /**
@@ -429,6 +433,74 @@ export const sendSponsorPaymentReminder = onRequest(
     });
   }
 );
+
+/** Sends the sponsor ticket-opening notification. */
+export const sendSponsorTicketOpened = onRequest(
+  { cors: true, timeoutSeconds: 120, secrets: MAILJET_SECRETS },
+  async (req, res) => {
+    await handleSponsorAction(req, res, 'SEND_TICKET_OPENED', async (context) => {
+      ensureSponsorTicketEmailWindowOpen(context, 'SEND_TICKET_OPENED');
+      ensureSponsorPaymentMarkedAsPaid(context, 'SEND_TICKET_OPENED', 'Sponsor ticket notification');
+      return await sendSponsorTicketNotification(context, 'SPONSOR_TICKET_OPENED', 'TICKET_OPENED');
+    });
+  }
+);
+
+/** Sends a reminder to a sponsor that still has tickets to create. */
+export const sendSponsorTicketReminder = onRequest(
+  { cors: true, timeoutSeconds: 120, secrets: MAILJET_SECRETS },
+  async (req, res) => {
+    await handleSponsorAction(req, res, 'SEND_TICKET_REMINDER', async (context) => {
+      ensureSponsorTicketEmailWindowOpen(context, 'SEND_TICKET_REMINDER');
+      ensureSponsorPaymentMarkedAsPaid(context, 'SEND_TICKET_REMINDER', 'Sponsor ticket notification');
+      if (getSponsorTicketCompletionState(context) !== 'TODO') {
+        throw new HttpError(409, 'Sponsor has no pending tickets', 'SEND_TICKET_REMINDER rejected: sponsor is not eligible');
+      }
+      return await sendSponsorTicketNotification(context, 'SPONSOR_TICKET_REMINDER', 'TICKET_REMINDER');
+    });
+  }
+);
+
+/** Validates the configured ticket-opening date. */
+function ensureSponsorTicketEmailWindowOpen(context: AuthorizedSponsorContext, operation: string): void {
+  const startDate = String(((context.conferenceData as any).sponsoring as Record<string, unknown> | undefined)?.ticketStartDate ?? '').slice(0, 10);
+  if (!startDate || startDate > new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date())) {
+    throw new HttpError(409, 'Sponsor ticket emails are not open', `${operation} rejected: ticket window is closed`);
+  }
+}
+
+/** Computes the persisted sponsor ticket completion state. */
+function getSponsorTicketCompletionState(context: AuthorizedSponsorContext): 'NO_TICKET' | 'TODO' | 'DONE' {
+  const sponsorTypes = ((((context.conferenceData as any).sponsoring) as Record<string, unknown> | undefined)?.sponsorTypes ?? []) as Array<Record<string, unknown>>;
+  const sponsorType = sponsorTypes.find((type) => String(type.id ?? '') === String(context.sponsorData.sponsorTypeId ?? ''));
+  const quotas = Array.isArray(sponsorType?.conferenceTicketQuotas) ? sponsorType.conferenceTicketQuotas as Array<Record<string, unknown>> : [];
+  const expected = quotas.reduce((sum, quota) => sum + Math.max(0, Number(quota.quota ?? 0)), 0);
+  return expected === 0 ? 'NO_TICKET' : 'TODO';
+}
+
+/** Sends one ticket notification and updates its audit/projection fields. */
+async function sendSponsorTicketNotification(
+  context: AuthorizedSponsorContext,
+  messageType: 'SPONSOR_TICKET_OPENED' | 'SPONSOR_TICKET_REMINDER',
+  eventType: 'TICKET_OPENED' | 'TICKET_REMINDER'
+): Promise<SponsorActionReport> {
+  const locale = resolveContextSponsorLocale(context);
+  const report = await sendSponsorNotificationEmail(context, buildSponsorTemplateAwareNotificationOptions({
+    context,
+    messageType,
+    eventType,
+    locale,
+    textPart: messageType === 'SPONSOR_TICKET_OPENED'
+      ? 'Your sponsor tickets are now available.'
+      : 'Please create your remaining sponsor tickets.',
+  }));
+  const sentAt = new Date().toISOString();
+  const projection = messageType === 'SPONSOR_TICKET_OPENED'
+    ? { ticketOpenedEmailSentAt: sentAt }
+    : { ticketReminderEmailSentAt: sentAt };
+  await context.sponsorRef.set(projection, { merge: true });
+  return { ...report, sponsor: { ...report.sponsor, ...projection } };
+}
 
 /**
  * Sends the sponsor application confirmation email.
@@ -1033,10 +1105,12 @@ function parseSponsorPaymentStatus(value: unknown): SponsorPaymentStatus {
  *
  * @param context Authorized sponsor action context.
  * @param operation Current operation name.
+ * @param subject Human-readable subject of the protected operation.
  */
 function ensureSponsorPaymentMarkedAsPaid(
   context: AuthorizedSponsorContext,
-  operation: SponsorActionOperation
+  operation: SponsorActionOperation,
+  subject: string = 'Paid invoice'
 ): void {
   const paymentStatus = String(context.sponsorData?.paymentStatus ?? '').trim();
   if (paymentStatus === 'PAID') {
@@ -1045,7 +1119,7 @@ function ensureSponsorPaymentMarkedAsPaid(
 
   throw new HttpError(
     409,
-    'Paid invoice is only available once payment status is PAID',
+    `${subject} is only available once payment status is PAID`,
     `${operation} rejected: sponsor payment status is not PAID`,
     {
       conferenceId: context.conferenceId,
@@ -1225,6 +1299,8 @@ function buildLocalizedSponsorMailSubject(
       SPONSOR_PAYMENT_REMINDER: 'Relance de paiement',
       SPONSOR_APPLICATION_CONFIRMATION: 'Confirmation de candidature sponsor',
       SPONSOR_ADMINISTRATIVE_SUMMARY: 'Recapitulatif administratif',
+      SPONSOR_TICKET_OPENED: 'Billets sponsor disponibles',
+      SPONSOR_TICKET_REMINDER: 'Relance billets sponsor',
     }
     : {
       SPONSOR_ORDER_FORM: 'Order form',
@@ -1233,6 +1309,8 @@ function buildLocalizedSponsorMailSubject(
       SPONSOR_PAYMENT_REMINDER: 'Payment reminder',
       SPONSOR_APPLICATION_CONFIRMATION: 'Sponsor application confirmation',
       SPONSOR_ADMINISTRATIVE_SUMMARY: 'Administrative summary',
+      SPONSOR_TICKET_OPENED: 'Sponsor tickets available',
+      SPONSOR_TICKET_REMINDER: 'Sponsor ticket reminder',
     };
   return `${labels[messageType]} - ${conferenceName}`;
 }

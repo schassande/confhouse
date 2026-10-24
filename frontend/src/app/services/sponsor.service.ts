@@ -411,6 +411,16 @@ export class SponsorService extends FirestoreGenericService<Sponsor> {
     });
   }
 
+  /** Sends the sponsor ticket-opening notification. */
+  async sendSponsorTicketOpened(conferenceId: string, sponsorId: string): Promise<SponsorActionReport> {
+    return await this.postSponsorOrganizerAction('sendSponsorTicketOpened', { conferenceId, sponsorId });
+  }
+
+  /** Sends a reminder for pending sponsor tickets. */
+  async sendSponsorTicketReminder(conferenceId: string, sponsorId: string): Promise<SponsorActionReport> {
+    return await this.postSponsorOrganizerAction('sendSponsorTicketReminder', { conferenceId, sponsorId });
+  }
+
   /**
    * Sends the sponsor application confirmation email through the backend action layer.
    *

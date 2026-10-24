@@ -30,7 +30,9 @@ export type SponsorBusinessEventType =
   | 'PAYMENT_REMINDER_SENT'
   | 'BOOTH_ASSIGNED'
   | 'BOOTH_CHANGED'
-  | 'TICKETS_ALLOCATED';
+  | 'TICKETS_ALLOCATED'
+  | 'TICKET_OPENED'
+  | 'TICKET_REMINDER';
 
 /**
  * Definition of one conference ticket quota for a sponsor type.
@@ -58,6 +60,10 @@ export interface SponsorTypeTemplateEmail {
   emailPaymentReminderTemplateId?: string;
   /** Template identifier used for sponsor paid invoice emails. */
   emailPaidInvoiceTemplateId?: string;
+  /** Template identifier used when sponsor tickets become available. */
+  emailTicketOpenedTemplateId?: string;
+  /** Template identifier used for sponsor ticket reminders. */
+  emailTicketReminderTemplateId?: string;
 }
 
 /**
@@ -175,4 +181,10 @@ export interface Sponsor extends PersistentData {
   logistics?: SponsorLogistics;
   /** List of identifier of ParticipantBilletWebTicket. It is the list of all ticket allowed for this sponsor. */
   participantTicketIds: string[];
+  /** Cached sponsor ticket completion state. */
+  allTicketsCreated?: 'NO_TICKET' | 'TODO' | 'DONE';
+  /** Last successful ticket-opening email timestamp. */
+  ticketOpenedEmailSentAt?: string;
+  /** Last successful ticket-reminder email timestamp. */
+  ticketReminderEmailSentAt?: string;
 }

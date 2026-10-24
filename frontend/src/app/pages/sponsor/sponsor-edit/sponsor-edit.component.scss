@@ -266,3 +266,11 @@
 .p-steppanel {
   background: none !important;
 }
+.ticket-completion-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+

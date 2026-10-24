@@ -299,6 +299,7 @@ Sponsorship setup stored in `conference.sponsoring` contains:
 - `startDate`
 - `endDate`
 - optional `ticketEndDate`
+- optional `ticketStartDate` in ISO `YYYY-MM-DD` format
 - `counter`
 - optional `email`, used as sponsor contact/sender email and as the internal recipient for new sponsor application manager notifications
 - optional `ccEmail`
@@ -344,7 +345,8 @@ This entity is not embedded in `Conference`.
 `Conference` stores sponsorship configuration, while `Sponsor` stores each actual sponsor application or sponsorship record.
 
 Sponsor business operations use the following extension fields:
-- `businessEvents` stores dated business facts such as `ORDER_FORM_SENT`, `INVOICE_SENT`, `PAYMENT_REMINDER_SENT`, `BOOTH_ASSIGNED`, `BOOTH_CHANGED`, `TICKETS_ALLOCATED`
+- `businessEvents` stores dated business facts such as `ORDER_FORM_SENT`, `INVOICE_SENT`, `PAYMENT_REMINDER_SENT`, `BOOTH_ASSIGNED`, `BOOTH_CHANGED`, `TICKETS_ALLOCATED`, `TICKET_OPENED`, and `TICKET_REMINDER`
+- `allTicketsCreated` caches `NO_TICKET`, `TODO`, or `DONE`; ticket email projections are stored in `ticketOpenedEmailSentAt` and `ticketReminderEmailSentAt`
 - `businessEvents` also includes `INVOICE_PAID_SENT` for acquitted invoice sends
 - `documents` stores lightweight summary projections such as `orderFormSentAt`, `invoiceSentAt`, `invoicePaidSentAt`, `lastReminderSentAt`
 - `logistics` stores lightweight summary projections such as `boothAssignedAt`

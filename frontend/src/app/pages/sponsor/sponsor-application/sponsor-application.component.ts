@@ -17,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
 import { Conference } from '@shared/model/conference.model';
 import { ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
 import { Sponsor, SponsorBusinessEvent, SponsorCommunicationLanguage, SponsorType } from '@shared/model/sponsor.model';
+import { computeSponsorTicketCompletion } from '@shared/model/sponsor-ticket-status';
 import { ConferenceService } from '../../../services/conference.service';
 import {
   ParticipantTicketFieldInput,
@@ -479,6 +480,11 @@ export class SponsorApplicationComponent {
       documents: editingSponsor?.documents,
       logistics: editingSponsor?.logistics,
       participantTicketIds: editingSponsor?.participantTicketIds ?? [],
+      allTicketsCreated: editingSponsor?.allTicketsCreated
+        ?? computeSponsorTicketCompletion(
+          this.sponsorTypeById(sponsorTypeId),
+          this.participantTicketCards().map((ticket) => ticket.ticket.ticketStatus)
+        ),
     };
 
     this.saving.set(true);

@@ -15,7 +15,9 @@ export type SponsorTemplateMessageType =
   | 'SPONSOR_INVOICE'
   | 'SPONSOR_PAID_INVOICE'
   | 'SPONSOR_PAYMENT_REMINDER'
-  | 'SPONSOR_APPLICATION_CONFIRMATION';
+  | 'SPONSOR_APPLICATION_CONFIRMATION'
+  | 'SPONSOR_TICKET_OPENED'
+  | 'SPONSOR_TICKET_REMINDER';
 
 interface SponsorMailTemplateSponsorTypeSource {
   id: string;
@@ -129,7 +131,11 @@ export function resolveSponsorMailTemplateId(
         ? templateEmail.emailInvoiceTemplateId
         : messageType === 'SPONSOR_PAYMENT_REMINDER'
           ? templateEmail.emailPaymentReminderTemplateId
-          : templateEmail.emailPaidInvoiceTemplateId;
+          : messageType === 'SPONSOR_TICKET_OPENED'
+            ? templateEmail.emailTicketOpenedTemplateId
+            : messageType === 'SPONSOR_TICKET_REMINDER'
+              ? templateEmail.emailTicketReminderTemplateId
+              : templateEmail.emailPaidInvoiceTemplateId;
 
   const normalized = String(templateId ?? '').trim();
   return normalized || undefined;

@@ -112,6 +112,7 @@ export class SponsorConfigComponent {
   readonly form = this.fb.group({
     startDate: [''],
     endDate: [''],
+    ticketStartDate: [''],
     ticketEndDate: [''],
     counter: [0],
     legalEntity: [''],
@@ -309,6 +310,7 @@ export class SponsorConfigComponent {
       sponsoring: {
         startDate: this.normalizeDateValue(this.form.get('startDate')?.value),
         endDate: this.normalizeDateValue(this.form.get('endDate')?.value),
+        ticketStartDate: this.normalizeOptionalDateValue(this.form.get('ticketStartDate')?.value),
         ticketEndDate: this.normalizeOptionalDateValue(this.form.get('ticketEndDate')?.value),
         counter: Math.max(0, Number(this.form.get('counter')?.value ?? 0)),
         legalEntity: String(this.form.get('legalEntity')?.value ?? '').trim() || undefined,
@@ -360,6 +362,7 @@ export class SponsorConfigComponent {
     this.form.patchValue({
       startDate: this.normalizeDateValue(conference?.sponsoring?.startDate),
       endDate: this.normalizeDateValue(conference?.sponsoring?.endDate),
+      ticketStartDate: this.normalizeDateValue(conference?.sponsoring?.ticketStartDate),
       ticketEndDate: this.normalizeDateValue(conference?.sponsoring?.ticketEndDate),
       counter: Math.max(0, Number(conference?.sponsoring?.counter ?? 0)),
       legalEntity: String(conference?.sponsoring?.legalEntity ?? '').trim(),
@@ -427,6 +430,12 @@ export class SponsorConfigComponent {
         ],
         emailPaidInvoiceTemplateId: [
           this.normalizeOptionalString(sponsorType?.templateEmail?.emailPaidInvoiceTemplateId) ?? '',
+        ],
+        emailTicketOpenedTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailTicketOpenedTemplateId) ?? '',
+        ],
+        emailTicketReminderTemplateId: [
+          this.normalizeOptionalString(sponsorType?.templateEmail?.emailTicketReminderTemplateId) ?? '',
         ],
       }),
       conferenceTicketQuotas: this.fb.array<FormGroup>(
@@ -616,6 +625,8 @@ export class SponsorConfigComponent {
       emailInvoiceTemplateId: this.normalizeOptionalString(value?.emailInvoiceTemplateId),
       emailPaymentReminderTemplateId: this.normalizeOptionalString(value?.emailPaymentReminderTemplateId),
       emailPaidInvoiceTemplateId: this.normalizeOptionalString(value?.emailPaidInvoiceTemplateId),
+      emailTicketOpenedTemplateId: this.normalizeOptionalString(value?.emailTicketOpenedTemplateId),
+      emailTicketReminderTemplateId: this.normalizeOptionalString(value?.emailTicketReminderTemplateId),
     };
 
     return Object.values(normalized).some((templateId) => templateId !== undefined) ? normalized : undefined;

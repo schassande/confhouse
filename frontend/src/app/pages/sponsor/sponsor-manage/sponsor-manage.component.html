@@ -36,6 +36,14 @@
         (onChange)="onFilterTypeChange($event.value)"
       ></p-select>
       <p-select
+        [options]="ticketStateFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedTicketState()"
+        [ngModelOptions]="{ standalone: true }"
+        (onChange)="onFilterTicketStateChange($event.value)"
+      ></p-select>
+      <p-select
         [options]="sponsorStatusFilterOptions()"
         optionLabel="label"
         optionValue="value"
@@ -73,8 +81,27 @@
     ></button>
   </div>
 
+  @if (ticketEmailsOpen() || autoAllocatableSponsorTypes().length > 0) {
+  <div class="unified-action-toolbar">
+  @if (ticketEmailsOpen()) {
+    <div class="ticket-action-zone">
+      <div class="ticket-email-actions">
+        <button pButton type="button" icon="pi pi-envelope" [label]="'CONFERENCE.SPONSOR_MANAGE.NOTIFY_TICKETS' | translate"
+          [loading]="ticketActionInProgress() === 'opened'" [disabled]="!!ticketActionInProgress()" (click)="onNotifyTickets()"></button>
+        <button pButton type="button" icon="pi pi-bell" class="p-button-outlined"
+          [label]="'CONFERENCE.SPONSOR_MANAGE.REMIND_TICKETS' | translate" [loading]="ticketActionInProgress() === 'reminder'"
+          [disabled]="!!ticketActionInProgress()" (click)="onRemindTickets()"></button>
+      </div>
+      <div>
+        {{ 'CONFERENCE.SPONSOR_MANAGE.PENDING_TICKETS' | translate: {
+          paidCount: pendingPaidTicketCount(),
+          unpaidCount: pendingUnpaidTicketCount()
+        } }}
+      </div>
+    </div>
+  }
   @if (autoAllocatableSponsorTypes().length > 0) {
-  <div class="allocation-toolbar">
+    <div class="booth-action-zone allocation-toolbar">
     @for (sponsorType of autoAllocatableSponsorTypes(); track sponsorType.id) {
     <div class="allocation-item">
       <button
@@ -98,6 +125,8 @@
       </span>
     </div>
     }
+    </div>
+  }
   </div>
   }
 
@@ -127,33 +156,9 @@
                   <h3>{{ sponsor.name }}</h3>
                   <div class="sponsor-badges">
                     <p-tag
-                      [value]="sponsorStatusLabel(sponsor.status)"
-                      [severity]="sponsorStatusSeverity(sponsor.status)"
+                      [value]="sponsorWorkflowStateLabel(sponsor)"
+                      [severity]="sponsorWorkflowStateSeverity(sponsor)"
                     ></p-tag>
-                    <p-tag
-                      [value]="paymentStatusLabel(sponsor.paymentStatus)"
-                      [severity]="paymentStatusSeverity(sponsor.paymentStatus)"
-                    ></p-tag>
-                    @if (sponsor.documents?.orderFormSentAt) {
-                    <p-tag
-                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_ORDER_FORM' | translate"
-                      severity="info"
-                    ></p-tag>
-                    }
-                    @if (sponsor.documents?.invoiceSentAt) {
-                    <p-tag
-                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_INVOICE' | translate"
-                      severity="info"
-                    ></p-tag>
-                    }
-                    @if (sponsor.documents?.invoicePaidSentAt) {
-                    <p-tag
-                      [value]="'CONFERENCE.SPONSOR_MANAGE.DOCUMENT_PAID_INVOICE' | translate"
-                      severity="info"
-                    ></p-tag>
-                    }
-                  </div>
-                  <div class="sponsor-meta">
                     @if (sponsor.boothName) {
                     <span class="booth-badge">
                       {{

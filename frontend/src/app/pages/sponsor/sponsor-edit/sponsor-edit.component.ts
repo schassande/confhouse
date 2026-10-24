@@ -33,7 +33,7 @@ import {
   SponsorStatus,
   SponsorType,
 } from '@shared/model/sponsor.model';
-import { Person } from '@shared/model/person.model';
+import { computeSponsorTicketCompletion } from '@shared/model/sponsor-ticket-status';
 import { ActivityParticipationService } from '../../../services/activity-participation.service';
 import { ActivityService } from '../../../services/activity.service';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
@@ -114,6 +114,15 @@ export class SponsorEditComponent implements OnInit {
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
   readonly sponsorId = computed(() => this.route.snapshot.paramMap.get('sponsorId') ?? '');
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly ticketEmailsOpen = computed(() => {
+    const startDate = String(this.conference()?.sponsoring?.ticketStartDate ?? '').slice(0, 10);
+    return !!startDate && startDate <= this.todayIsoDate();
+  });
+
+  /** Returns today's ISO date for date-only sponsor ticket rules. */
+  todayIsoDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
   readonly activities = signal<Activity[]>([]);
   readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly sponsors = signal<Sponsor[]>([]);
@@ -259,7 +268,15 @@ export class SponsorEditComponent implements OnInit {
       documents: editingSponsor?.documents,
       logistics: editingSponsor?.logistics,
       participantTicketIds: editingSponsor?.participantTicketIds ?? [],
+      allTicketsCreated: computeSponsorTicketCompletion(
+        this.sponsorTypes().find((type) => type.id === sponsorTypeId),
+        this.participantTicketCards().map((ticket) => ticket.ticket.ticketStatus)
+      ),
     };
+    console.log('OnSave', 
+      'tickets status:', this.participantTicketCards().map((ticket) => ticket.ticket.ticketStatus),
+      'sponsor ticket status', payload.allTicketsCreated
+    );
 
     this.sponsorService.save(payload).subscribe({
       next: () => {
@@ -440,6 +457,28 @@ export class SponsorEditComponent implements OnInit {
     );
   }
 
+  /** Sends the sponsor ticket-opening notification. */
+  async onSendTicketOpened(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor) {
+      return;
+    }
+    await this.runSponsorAction('mail-ticket-opened', async () =>
+      await this.sponsorService.sendSponsorTicketOpened(this.conferenceId(), sponsor.id)
+    );
+  }
+
+  /** Sends the sponsor ticket reminder when tickets remain pending. */
+  async onSendTicketReminder(): Promise<void> {
+    const sponsor = this.currentEditingSponsor();
+    if (!sponsor || sponsor.allTicketsCreated !== 'TODO') {
+      return;
+    }
+    await this.runSponsorAction('mail-ticket-reminder', async () =>
+      await this.sponsorService.sendSponsorTicketReminder(this.conferenceId(), sponsor.id)
+    );
+  }
+
   /**
    * Sends the sponsor application confirmation email through the backend action layer.
    */
@@ -494,6 +533,25 @@ export class SponsorEditComponent implements OnInit {
       return 'danger';
     default:
       return 'secondary';
+    }
+  }
+
+  /** Returns the translated label for the sponsor ticket completion state. */
+  ticketCompletionLabel(state: Sponsor['allTicketsCreated']): string {
+    return this.translateService.instant(`CONFERENCE.SPONSOR_MANAGE.TICKET_COMPLETION_${state ?? 'MISSING'}`);
+  }
+
+  /** Returns the visual severity for the sponsor ticket completion state. */
+  ticketCompletionSeverity(state: Sponsor['allTicketsCreated']): TagSeverity {
+    switch (state) {
+      case 'DONE':
+        return 'success';
+      case 'NO_TICKET':
+        return 'secondary';
+      case 'TODO':
+        return 'warn';
+      default:
+        return 'danger';
     }
   }
 
@@ -667,7 +725,10 @@ export class SponsorEditComponent implements OnInit {
           this.cdr.markForCheck();
           return;
         }
-
+        sponsors.forEach(s => {
+          // s.participantTicketIds.forEach
+          // s.allTicketsCreated = 
+        })
         this.conference.set(conference);
         this.activities.set(activities ?? []);
         this.billetwebConfig.set(billetwebConfig);
@@ -841,6 +902,22 @@ export class SponsorEditComponent implements OnInit {
       const viewModels = await Promise.all(
         participantTickets.map(async (ticket) => await this.buildParticipantTicketVm(ticket))
       );
+
+      const recalculatedCompletion = computeSponsorTicketCompletion(
+        this.sponsorTypes().find((type) => type.id === synchronizedReport.sponsor.sponsorTypeId),
+        participantTickets.map((ticket) => ticket.ticketStatus)
+      );
+      const reconciledSponsor = {
+        ...synchronizedReport.sponsor,
+        allTicketsCreated: recalculatedCompletion,
+      };
+
+      if (synchronizedReport.sponsor.allTicketsCreated !== recalculatedCompletion) {
+        const savedSponsor = await firstValueFrom(this.sponsorService.save(reconciledSponsor));
+        this.applyUpdatedSponsor(savedSponsor);
+      } else {
+        this.applyUpdatedSponsor(reconciledSponsor);
+      }
 
       console.log('[SponsorEdit] refreshParticipantTickets:viewModels', {
         sponsorId: sponsor.id,

@@ -55,6 +55,8 @@ export type SponsorRecord = Pick<Sponsor, 'status' | 'statusDate' | 'paymentStat
 This repository currently uses a lightweight shared-source setup:
 
 - `frontend/tsconfig.app.json` includes `../shared/src/**/*.ts`
+- `frontend/tsconfig.app.json` sets `rootDir` to `..`, because the Angular
+  compilation includes sources from both `frontend` and `shared`
 - `frontend/tsconfig.json` defines the `@shared/*` path alias to `../shared/src/*`
 - `functions/tsconfig.json` includes `../shared/src`
 - there is no separate package build step for `shared`
@@ -211,6 +213,11 @@ firebase emulators:start --only storage
    ```sh
    npm start
    ```
+   The start script enables Angular file polling every second because the frontend
+   imports TypeScript sources directly from `../shared/src`, which is outside the
+   frontend project directory. This ensures changes to shared models trigger a
+   rebuild and browser reload. If needed, polling can be adjusted temporarily with
+   `ng serve --poll=<milliseconds>`.
 
 ## Deployment
 

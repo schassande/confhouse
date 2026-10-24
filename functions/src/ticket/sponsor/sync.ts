@@ -118,6 +118,10 @@ export async function synchronizeSponsorParticipantTickets(
     );
   }
 
+  const allTicketsCreated = await calculateSponsorTicketCompletion(context, mergedTickets.map((ticket) => ticket.id));
+  await context.sponsorRef.set({ allTicketsCreated }, { merge: true });
+  nextSponsor = { ...nextSponsor, allTicketsCreated };
+
   const report: SponsorTicketActionReport = {
     sponsor: nextSponsor,
     participantTickets: mergedTickets,
@@ -132,6 +136,27 @@ export async function synchronizeSponsorParticipantTickets(
   });
 
   return report;
+}
+
+/** Calculates the cached ticket completion state from configured quotas and created slots. */
+export async function calculateSponsorTicketCompletion(
+  context: AuthorizedSponsorContext,
+  participantTicketIds: string[] = context.sponsorData.participantTicketIds ?? []
+): Promise<'NO_TICKET' | 'TODO' | 'DONE'> {
+  const sponsorTypes = Array.isArray((context.conferenceData.sponsoring as any)?.sponsorTypes)
+    ? (context.conferenceData.sponsoring as any).sponsorTypes as SponsorType[]
+    : [];
+  const sponsorType = sponsorTypes.find((type) => String(type.id ?? '') === String(context.sponsorData.sponsorTypeId ?? ''));
+  const expected = (sponsorType?.conferenceTicketQuotas ?? [])
+    .reduce((total, quota) => total + Math.max(0, Number(quota.quota ?? 0)), 0);
+  if (expected === 0) {
+    return 'NO_TICKET';
+  }
+  const tickets = await loadParticipantTicketsByIds(context.db, normalizeStringArray(participantTicketIds));
+  const createdCount = Array.from(tickets.values())
+    .filter((ticket) => ticket.ticketStatus === 'CREATED')
+    .length;
+  return createdCount >= expected ? 'DONE' : 'TODO';
 }
 
 /**
