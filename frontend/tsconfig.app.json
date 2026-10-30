@@ -5,8 +5,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/app",
     "rootDir": "..",
-    "types": [],
-    "ignoreDeprecations": "6.0"
+    "types": []
   },
   "include": [
     "src/**/*.ts",

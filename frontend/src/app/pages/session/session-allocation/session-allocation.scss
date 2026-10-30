@@ -97,6 +97,11 @@ $header-height: 40px;
   cursor: pointer;
 }
 
+.slot-card.overflow-slot {
+  pointer-events: none;
+  border-style: dashed;
+}
+
 .slot-card.drop-target {
   border-color: #0ea5e9 !important;
   background-color: #0ea5e9 !important;

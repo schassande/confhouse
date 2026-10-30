@@ -42,6 +42,8 @@ interface SlotView {
   slot: Slot;
   roomColIdx: number;
   startTick: number;
+  isOverflow: boolean;
+  sourceRoomName?: string;
 }
 
 interface TimelineTick {
@@ -407,12 +409,12 @@ export class SessionAllocation implements OnInit {
   slotText(slotView: SlotView): string {
     const session = this.selectedSession(slotView);
     if (!session) {
-      return '';
+      return slotView.isOverflow ? `overflow · ${slotView.sourceRoomName ?? ''}` : '';
     }
     if (this.colorByMode() === 'occupation') {
       return `${this.sessionOccupationValue(session)} - ${session.title}`;
     }
-    return session.title;
+    return slotView.isOverflow ? `${session.title} · overflow` : session.title;
   }
 
   slotStyle(slotView: SlotView): Record<string, string | number> {
@@ -491,7 +493,10 @@ export class SessionAllocation implements OnInit {
   }
 
   selectedSessionId(slotView: SlotView): string | null {
-    return this.allocationBySlotKey().get(slotView.key)?.sessionId ?? null;
+    const key = slotView.isOverflow
+      ? this.toSlotKey(slotView.day.id, slotView.slot.id, slotView.slot.roomId)
+      : slotView.key;
+    return this.allocationBySlotKey().get(key)?.sessionId ?? null;
   }
 
   selectedSession(slotView: SlotView): Session | undefined {
@@ -503,6 +508,9 @@ export class SessionAllocation implements OnInit {
   }
 
   openSessionPicker(slotView: SlotView): void {
+    if (slotView.isOverflow) {
+      return;
+    }
     this.selectedSlotForPicker.set(slotView);
     this.selectedPickerTrackIds.set([...(this.selectedTrackIds() ?? [])]);
     this.pickerSearchText.set(this.unallocatedSearchText());
@@ -590,6 +598,10 @@ export class SessionAllocation implements OnInit {
   }
 
   async onSlotDrop(event: DragEvent, slotView: SlotView): Promise<void> {
+    if (slotView.isOverflow) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
     this.dropTargetSlotKey.set('');
     const payload = this.readDragPayload(event);
@@ -1082,7 +1094,7 @@ export class SessionAllocation implements OnInit {
   ): SlotView[] {
     const roomIndexById = new Map<string, number>(enabledRooms.map((room, idx) => [room.id, idx]));
 
-    return day.slots
+    const sourceViews = day.slots
       .filter((slot) => !!slotTypeById.get(slot.slotTypeId)?.isSession)
       .map((slot) => {
         const roomColIdx = roomIndexById.get(slot.roomId);
@@ -1102,9 +1114,28 @@ export class SessionAllocation implements OnInit {
           room,
           roomColIdx,
           startTick,
+          isOverflow: false,
         };
       })
-      .filter((value): value is SlotView => !!value)
+      .filter((value): value is SlotView => !!value);
+    const overflowViews: SlotView[] = [];
+    sourceViews.forEach((sourceView) => {
+      (sourceView.slot.overflowRoomIds ?? []).forEach((overflowRoomId) => {
+        const roomColIdx = roomIndexById.get(overflowRoomId);
+        if (roomColIdx === undefined) {
+          return;
+        }
+        overflowViews.push({
+          ...sourceView,
+          key: this.toSlotKey(day.id, sourceView.slot.id, overflowRoomId),
+          room: enabledRooms[roomColIdx],
+          roomColIdx,
+          isOverflow: true,
+          sourceRoomName: sourceView.room.name,
+        });
+      });
+    });
+    return [...sourceViews, ...overflowViews]
       .sort((a, b) => {
         if (a.roomColIdx !== b.roomColIdx) {
           return a.roomColIdx - b.roomColIdx;

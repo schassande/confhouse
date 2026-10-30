@@ -225,7 +225,7 @@ Navigation:
 
 ### 12. Conference Config Planning Structure (`/conference/:conferenceId/config/planning-structure`)
 Purpose:
-- Planning structure management (days, slots, constraints).
+- Planning structure management (days, slots, constraints), including read-only overflow-room projections.
 
 Access:
 - Authenticated + valid conference context.
@@ -278,7 +278,7 @@ Navigation:
 
 ### 17. Session Allocation (`/conference/:conferenceId/allocation`)
 Purpose:
-- Session planning/allocation across slots and rooms.
+- Session planning/allocation across slots and rooms. Overflow rooms display the source-room slot and session as read-only copies.
 
 Access:
 - Authenticated + organizer + valid conference context.

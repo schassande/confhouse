@@ -108,6 +108,15 @@ export class DayStructure implements OnInit {
       const roomId = slot.roomId;
       if (!map.has(roomId)) map.set(roomId, []);
       map.get(roomId)!.push(slot);
+      for (const overflowRoomId of slot.overflowRoomIds ?? []) {
+        const overflowSlot = {
+          ...slot,
+          id: `${slot.id}::overflow::${overflowRoomId}`,
+          roomId: overflowRoomId,
+        };
+        if (!map.has(overflowRoomId)) map.set(overflowRoomId, []);
+        map.get(overflowRoomId)!.push(overflowSlot);
+      }
     }
     return map;
   });
@@ -184,6 +193,14 @@ export class DayStructure implements OnInit {
   }
   getSlotType(slotTypeId: string): SlotType | undefined {
     return this.slotTypes().find(st => st.id === slotTypeId);
+  }
+  isOverflowSlot(slot: Slot): boolean {
+    return slot.id.includes('::overflow::');
+  }
+  sourceRoomName(slot: Slot): string {
+    const sourceSlotId = slot.id.split('::overflow::')[0];
+    const sourceSlot = this.day().slots.find(candidate => candidate.id === sourceSlotId);
+    return this.rooms().find(room => room.id === sourceSlot?.roomId)?.name ?? '';
   }
   getSessionType(sessionTypeId: string): SessionType | undefined {
     return this.sessionTypes().find(st => st.id === sessionTypeId);

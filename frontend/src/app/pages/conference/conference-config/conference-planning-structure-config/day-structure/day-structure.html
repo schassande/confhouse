@@ -60,19 +60,24 @@
               @let position = getSlotPosition(slot);
               @let slotType = getSlotType(slot.slotTypeId);
               @let sessionType = getSessionType(slot.sessionTypeId);
-              <div class="slot" 
+              <div class="slot"
+                [class.overflow-slot]="isOverflowSlot(slot)"
                 [class.slot-compact]="isCompactSlot(slot)"
                 [style.--duration]="position.durationtick" 
                 [style.--start-tick]="position.startTick"
                 [style.--room-col-idx]="position.roomColIdx"
                 [style.backgroundColor]="slotType?.isSession ? sessionType?.color : slotType?.color"
-                (click)="onSlotEdit(slot)">
+                (click)="!isOverflowSlot(slot) && onSlotEdit(slot)">
                 
                 <span class="slot-title">
+                  @if (isOverflowSlot(slot)) {
+                    overflow · {{ sourceRoomName(slot) }}
+                  } @else {
                   @if (slotType?.isSession) {
                     {{ sessionType?.name }}
                   } @else {
                     {{ slotType?.name?.[defaultLanguage()] }}
+                  }
                   }
                 </span>
                 <span class="slot-time">{{ slot.startTime}}-{{ slot.endTime }}</span>

@@ -180,6 +180,7 @@ export class PlanningPdfService {
         {
           table: {
             headerRows: 1,
+            dontBreakRows: true,
             widths: [48, ...rooms.map(() => '*')],
             body,
             heights: (rowIndex: number) => (rowIndex === 0 ? rowHeight + 2 : rowHeight),
@@ -221,26 +222,29 @@ export class PlanningPdfService {
       pageSize: 'A4',
       pageOrientation: 'portrait',
       pageMargins: [16, 14, 16, 14],
-      content: [
-        {
-          columns: [
-            { width: '*', text: `${conference.name} ${conference.edition}`.trim(), style: 'header' },
-            { width: 'auto', stack: legend, alignment: 'right' },
-          ],
-          columnGap: 8,
-        },
-        { text: `Planning du ${this.localizedDayLabel(day.date)} - Salle ${room.name}`, style: 'subHeader' },
-        {
-          table: {
-            headerRows: 1,
-            widths: [58, '*'],
-            body,
-            heights: (rowIndex: number) => (rowIndex === 0 ? rowHeight + 2 : rowHeight),
+      content: [{
+        unbreakable: true,
+        stack: [
+          {
+            columns: [
+              { width: '*', text: `${conference.name} ${conference.edition}`.trim(), style: 'header' },
+              { width: 'auto', stack: legend, alignment: 'right' },
+            ],
+            columnGap: 8,
           },
-          layout: this.timelineTableLayout(1, 1),
-          margin: [0, 4, 0, 4],
-        },
-      ],
+          { text: `Planning du ${this.localizedDayLabel(day.date)} - Salle ${room.name}`, style: 'subHeader' },
+          {
+            table: {
+              headerRows: 1,
+              widths: [58, '*'],
+              body,
+              heights: (rowIndex: number) => (rowIndex === 0 ? rowHeight + 2 : rowHeight),
+            },
+            layout: this.timelineTableLayout(1, 1),
+            margin: [0, 4, 0, 4],
+          },
+        ],
+      }],
       styles: {
         header: { fontSize: 16, bold: true },
         subHeader: { fontSize: 11, color: '#374151', margin: [0, 2, 0, 4] },
@@ -522,6 +526,18 @@ export class PlanningPdfService {
         }
 
         if (!allocation || !isSessionSlot) {
+          if (isSessionSlot) {
+            result.get(slot.roomId)?.push({
+              slotId: slot.id,
+              startMinute: this.toMinutes(slot.startTime),
+              endMinute: this.toMinutes(slot.endTime),
+              duration: slot.duration,
+              title: this.slotTypeLabel(slotType, slot.slotTypeId),
+              fillColor: slotType?.color ?? '#E2E8F0',
+              session: undefined,
+              track: undefined,
+            });
+          }
           return;
         }
         const session = data.sessionsById.get(allocation.sessionId);
@@ -543,6 +559,22 @@ export class PlanningPdfService {
         });
       });
 
+    result.forEach((slots, roomId) => {
+      slots.sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
+      result.set(roomId, slots);
+    });
+
+    day.slots.forEach((sourceSlot) => {
+      const sourceViews = result.get(sourceSlot.roomId)?.filter(view => view.slotId === sourceSlot.id) ?? [];
+      (sourceSlot.overflowRoomIds ?? []).forEach((overflowRoomId) => {
+        sourceViews.forEach((sourceView) => {
+          result.get(overflowRoomId)?.push({
+            ...sourceView,
+            title: `${sourceView.title} · overflow`,
+          });
+        });
+      });
+    });
     result.forEach((slots, roomId) => {
       slots.sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
       result.set(roomId, slots);
@@ -645,7 +677,8 @@ export class PlanningPdfService {
   }
 
   private computeRowHeight(totalRows: number, orientation: 'landscape' | 'portrait'): number {
-    const availableHeight = orientation === 'landscape' ? 445 : 670;
+    // Reserve space for the title, day label, legend, table margins, and the table header.
+    const availableHeight = orientation === 'landscape' ? 390 : 670;
     const h = Math.floor(availableHeight / Math.max(2, totalRows + 1));
     return Math.max(8, Math.min(34, h));
   }

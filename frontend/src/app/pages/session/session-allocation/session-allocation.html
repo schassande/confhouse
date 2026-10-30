@@ -153,8 +153,9 @@
                     <div
                       class="slot-card"
                       [ngStyle]="slotStyle(slotView)"
+                      [class.overflow-slot]="slotView.isOverflow"
                       [class.drop-target]="dropTargetSlotKey() === slotView.key"
-                      [draggable]="!!selectedSessionId(slotView)"
+                      [draggable]="!slotView.isOverflow && !!selectedSessionId(slotView)"
                       (dragstart)="onSlotDragStart($event, slotView)"
                       (dragend)="onDragEnd()"
                       (dragover)="onDragOver($event, slotView)"
