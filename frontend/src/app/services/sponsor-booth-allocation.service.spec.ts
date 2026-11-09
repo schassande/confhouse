@@ -29,7 +29,7 @@ function buildSponsor(overrides: Partial<Sponsor>): Sponsor {
     businessEvents: overrides.businessEvents,
     documents: overrides.documents,
     logistics: overrides.logistics,
-    conferenceTickets: overrides.conferenceTickets,
+    participantTicketIds: overrides.participantTicketIds ?? [],
   };
 }
 
