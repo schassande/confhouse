@@ -72,47 +72,57 @@
     <p>{{ 'CONFERENCE.LOADING' | translate }}</p>
   } @else {
     @let range = conferenceDateRange(conf);
-    @if (range && range.start && range.end) {
-      <div class="conference-dates info-row">
-        <fa-icon [icon]="faCalendarDays" />
-        <strong>{{ 'HOME.CONF_DATES' | translate }}:</strong>
-        {{ range.start | date : 'dd MMM yyyy' }}
-        @if (range.start !== range.end) {
-          - {{ range.end | date : 'dd MMM yyyy' }}
+    @let cfpRange = cfpDateRange(conf);
+    <section class="conference-info">
+      @if (conf.description[lang()]) {
+        <div class="info-description">
+          <fa-icon class="info-icon" [icon]="faCircleInfo" />
+          <p>{{ conf.description[lang()] }}</p>
+        </div>
+      }
+      <div class="info-grid">
+        @if (range && range.start && range.end) {
+          <div class="info-tile">
+            <fa-icon class="info-icon" [icon]="faCalendarDays" />
+            <span class="info-label">{{ 'HOME.CONF_DATES' | translate }}</span>
+            <span class="info-value info-dates">
+              {{ range.start | date : 'dd MMM yyyy' }}
+              @if (range.start !== range.end) {
+                - {{ range.end | date : 'dd MMM yyyy' }}
+              }
+            </span>
+          </div>
+        }
+        @if (conf.location) {
+          <div class="info-tile">
+            <fa-icon class="info-icon" [icon]="faLocationDot" />
+            <span class="info-label">{{ 'HOME.CONF_LOCATION' | translate }}</span>
+            <span class="info-value">{{ conf.location }}</span>
+          </div>
+        }
+        @if (conf.website) {
+          <div class="info-tile">
+            <fa-icon class="info-icon" [icon]="faGlobe" />
+            <span class="info-label">{{ 'CONFERENCE.VIEW.WEBSITE' | translate }}</span>
+            <a class="info-value" [href]="conf.website" target="_blank" rel="noopener noreferrer">{{ displayUrl(conf.website) }}</a>
+          </div>
+        }
+        @if (cfpRange || conf.cfp.website) {
+          <div class="info-tile">
+            <fa-icon class="info-icon" [icon]="faBullhorn" />
+            <span class="info-label">{{ 'CONFERENCE.VIEW.CFP' | translate }}</span>
+            @if (cfpRange) {
+              <span class="info-value">
+                {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
+              </span>
+            }
+            @if (conf.cfp.website) {
+              <a class="info-link" [href]="conf.cfp.website" target="_blank" rel="noopener noreferrer">{{ displayUrl(conf.cfp.website) }}</a>
+            }
+          </div>
         }
       </div>
-    }
-    <div class="info-row">
-      <fa-icon [icon]="faLocationDot" />
-      {{ conf.location }}
-    </div>
-    @if (conf.description[lang()]) {
-      <div class="info-row">
-        <fa-icon [icon]="faCircleInfo" />
-        <strong>{{ 'CONFERENCE.DESCRIPTION' | translate }}: </strong>
-        <span>{{ conf.description[lang()] }}</span>
-      </div>
-    }
-    @if (conf.website) {
-      <div class="website info-row">
-        <fa-icon [icon]="faGlobe" />
-        <span>{{ 'CONFERENCE.VIEW.WEBSITE' | translate }}: </span>
-        <a [href]="conf.website" target="_blank" rel="noopener noreferrer">{{ conf.website }}</a>
-      </div>
-    }
-    <div class="cfp">
-      @if (cfpDateRange(conf); as cfpRange) {
-        <div class="cfp-dates">
-          <strong>{{ 'CONFERENCE.VIEW.CFP' | translate }}: </strong>
-          {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
-        </div>
-      }
-      @if (conf.cfp.website) {
-        <div class="cfp-website">
-          <a [href]="conf.cfp.website" target="_blank" rel="noopener noreferrer">{{ conf.cfp.website }}</a>
-        </div>
-      }
-    </div>
+    </section>
 
     @if (currentPerson() && canApplyAsSponsor()) {
       <div class="sponsor-cta">

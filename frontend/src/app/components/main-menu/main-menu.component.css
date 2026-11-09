@@ -4,16 +4,24 @@
   left: 0;
   width: 100%;
   height: 56px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--sc-main2);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
   padding: 0 2rem 0 0.5rem;
 }
+.home-link {
+  display: flex;
+}
 .menu-left .logo {
+  display: block;
   height: 36px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px;
 }
 .managed-conference-logo {
   height: 50px;
@@ -35,15 +43,20 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  color: #1a1a1a;
+  color: inherit;
   text-decoration: none;
   font-weight: 700;
   font-size: 2rem;
   line-height: 1;
   white-space: nowrap;
 }
-.app-title:hover {
-  color: #1976d2;
+.app-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.app-title:hover,
+.app-title a:hover {
+  color: var(--sc-orange-on-main);
 }
 .menu-right {
   display: flex;
@@ -80,7 +93,7 @@
   margin-right: 0.5rem;
 }
 .menu-link {
-  color: #1976d2;
+  color: inherit;
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
@@ -88,7 +101,7 @@
   transition: color 0.2s;
 }
 .menu-link:hover {
-  color: #0d47a1;
+  color: var(--sc-orange-on-main);
 }
 .menu-link-icon {
   margin-left: 0;

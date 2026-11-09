@@ -198,6 +198,83 @@
   gap: 10px;
 }
 
-.cfp-website {
-  margin-top: 10px;
+/* Conference information blocks, aligned with the snowcamp.io visual identity */
+.conference-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
+}
+
+.info-description {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--sc-main);
+  color: aliceblue;
+
+  .info-icon {
+    color: var(--sc-accent-yellow);
+    font-size: 1.25rem;
+    margin-top: 0.15rem;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.info-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  min-width: 0;
+
+  .info-icon {
+    color: var(--sc-main2);
+    font-size: 1.5rem;
+  }
+}
+
+.info-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sc-main2);
+}
+
+.info-value {
+  font-weight: 700;
+  color: var(--sc-main);
+  overflow-wrap: anywhere;
+}
+
+.info-dates {
+  color: var(--sc-green);
+}
+
+a.info-value,
+.info-link {
+  color: var(--sc-red);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.info-value:hover,
+.info-link:hover {
+  text-decoration: underline;
 }

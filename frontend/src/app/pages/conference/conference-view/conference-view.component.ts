@@ -13,7 +13,7 @@ import { ActivityParticipationService } from '../../../services/activity-partici
 import { SponsorService } from '../../../services/sponsor.service';
 import { UserSignService } from '../../../services/usersign.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faCalendarDays, faCircleInfo, faGlobe, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import { SessionService } from '../../../services/session.service';
 import { Session, SessionAllocation } from '@shared/model/session.model';
 import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
@@ -63,6 +63,7 @@ export class ConferenceViewComponent {
   readonly faLocationDot = faLocationDot;
   readonly faCircleInfo = faCircleInfo;
   readonly faGlobe = faGlobe;
+  readonly faBullhorn = faBullhorn;
 
   private readonly route = inject(ActivatedRoute);
   private readonly conferenceService = inject(ConferenceService);
@@ -240,6 +241,16 @@ export class ConferenceViewComponent {
     }
 
     return { start: sortedDates[0], end: sortedDates[sortedDates.length - 1] };
+  }
+
+  /**
+   * Formats a URL for display, without protocol prefix and trailing slash.
+   *
+   * @param url Absolute URL, e.g. `https://snowcamp.io/`.
+   * @returns Display text, e.g. `snowcamp.io`.
+   */
+  displayUrl(url: string): string {
+    return String(url ?? '').trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
   }
 
   /**

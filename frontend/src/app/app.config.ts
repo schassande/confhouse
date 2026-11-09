@@ -15,7 +15,7 @@ import { provideAuth } from '@angular/fire/auth';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { emulatorHosts, useEmulators } from './firebase-emulators';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeuix/themes/aura';
+import { SnowcampPreset } from './theme/snowcamp.preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,6 +48,6 @@ export const appConfig: ApplicationConfig = {
       loader: provideTranslateHttpLoader({prefix:'./i18n/', suffix:'.json'}),
       fallbackLang: 'en'
     }),
-    providePrimeNG({ theme: { preset: Aura } })
+    providePrimeNG({ theme: { preset: SnowcampPreset } })
   ]
 };

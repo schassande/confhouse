@@ -1,151 +1,145 @@
+/* Full-bleed mountain hero with translucent blocks, inspired by snowcamp.io */
 .home-container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 32px;
-  background: #fff;
+  position: relative;
+  box-sizing: border-box;
+  min-height: calc(100vh - 56px);
+  padding: 2rem clamp(1rem, 4vw, 3rem) 5rem;
+  background: url('/img/home-background.avif') center / cover no-repeat fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  --p-dataview-content-background: transparent;
+  --p-dataview-border-width: 0;
+  --p-dataview-paginator-bottom-border-width: 0;
+}
+
+.block {
+  background: var(--sc-block-background);
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  text-align: left;
+  color: aliceblue;
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
 }
 
 .home-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  position: relative;
-  min-height: 2.25rem;
+  text-align: center;
+  max-width: 40rem;
 }
 
 .home-header h1 {
   margin: 0;
-  text-align: center;
+  color: var(--sc-accent-orange);
+  text-transform: uppercase;
 }
 
-.home-header .add-button {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.home-tagline {
+  margin: 0.5rem 0 0;
+}
+
+.home-message {
+  margin: 0;
+}
+
+.add-button {
+  align-self: flex-end;
+  --p-button-success-background: var(--sc-green);
+  --p-button-success-border-color: var(--sc-green);
+  --p-button-success-hover-background: var(--sc-red);
+  --p-button-success-hover-border-color: var(--sc-red);
+}
+
+p-dataview {
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Legacy PrimeNG 14 CDN theme (index.html) forces a white list background */
+:host ::ng-deep .p-dataview .p-dataview-content,
+:host ::ng-deep .p-dataview .p-paginator {
+  background: transparent;
 }
 
 .conference-list {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
 }
 
 .conference-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 14px;
+  text-align: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(240, 248, 255, 0.6);
   cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
 .conference-card:hover {
-  border-color: #1976d2;
-  box-shadow: 0 6px 18px rgba(25, 118, 210, .16);
-  transform: translateY(-1px);
+  border-color: var(--sc-accent-orange);
+  transform: translateY(-2px);
 }
 
 .conference-card:focus-visible {
-  outline: 2px solid #1976d2;
+  outline: 3px solid var(--sc-accent-yellow);
   outline-offset: 2px;
 }
 
+.conference-logo-frame {
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+  margin-bottom: 0.25rem;
+}
+
 .conference-logo {
-  width: 64px;
-  height: 64px;
+  display: block;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.conference-content {
-  min-width: 0;
-  flex: 1;
-}
-
-.conference-line-1,
-.conference-line-2 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.conference-line-2 {
-  margin-top: 6px;
-  color: #555;
 }
 
 .conference-card h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  color: var(--sc-accent-yellow);
+  text-transform: uppercase;
 }
 
 .conference-edition {
-  font-weight: 600;
-  color: #333;
+  color: aliceblue;
 }
 
-.conference-location {
-  font-weight: 500;
+.conference-dates {
+  color: var(--sc-accent-green);
+  font-weight: 700;
 }
 
-.conference-dates,
 .conference-cfp-dates {
-  white-space: nowrap;
+  color: var(--sc-accent-blue);
+}
+
+.photo-credit {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  width: 4em;
+  background: var(--sc-block-background);
+  border-radius: 12px;
 }
 
 @media (max-width: 640px) {
   .home-container {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    margin: 0;
-    padding: 16px;
+    padding: 1rem 1rem 5rem;
+    background-attachment: scroll;
   }
 
-  .conference-card {
-    align-items: flex-start;
-  }
-
-  .conference-logo {
-    width: 52px;
-    height: 52px;
-  }
-
-  .conference-dates,
-  .conference-cfp-dates {
-    white-space: normal;
-  }
-
-  .home-header {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .home-header .add-button {
+  .add-button {
     position: fixed;
     right: 1rem;
     bottom: 1rem;
-    top: auto;
-    transform: none;
     z-index: 1000;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
   }

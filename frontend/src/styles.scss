@@ -3,11 +3,42 @@
 @import 'primeicons/primeicons.css';
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
-/* You can add global styles to this file, and also import other style files */
+/* Visual identity aligned with snowcamp.io (see doc/pages.md, "Visual identity") */
+@font-face {
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --sc-main: #2e2841;
+  --sc-main2: #544a78;
+  --sc-background: #f9f9f9;
+  --sc-red: hsl(355.54 50.959% 42.657%);
+  --sc-green: #1c784d;
+  --sc-orange-on-main: hsl(25.262 92.02% 69.731%);
+  --sc-block-background: rgba(46, 40, 65, 0.85);
+  --sc-accent-orange: #ff8a00;
+  --sc-accent-yellow: #fff200;
+  --sc-accent-blue: #00b9ff;
+  --sc-accent-green: #8dc63f;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
+  font-family: 'Luciole', sans-serif;
+  color: var(--sc-main);
+  background-color: var(--sc-background);
 }
 
 a:hover {

@@ -1,6 +1,7 @@
 ﻿{
   "HOME": {
     "TITLE": "Conférences",
+    "TAGLINE": "Organisez vos conférences de bout en bout.",
     "LOADING": "Chargement des conférences...",
     "NO_CONFS": "Aucune conférence trouvée.",
     "CREATE_CONF": "Créer une conférence",

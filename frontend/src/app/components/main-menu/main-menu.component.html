@@ -1,7 +1,9 @@
 <header class="main-menu">
   <div class="menu-left">
     @if (!isSingleConferenceMode()) {
-      <img routerLink="/"  ngOptimizedImage src="assets/logo.png" height="50" alt="Logo" class="logo" />
+      <a routerLink="/" class="home-link">
+        <img ngOptimizedImage src="assets/logo.png" height="50" alt="Logo" class="logo" />
+      </a>
     }
     <div class="app-title">
       @if (conferenceLogo() && conferenceId() && conferenceTitle()) {
@@ -19,7 +21,7 @@
         <span class="pi pi-cog"  style="font-size: 2rem" routerLink="/conference/{{ conferenceId() }}/manage"></span>
         }
       } @else {
-        <span routerLink="/">Conf House</span>
+        <a routerLink="/">Conf House</a>
       }
     </div>
   </div>

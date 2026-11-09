@@ -109,6 +109,16 @@ Purpose:
 - Home page with the conference list.
 - Main navigation entry point.
 
+Layout:
+- Full-bleed mountain background (`frontend/public/img/home-background.avif`, from snowcamp.io) with the photographer credit logo in the bottom-left corner.
+- Title block and conference cards are translucent dark blocks, in a responsive grid (12 per page, paginated beyond).
+- Card colors: name in yellow, dates in green, CFP dates in blue; thin light border, turning orange on hover. The list itself has no background so the photo shows between cards.
+
+Visual identity (decision):
+- The application look is aligned with snowcamp.io: Luciole font (`frontend/public/fonts`, CC-BY 4.0), palette exposed as `--sc-*` CSS variables in `frontend/src/styles.scss`, and PrimeNG `SnowcampPreset` (Aura with a `#544a78` primary palette) in `frontend/src/app/theme/snowcamp.preset.ts`.
+- The top bar (main menu) uses the snowcamp.io purple (`--sc-main2`) with white text and orange hover; the Conf House logo sits on a white chip because its roof is black. The logo (hidden in single-conference mode) sits on the left of the top bar and links to `/`, like the "Conf House" title.
+- Branding is hardcoded (not configurable per platform or conference) to keep it simple; swapping it means changing these variables, the preset and the background image.
+
 Access:
 - Public.
 
@@ -154,6 +164,9 @@ Navigation:
 Purpose:
 - Public conference page (information, dates, external links).
 - Shows available activities for signed-in users.
+
+Layout:
+- Description in a dark purple block, then a responsive grid of white tiles (icon, uppercase label, value) for dates, location, website and CFP (dates and link). Tiles are shown only when the data exists. Links display without protocol prefix and trailing slash (`snowcamp.io`).
 
 Access:
 - Public.

@@ -1,57 +1,63 @@
 <section class="home-container">
-  <div class="home-header">
+  <div class="home-header block">
     <h1>{{ 'HOME.TITLE' | translate }}</h1>
-    @if (canCreateConference()) {
-      <button pButton type="button" icon="pi pi-plus" class="p-button-success add-button" (click)="createConference()"></button>
-    }
+    <p class="home-tagline">{{ 'HOME.TAGLINE' | translate }}</p>
   </div>
+  @if (canCreateConference()) {
+    <button
+      pButton
+      type="button"
+      icon="pi pi-plus"
+      class="p-button-success add-button"
+      [label]="'HOME.CREATE_CONF' | translate"
+      (click)="createConference()"
+    ></button>
+  }
   @if (conferences() === undefined) {
-    <p>{{ 'HOME.LOADING' | translate }}</p>
+    <p class="home-message block">{{ 'HOME.LOADING' | translate }}</p>
   } @else if (conferences()?.length === 0) {
-    <p>{{ 'HOME.NO_CONFS' | translate }}</p>
+    <p class="home-message block">{{ 'HOME.NO_CONFS' | translate }}</p>
   } @else {
-    <p-dataview [value]="conferences() || []" [paginator]="(conferences()?.length || 0) > 12" [rows]="12" layout="list">
-      <ng-template #list let-items>
+    <p-dataview [value]="conferences() || []" [paginator]="(conferences()?.length || 0) > 12" [rows]="12" layout="grid">
+      <ng-template #grid let-items>
         <div class="conference-list">
           @for (conf of items; track conf.id) {
             <article
-              class="conference-card"
+              class="conference-card block"
               role="button"
               tabindex="0"
               (click)="openConference(conf)"
               (keydown.enter)="openConference(conf)"
               (keydown.space)="openConference(conf); $event.preventDefault()"
             >
-              <img class="conference-logo" [src]="conf.logo" [alt]="conf.name + ' logo'" />
-              <div class="conference-content">
-                <div class="conference-line-1">
-                  <h2>{{ conf.name }}</h2>
-                  <span class="conference-edition">{{ conf.edition }}</span>
-                  @if (conferenceDateRange(conf); as range) {
-                    @if (range.start && range.end) {
-                      <span class="conference-dates">
-                        {{ range.start | date : 'dd MMM yyyy' }}
-                        @if (range.start !== range.end) {
-                          - {{ range.end | date : 'dd MMM yyyy' }}
-                        }
-                      </span>
-                    }
-                  }
-                </div>
-
-                <div class="conference-line-2">
-                  <span class="conference-location">{{ conf.location }}</span>
-                  @if (cfpDateRange(conf); as cfpRange) {
-                    <span class="conference-cfp-dates">
-                      CFP: {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
-                    </span>
-                  }
-                </div>
+              <div class="conference-logo-frame">
+                <img class="conference-logo" [src]="conf.logo" [alt]="conf.name + ' logo'" />
               </div>
+              <h2>
+                {{ conf.name }}
+                <span class="conference-edition">{{ conf.edition }}</span>
+              </h2>
+              @if (conferenceDateRange(conf); as range) {
+                @if (range.start && range.end) {
+                  <span class="conference-dates">
+                    {{ range.start | date : 'dd MMM yyyy' }}
+                    @if (range.start !== range.end) {
+                      - {{ range.end | date : 'dd MMM yyyy' }}
+                    }
+                  </span>
+                }
+              }
+              <span class="conference-location">{{ conf.location }}</span>
+              @if (cfpDateRange(conf); as cfpRange) {
+                <span class="conference-cfp-dates">
+                  CFP: {{ cfpRange.start | date : 'dd MMM yyyy' }} - {{ cfpRange.end | date : 'dd MMM yyyy' }}
+                </span>
+              }
             </article>
           }
         </div>
       </ng-template>
     </p-dataview>
   }
+  <img class="photo-credit" src="/img/bruno-lavit-credit.png" alt="Photo: Bruno Lavit" />
 </section>

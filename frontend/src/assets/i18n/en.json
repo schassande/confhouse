@@ -1,6 +1,7 @@
 ﻿{
   "HOME": {
     "TITLE": "Conferences",
+    "TAGLINE": "Run your conferences end to end.",
     "LOADING": "Loading conferences...",
     "NO_CONFS": "No upcoming conferences found.",
     "CREATE_CONF": "Create Conference",
