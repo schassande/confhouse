@@ -631,7 +631,7 @@ function normalizeIsoTime(value: any): string | undefined {
 }
 
 /**
- * Maps social medias.
+ * Maps social media.
  * @param values Input values.
  * @returns Computed result.
  */

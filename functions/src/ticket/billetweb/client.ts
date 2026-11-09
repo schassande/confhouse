@@ -103,7 +103,7 @@ export async function loadBilletwebCredentials(
 }
 
 /**
- * Finds or create person by email.
+ * Finds or creates person by email.
  * @param db Firestore instance.
  * @param payload Normalized payload.
  * @returns Promise resolved with the computed result.

@@ -103,7 +103,7 @@ export class SlotEditorComponent implements OnInit {
         const startTimeDateTime = this.conferenceService.timeStringToDate(startTime).getTime();
         let newDuration = (newEndTimeDateTime - startTimeDateTime) / 60000;
         if (duration <= 0) { 
-          // duration must greater than 0 => set a default duration and compute start time
+          // duration must be greater than 0 => set a default duration and compute start time
           newDuration = 5;
           const newStartTime = this.conferenceService.formatHour(new Date(newEndTimeDateTime - newDuration));
           this.form()?.get('startTime')?.setValue(newStartTime);

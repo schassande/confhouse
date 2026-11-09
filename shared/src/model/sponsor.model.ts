@@ -98,7 +98,7 @@ export type BoothAllocationMode =
   'RANDOM' // Random allocation of the booth not based on the wishes
   | 'MANUAL' // Organizer allocates manually the stand
   | 'REGISTRATION_DATE' // Automatic allocation based on the registration date and the wishes
-  | 'WISHES_DATE'  // Automatic allocation based on the last whises date and the wishes
+  | 'WISHES_DATE'  // Automatic allocation based on the last wishes date and the wishes
   | 'CONFIRMATION_DATE'  // Automatic allocation based on the confirmation date and the wishes
   | 'PAYMENT_DATE' // Automatic allocation based on the payment date and the wishes
 ;
@@ -179,7 +179,7 @@ export interface Sponsor extends PersistentData {
   documents?: SponsorDocuments;
   /** Summary logistics projection derived from business history. */
   logistics?: SponsorLogistics;
-  /** List of identifier of ParticipantBilletWebTicket. It is the list of all ticket allowed for this sponsor. */
+  /** List of identifiers of ParticipantBilletWebTicket. It is the list of all tickets allowed for this sponsor. */
   participantTicketIds: string[];
   /** Cached sponsor ticket completion state. */
   allTicketsCreated?: 'NO_TICKET' | 'TODO' | 'DONE';

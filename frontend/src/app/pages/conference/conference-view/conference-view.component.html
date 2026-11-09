@@ -136,7 +136,7 @@
 
     @if(currentPerson() && !canManageConference() && !isConferenceSponsor() && speakerFeedbackSessions().length === 0) {
       <div>Currently, you don't have any role (Speaker, Sponsor or manager) in the conference {{conf.name}}.
-        <br>If you are speaker or sponsor, be sure to use your registration email.
+        <br>If you are a speaker or sponsor, be sure to use your registration email.
       </div>
     }
     @if (currentPerson() && (visibleActivities().length > 0 || canManageConference() || speakerFeedbackSessions().length > 0 || isConferenceSponsor())) {

@@ -42,7 +42,7 @@ export class SessionService extends FirestoreGenericService<Session> {
   protected override getCollectionName(): string {
     return 'session';
   }
-  /** Load the session of a conference
+  /** Load the sessions of a conference
    * @param conferenceId the identifier of the conference
    * @returns 
    */
@@ -58,7 +58,7 @@ export class SessionService extends FirestoreGenericService<Session> {
     );
   }
 
-  /** Search all session of a speaker */
+  /** Search all sessions of a speaker */
   bySpeaker(speakerId: string): Observable<Session[]> {
     const q1 = getDocs(fbQuery(this.itemsCollection(), fbWhere('speaker1Id', '==', speakerId)));
     const q2 = getDocs(fbQuery(this.itemsCollection(), fbWhere('speaker2Id', '==', speakerId)));

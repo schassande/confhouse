@@ -775,7 +775,7 @@
         "COPY_DAY": "Copy",
         "ROOM_SELECTOR": "Rooms activation",
         "X_SLOTS": "{{nb}} slots",
-        "ROOM_DISABLING_WARNING": "Warning, if you disable a room, all slots allocated on this room for that day will be definitevely deleted."
+        "ROOM_DISABLING_WARNING": "Warning, if you disable a room, all slots allocated on this room for that day will be definitively deleted."
       },
       "SLOT_EDITOR": {
         "TITLE": "Slot editor",
@@ -793,7 +793,7 @@
         "BEFORE_DAY_BEGIN": "The slot begin time is before the day begin time",
         "AFTER_DAY_END": "The slot end time is after the day end time",
         "ROOM_DISABLED": "Room is disabled for the day",
-        "OVERLAP_SLOT": "This slot overlap another slot(s)",
+        "OVERLAP_SLOT": "This slot overlaps another slot(s)",
         "WRONG_ROOM_TYPE": "The room type is not compatible with the slot type",
         "WRONG_DURATION": "The slot duration does not match the begin/end gap",
         "WRONG_DURATION_SESSION": "The slot duration does not match the session duration",

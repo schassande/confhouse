@@ -208,7 +208,7 @@ firebase emulators:start --only storage
      }
    };
    ```
-   Don't add this file on Git project. There are ignored for security reasons.
+   Don't add this file on Git project. They are ignored for security reasons.
 3. Start the dev server:
    ```sh
    npm start

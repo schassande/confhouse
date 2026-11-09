@@ -13,13 +13,13 @@ export interface BilletwebConfig extends PersistentData {
   conferenceId: string;
   /** Billetweb event ID */
   eventId: string;
-  /** Ticket types in billerweb */
+  /** Ticket types in billetweb */
   ticketTypes: {
-    /** Ticket types in billerweb for a speaker */
+    /** Ticket types in billetweb for a speaker */
     speaker: BilletwebTicketType;
-    /** Ticket types in billerweb for an organizer */
+    /** Ticket types in billetweb for an organizer */
     organizer: BilletwebTicketType;
-    /** Ticket types in billerweb available for sponsors */
+    /** Ticket types in billetweb available for sponsors */
     sponsors: BilletwebTicketType[];
   }
   /** Mapping between BilletWeb custom fields and activity participation attributes */
@@ -36,7 +36,7 @@ export interface BilletwebTicketType {
 
 /**
  * Conf House creates ticket in billetweb. Ticket creation can require custom field.
- * This objet defines the mapping between an attribut from an activity to the custom
+ * This object defines the mapping between an attribute from an activity to the custom
  * field of the billetweb ticket 
  */
 export interface ActivityTicketFieldMapping {

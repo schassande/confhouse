@@ -80,7 +80,7 @@ response="$(
 
 
 #====================================#
-# Query attendes to check the result #
+# Query attendees to check the result #
 #====================================#
 echo "GET ${attendees_url}"
 echo

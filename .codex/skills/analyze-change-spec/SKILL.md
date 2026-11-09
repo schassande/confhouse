@@ -11,7 +11,7 @@ Analyser le fichier de spec explicitement indiqué par l'utilisateur dans `/doc/
 
 Ne pas implémenter la fonctionnalité pendant cette analyse, sauf demande explicite distincte.
 
-Decrire l'implementation technique qui doit être réalisé
+Décrire l'implémentation technique qui doit être réalisée
 
 ## Règles impératives
 
@@ -137,7 +137,7 @@ Lorsque toutes les informations nécessaires sont présentes :
 - conclure `Ready for implementation` ou `Not ready for implementation` ;
 - résumer les impacts techniques vérifiés et les hypothèses restantes ;
 - fournir les critères d'acceptation et les vérifications recommandées.
-- Ecrire la specification technique de l'implementation
+- Écrire la spécification technique de l'implémentation
 
 Ne pas demander une validation supplémentaire si aucune décision nécessaire ne manque. Si une décision facultative reste ouverte mais ne bloque pas l'implémentation, la placer dans `Open decisions` et marquer la spec comme prête sous réserve, en expliquant pourquoi.
 

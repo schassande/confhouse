@@ -19,7 +19,7 @@ export interface Conference extends PersistentData {
   /** Description in several languages. See the field languages for supported ones */
   description: { [lang: string]: string };
   visible: boolean;
-  /** List of organizer email */
+  /** List of organizer emails */
   organizerEmails: string[];
   /** Email domain for organizers */
   organizerEmailDomain?: string;

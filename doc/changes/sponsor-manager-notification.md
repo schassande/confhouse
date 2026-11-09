@@ -14,7 +14,7 @@ The notification is independent from the sponsor-facing application confirmation
 - Only initial creation sends the notification.
 - Updates to an existing sponsor do not send this notification.
 - The notification is asynchronous and does not block sponsor registration.
-- Mailjet failures are logged but are not visible to the sponsor and do not rollback registration.
+- Mailjet failures are logged but are not visible to the sponsor and do not roll back registration.
 - No `SponsorBusinessEvent` is recorded for this notification.
 - No additional application idempotency is required beyond the Firestore `onCreate` trigger.
 - The email content is rendered by a Mailjet template.

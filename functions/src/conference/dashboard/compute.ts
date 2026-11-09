@@ -23,7 +23,7 @@ interface RecomputeConferenceDashboardInput {
 }
 
 /**
- * Recomputes and persist conference dashboard.
+ * Recomputes and persists conference dashboard.
  * @param db Firestore instance.
  * @param input Input payload.
  * @returns Promise resolved with the computed result.

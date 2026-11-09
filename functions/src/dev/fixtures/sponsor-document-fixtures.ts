@@ -42,7 +42,7 @@ export const SAMPLE_SPONSOR_DOCUMENT_CONFERENCE: SponsorDocumentConferenceSource
         id: 'flocon',
         name: 'Flocon',
         description: {
-          en: 'Sponsor package with kakemono andconference visibility.',
+          en: 'Sponsor package with kakemono and conference visibility.',
           fr: 'Offre sponsor avec kakemono et visibilité conference.',
         },
         price: 1250,
