@@ -7,3 +7,4 @@ functions/.firebase
 functions/.vscode
 
 firebase-debug.log
+*-debug.log

@@ -219,6 +219,45 @@ firebase emulators:start --only storage
    rebuild and browser reload. If needed, polling can be adjusted temporarily with
    `ng serve --poll=<milliseconds>`.
 
+### Local preview with emulators
+
+The frontend can run fully locally against the Firestore and Auth emulators, with demo data, without access to the real Firebase project.
+
+Design decision: emulator mode is opt-in through an optional `useEmulators: true` field in the gitignored `environment.ts` (read by `frontend/src/app/firebase-emulators.ts`). When enabled, `app.config.ts` connects Firestore, Auth and Functions to the local emulators and `functionBaseUrl` targets the Functions emulator. Existing `environment.ts` files without the field keep targeting the real project. The demo project id `demo-confhouse` is used so the Firebase CLI needs no login and never reaches real services.
+
+Prerequisites: Firebase CLI (`npm i -g firebase-tools`) and Java 11+.
+
+1. Set `frontend/src/environments/environment.ts` to:
+   ```ts
+   export const environment = {
+     production: false,
+     useEmulators: true,
+     firebase: {
+       apiKey: "placeholder-api-key",
+       authDomain: "demo-confhouse.firebaseapp.com",
+       projectId: "demo-confhouse",
+       storageBucket: "demo-confhouse.firebasestorage.app",
+       messagingSenderId: "000000000000",
+       appId: "1:000000000000:web:0000000000000000",
+       function_region: "us-central1"
+     }
+   };
+   ```
+2. From the repository root, start the emulators (Firestore on 8080, Auth on 9099, UI on http://127.0.0.1:4000):
+   ```sh
+   npm run emulators
+   ```
+3. In another terminal, load the demo data (idempotent, can be re-run):
+   ```sh
+   npm run emulators:seed
+   ```
+   It creates the platform config, two conferences (`snowcamp-2027` with days, CFP dates and activities, `demo-2026`), and two verified accounts with password `password`:
+   - `attendee@example.com`: attendee, sees the attendee activities on the conference page
+   - `orga@example.com`: organizer of both conferences
+4. Start the frontend with `npm start` in `frontend` and open http://localhost:4200.
+
+Emulator data is in memory and lost when the emulators stop; re-run the seed after each restart. Cloud Functions are not started by `npm run emulators`; features calling HTTP functions (for example account creation through `createPerson`) need `firebase emulators:start --project demo-confhouse` with a built `functions` folder.
+
 ## Deployment
 
 1. Build the frontend:

@@ -9,6 +9,8 @@
     "deploy:functions": "npm run build && firebase deploy --only functions",
     "deploy:firestore:rules": "firebase deploy --only firestore:rules",
     "deploy:storage": "npm run build && firebase deploy --only storage",
-    "deploy:all": "npm run build && firebase deploy --only hosting,functions,storage"
+    "deploy:all": "npm run build && firebase deploy --only hosting,functions,storage",
+    "emulators": "firebase emulators:start --project demo-confhouse --only firestore,auth",
+    "emulators:seed": "node scripts/seed-emulators.mjs"
   }
 }
