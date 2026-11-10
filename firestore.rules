@@ -206,6 +206,11 @@ service cloud.firestore {
       allow create: if isConferenceOrganizer(request.resource.data.conferenceId);
       allow read, update, delete: if isConferenceOrganizer(resource.data.conferenceId);
     }
+    match /participantBilletWebTicket/{document=**} {
+      allow read: if isConferenceOrganizer(resource.data.conferenceId)
+        || isSamePerson(resource.data.personId);
+      allow write: if false;
+    }
 
     match /{document=**} {
       allow read, write: if false;

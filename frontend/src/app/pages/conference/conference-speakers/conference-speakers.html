@@ -3,7 +3,10 @@
     'CONFERENCE.SPEAKERS.TITLE_PAGE'
       | translate
         : {
-            conference: ((conference()?.name || '') + (conference()?.edition ? ' ' + conference()?.edition : '')).trim()
+            conference: (
+              (conference()?.name || '') +
+              (conference()?.edition ? ' ' + conference()?.edition : '')
+            ).trim(),
           }
   }}
 </h2>
@@ -41,6 +44,16 @@
           [placeholder]="'CONFERENCE.SPEAKERS.FILTER_SEARCH' | translate"
           class="header-control header-search"
         />
+
+        <p-select
+          [options]="ticketPresenceOptions()"
+          [ngModel]="ticketPresenceFilter()"
+          (ngModelChange)="ticketPresenceFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'CONFERENCE.SPEAKERS.FILTER_TICKET' | translate"
+          class="header-control"
+        ></p-select>
       </div>
 
       <div class="toolbar-row row-2">
@@ -73,7 +86,7 @@
               | translate
                 : {
                     filtered: filteredSpeakerViews().length,
-                    total: speakerViews().length
+                    total: speakerViews().length,
                   }
           }}
         </div>
@@ -87,6 +100,45 @@
           (click)="onAddSpeaker()"
         ></button>
       </div>
+
+      @if (hasSpeakerTicketConfiguration()) {
+        <div class="toolbar-row bulk-action-row">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-ticket"
+            [label]="
+              'CONFERENCE.SPEAKERS.CREATE_FILTERED_TICKETS'
+                | translate: { count: bulkTicketCandidateCount() }
+            "
+            [loading]="bulkTicketCreationPending()"
+            [disabled]="bulkTicketCreationPending() || bulkTicketCandidateCount() === 0"
+            (click)="createTicketsForFilteredSpeakers()"
+          ></button>
+          @if (bulkTicketSuccessCount() > 0 || bulkTicketFailures().length > 0) {
+            <span class="bulk-summary" aria-live="polite">
+              {{
+                'CONFERENCE.SPEAKERS.BULK_TICKET_SUMMARY'
+                  | translate
+                    : {
+                        success: bulkTicketSuccessCount(),
+                        failed: bulkTicketFailures().length,
+                      }
+              }}
+            </span>
+          }
+        </div>
+        @if (bulkTicketFailures().length > 0) {
+          <ul class="bulk-failures">
+            @for (failure of bulkTicketFailures(); track $index) {
+              <li>
+                <strong>{{ failure.speakerName }}</strong
+                >: {{ failure.message }}
+              </li>
+            }
+          </ul>
+        }
+      }
     </div>
   </ng-template>
 
@@ -118,6 +170,11 @@
               @if (view.unavailableSlotsCount > 0) {
                 <span class="meta-badge">
                   {{ 'CONFERENCE.SPEAKERS.UNAVAILABLE_SLOTS' | translate }}
+                </span>
+              }
+              @if (view.conferenceSpeaker.ticketId) {
+                <span class="meta-badge ticket-badge">
+                  {{ 'CONFERENCE.SPEAKERS.HAS_TICKET' | translate }}
                 </span>
               }
               @for (countByType of view.sessionTypeCounts; track countByType.sessionTypeId) {

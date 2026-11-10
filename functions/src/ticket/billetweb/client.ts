@@ -13,7 +13,7 @@ import type {
   BilletwebAttendee,
   BilletwebCredentials,
   ParticipantTicketFieldInput,
-  SponsorTicketActionOperation,
+  TicketActionOperation,
 } from '../common/types';
 import { logger } from 'firebase-functions';
 
@@ -29,7 +29,7 @@ const BILLETWEB_KEY_SECRET_NAME = 'BILLETWEB_KEY';
 export async function loadBilletwebConfig(
   db: FirebaseFirestore.Firestore,
   conferenceId: string,
-  operation: SponsorTicketActionOperation
+  operation: TicketActionOperation
 ): Promise<BilletwebConfig> {
   const snapshot = await db
     .collection(FIRESTORE_COLLECTIONS.BILLETWEB_CONFIG)
@@ -65,7 +65,7 @@ export async function loadBilletwebCredentials(
   db: FirebaseFirestore.Firestore,
   conferenceId: string,
   billetwebConfig: BilletwebConfig,
-  operation: SponsorTicketActionOperation
+  operation: TicketActionOperation
 ): Promise<BilletwebCredentials> {
   const secretSnapshot = await db
     .collection(FIRESTORE_COLLECTIONS.CONFERENCE_SECRET)

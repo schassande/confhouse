@@ -389,6 +389,9 @@ Talk proposal/session entity. It references up to three speakers (`speaker1Id..s
 ### ConferenceSpeaker (`conference-speaker`)
 Conference-scoped speaker projection. Links one `personId` to one `conferenceId`, tracks accepted session IDs, and stores unavailable slot IDs.
 
+The optional `ticketId` field references a `ParticipantBilletWebTicket` document in the same conference. Missing `ticketId` means that no BilletWeb speaker ticket is linked.
+Ticket documents are written only by server functions. Firestore clients may read them only when they organize the owning conference or represent the linked person.
+
 ### SessionAllocation (`session-allocation`)
 Scheduling assignment tuple: `conferenceId + dayId + slotId + roomId + sessionId`.
 

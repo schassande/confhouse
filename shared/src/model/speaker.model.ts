@@ -1,4 +1,4 @@
-import { PersistentData } from "./persistant.model";
+import { PersistentData } from './persistant.model';
 
 export type SubmitSource = 'CONFERENCE_HALL' | 'MANUAL';
 
@@ -16,4 +16,6 @@ export interface ConferenceSpeaker extends PersistentData {
   source: SubmitSource;
   /** Identifier of the speaker from the source */
   sourceId: string;
+  /** Firestore identifier of the speaker's persisted BilletWeb ticket, when present. */
+  ticketId?: string;
 }

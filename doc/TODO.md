@@ -1,19 +1,17 @@
 # TODO List
 
 ## Priority 1
-
-- RGPD
-- BilletWeb integration
-  * Billetweb for speaker: Use API to create/delete the ticket of the speaker (https://www.billetweb.fr/bo/api.php#/api/event/:id/add_order)
-    - Store billetweb ticket in ConferenceSpeaker
-    - In Speaker edition, add the view of the billetweb ticket (add/remove)
-    - in Speaker list, 
-      * add a filter of speaker with/without a ticket
-      * Add an action to allocate a ticket to all speakers
-    - When speaker/session removed/cancelled/... remove the ticket
-  * Billetweb for organiser: Use API to create/delete the ticket of the organiser
+- Page Speaker management
+  - Search speaker without talk
+  - increase page size from 10 to 50
+- Copy firestore data to local data (emulator)
+- Dev environnement
+  - Build a dev env
+  - Clean dev
+  - Duplicate prod end in dev
 - Edit Speaker: Cancel speaker by organizer
 - Edit Speaker: s'assurer que la disponibilité est suffisante pour couvrir au moins un slot compatible pour chaque session du speaker.
+- RGPD
 
 ## Priority 2
 - Default color list for tracks and session types.

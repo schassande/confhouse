@@ -72,6 +72,26 @@
   white-space: nowrap;
 }
 
+.bulk-action-row {
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--p-surface-200);
+}
+
+.bulk-summary {
+  color: var(--p-text-muted-color);
+}
+
+.bulk-failures {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--p-red-600);
+}
+
+.ticket-badge {
+  background: var(--p-primary-100);
+  color: var(--p-primary-700);
+}
+
 .speaker-list {
   display: flex;
   flex-direction: column;
@@ -84,7 +104,9 @@
   padding: 0.8rem;
   background: var(--p-surface-0);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .speaker-card:hover {

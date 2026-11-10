@@ -30,6 +30,8 @@ import { sendSponsorPaymentReminder } from './sponsor/communication/send-payment
 import { sendSponsorTicketOpened, sendSponsorTicketReminder } from './sponsor/common';
 import { notifyManagerOnSponsorCreate } from './sponsor/communication/notify-manager-on-sponsor-create';
 import { listPublicSponsors } from './sponsor/public-list';
+import { deleteSpeakerTicket } from './ticket/speaker/delete';
+import { upsertSpeakerTicket } from './ticket/speaker/upsert';
 
 setGlobalOptions({ maxInstances: 10 });
 
@@ -66,4 +68,6 @@ export {
   notifyManagerOnSponsorCreate,
   listPublicSponsors,
   recomputeConferenceDashboardDaily,
+  upsertSpeakerTicket,
+  deleteSpeakerTicket,
 };

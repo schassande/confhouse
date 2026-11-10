@@ -14,17 +14,20 @@ import { SliderModule } from 'primeng/slider';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
-import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
+import { BilletwebConfig, ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
 import { Conference, Day, Slot } from '@shared/model/conference.model';
 import { Person } from '@shared/model/person.model';
 import { Session, SessionAllocation } from '@shared/model/session.model';
 import { ConferenceSpeaker } from '@shared/model/speaker.model';
 import { ConferenceAdminService } from '../../../services/conference-admin.service';
+import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
+import { ParticipantBilletwebTicketService } from '../../../services/participant-billetweb-ticket.service';
 import { PersonService } from '../../../services/person.service';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
 import { SessionService } from '../../../services/session.service';
+import { SessionStatusBadgeComponent } from '../../../components/session-status-badge/session-status-badge.component';
 
 interface DayAvailabilityEditor {
   dayId: string;
@@ -74,7 +77,9 @@ export class ConferenceSpeakerEdit implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
+  private readonly participantBilletwebTicketService = inject(ParticipantBilletwebTicketService);
   private readonly sessionService = inject(SessionService);
   private readonly conferenceAdminService = inject(ConferenceAdminService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
@@ -85,6 +90,10 @@ export class ConferenceSpeakerEdit implements OnInit {
   readonly saving = signal(false);
   readonly createMode = signal(false);
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
+  readonly participantTicket = signal<ParticipantBilletWebTicket | undefined>(undefined);
+  readonly ticketActionPending = signal(false);
+  readonly ticketActionError = signal('');
   readonly sessions = signal<Session[]>([]);
   readonly sessionAllocations = signal<SessionAllocation[]>([]);
   readonly personsById = signal<Map<string, Person>>(new Map());
@@ -103,7 +112,11 @@ export class ConferenceSpeakerEdit implements OnInit {
   readonly speakerPageTitleKey = computed(() =>
     this.createMode()
       ? 'CONFERENCE.SPEAKERS.EDIT.PAGE_TITLE_CREATE'
-      : 'CONFERENCE.SPEAKERS.EDIT.PAGE_TITLE'
+      : 'CONFERENCE.SPEAKERS.EDIT.PAGE_TITLE',
+  );
+  readonly hasSpeakerTicketConfiguration = computed(
+    () =>
+      String(this.billetwebConfig()?.ticketTypes?.speaker?.ticketTypeId ?? '').trim().length > 0,
   );
 
   private readonly sessionById = computed(() => {
@@ -147,10 +160,10 @@ export class ConferenceSpeakerEdit implements OnInit {
           return null;
         }
         const sessionType = conference.sessionTypes.find(
-          (item) => item.id === String(session.conference?.sessionTypeId ?? '').trim()
+          (item) => item.id === String(session.conference?.sessionTypeId ?? '').trim(),
         );
         const track = conference.tracks.find(
-          (item) => item.id === String(session.conference?.trackId ?? '').trim()
+          (item) => item.id === String(session.conference?.trackId ?? '').trim(),
         );
         const sessionTypeBackgroundColor = sessionType?.color ?? '#E2E8F0';
         const trackBackgroundColor = track?.color ?? '#334155';
@@ -176,7 +189,8 @@ export class ConferenceSpeakerEdit implements OnInit {
           speakersLabel: speakerNames.join(', '),
           slotLabel,
           status: String(session.conference?.status ?? 'UNKNOWN').trim() || 'UNKNOWN',
-          sessionTypeLabel: sessionType?.name ?? String(session.conference?.sessionTypeId ?? '').trim(),
+          sessionTypeLabel:
+            sessionType?.name ?? String(session.conference?.sessionTypeId ?? '').trim(),
           sessionTypeBackgroundColor,
           sessionTypeTextColor: this.computeTextColorForBackground(sessionTypeBackgroundColor),
           trackLabel: track?.name ?? String(session.conference?.trackId ?? '').trim(),
@@ -197,18 +211,30 @@ export class ConferenceSpeakerEdit implements OnInit {
 
     forkJoin({
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      billetwebConfig: this.billetwebConfigService.findByConferenceId(conferenceId).pipe(take(1)),
       conferenceSpeakers: this.conferenceSpeakerService.byConferenceId(conferenceId).pipe(take(1)),
       sessions: this.sessionService.byConferenceId(conferenceId).pipe(take(1)),
       sessionAllocations: this.sessionAllocationService.byConferenceId(conferenceId).pipe(take(1)),
       persons: this.personService.bySubmittedConferenceId(conferenceId).pipe(take(1)),
     }).subscribe({
-      next: ({ conference, conferenceSpeakers, sessions, sessionAllocations, persons }) => {
+      next: ({
+        conference,
+        billetwebConfig,
+        conferenceSpeakers,
+        sessions,
+        sessionAllocations,
+        persons,
+      }) => {
         this.conference.set(conference);
+        this.billetwebConfig.set(billetwebConfig);
         this.conferenceSpeakers.set(conferenceSpeakers);
         this.sessions.set(sessions);
         this.sessionAllocations.set(sessionAllocations);
-        this.personsById.set(new Map(persons.filter((person) => !!person.id).map((person) => [person.id, person])));
+        this.personsById.set(
+          new Map(persons.filter((person) => !!person.id).map((person) => [person.id, person])),
+        );
         this.initFromRoute(conferenceSpeakers);
+        void this.loadParticipantTicket();
         this.loading.set(false);
       },
       error: (error) => {
@@ -245,19 +271,25 @@ export class ConferenceSpeakerEdit implements OnInit {
     if (!value || value.length !== 2) {
       return;
     }
-    const nextRange = this.normalizeRange([
-      Number(value[0] ?? dayAvailability.minMinute),
-      Number(value[1] ?? dayAvailability.maxMinute),
-    ] as [number, number], dayAvailability.minMinute, dayAvailability.maxMinute);
+    const nextRange = this.normalizeRange(
+      [
+        Number(value[0] ?? dayAvailability.minMinute),
+        Number(value[1] ?? dayAvailability.maxMinute),
+      ] as [number, number],
+      dayAvailability.minMinute,
+      dayAvailability.maxMinute,
+    );
     dayAvailability.range = nextRange;
     this.editingDayAvailabilities.set([...this.editingDayAvailabilities()]);
   }
 
   onDayAvailabilityToggle(dayAvailability: DayAvailabilityEditor, value: boolean | null): void {
     dayAvailability.isDayAvailable = !!value;
-    if (dayAvailability.isDayAvailable
-      && dayAvailability.range[0] === dayAvailability.minMinute
-      && dayAvailability.range[1] === dayAvailability.minMinute) {
+    if (
+      dayAvailability.isDayAvailable &&
+      dayAvailability.range[0] === dayAvailability.minMinute &&
+      dayAvailability.range[1] === dayAvailability.minMinute
+    ) {
       dayAvailability.range = [dayAvailability.minMinute, dayAvailability.maxMinute];
     }
     this.editingDayAvailabilities.set([...this.editingDayAvailabilities()]);
@@ -271,7 +303,10 @@ export class ConferenceSpeakerEdit implements OnInit {
     }
 
     const conferenceDays = this.conference()?.days ?? [];
-    const unavailableSlotsId = this.computeUnavailableSlotsId(conferenceDays, this.editingDayAvailabilities());
+    const unavailableSlotsId = this.computeUnavailableSlotsId(
+      conferenceDays,
+      this.editingDayAvailabilities(),
+    );
     const nextPerson = this.deepCopyPerson(person);
     const speaker = this.ensureSpeaker(nextPerson);
     this.ensureSubmittedConferenceId(speaker);
@@ -285,7 +320,7 @@ export class ConferenceSpeakerEdit implements OnInit {
       const savedPerson = await firstValueFrom(
         this.createMode()
           ? this.personService.createViaFunction(nextPerson)
-          : this.personService.save(nextPerson)
+          : this.personService.save(nextPerson),
       );
 
       const nextConferenceSpeaker: ConferenceSpeaker = {
@@ -297,25 +332,30 @@ export class ConferenceSpeakerEdit implements OnInit {
         source: this.createMode() ? 'MANUAL' : (conferenceSpeaker.source ?? 'MANUAL'),
         sourceId: this.createMode() ? '' : String(conferenceSpeaker.sourceId ?? '').trim(),
       };
-      const savedConferenceSpeaker = await firstValueFrom(this.conferenceSpeakerService.save(nextConferenceSpeaker));
+      const savedConferenceSpeaker = await firstValueFrom(
+        this.conferenceSpeakerService.save(nextConferenceSpeaker),
+      );
 
       if (!this.createMode()) {
-        const deallocationResult = await this.sessionAllocationService.deallocateSpeakerAllocationsOutsideAvailability({
-          conferenceId: this.conferenceId(),
-          sessionIds: savedConferenceSpeaker.sessionIds ?? [],
-          unavailableSlotIds: unavailableSlotsId,
-          allAllocations: this.sessionAllocations(),
-          sessions: this.sessions(),
-        });
+        const deallocationResult =
+          await this.sessionAllocationService.deallocateSpeakerAllocationsOutsideAvailability({
+            conferenceId: this.conferenceId(),
+            sessionIds: savedConferenceSpeaker.sessionIds ?? [],
+            unavailableSlotIds: unavailableSlotsId,
+            allAllocations: this.sessionAllocations(),
+            sessions: this.sessions(),
+          });
 
         if (deallocationResult.updatedSessions.length > 0) {
           const updatedSessionById = new Map(
             deallocationResult.updatedSessions
               .filter((session) => !!session.id)
-              .map((session) => [String(session.id ?? '').trim(), session])
+              .map((session) => [String(session.id ?? '').trim(), session]),
           );
           this.sessions.update((values) =>
-            values.map((session) => updatedSessionById.get(String(session.id ?? '').trim()) ?? session)
+            values.map(
+              (session) => updatedSessionById.get(String(session.id ?? '').trim()) ?? session,
+            ),
           );
         }
 
@@ -323,16 +363,21 @@ export class ConferenceSpeakerEdit implements OnInit {
           const removedAllocationIdSet = new Set(
             deallocationResult.deallocatedAllocations
               .map((allocation) => String(allocation.id ?? '').trim())
-              .filter((id) => !!id)
+              .filter((id) => !!id),
           );
           this.sessionAllocations.update((values) =>
-            values.filter((allocation) => !removedAllocationIdSet.has(String(allocation.id ?? '').trim()))
+            values.filter(
+              (allocation) => !removedAllocationIdSet.has(String(allocation.id ?? '').trim()),
+            ),
           );
 
           try {
             await this.conferenceAdminService.refreshConferenceDashboard(this.conferenceId());
           } catch (refreshError) {
-            console.error('Error while refreshing conference dashboard after speaker deallocation:', refreshError);
+            console.error(
+              'Error while refreshing conference dashboard after speaker deallocation:',
+              refreshError,
+            );
           }
 
           this.deallocationCount.set(deallocationResult.deallocatedCount);
@@ -354,6 +399,52 @@ export class ConferenceSpeakerEdit implements OnInit {
     this.closeSpeakerEdit();
   }
 
+  /** Creates or updates the current speaker ticket and refreshes the local ticket state. */
+  async upsertTicket(): Promise<void> {
+    const speaker = this.editingConferenceSpeaker();
+    if (!speaker?.id || this.ticketActionPending()) {
+      return;
+    }
+    this.ticketActionPending.set(true);
+    this.ticketActionError.set('');
+    try {
+      const report = await this.conferenceSpeakerService.upsertSpeakerTicket(
+        this.conferenceId(),
+        speaker.id,
+      );
+      this.editingConferenceSpeaker.set(report.conferenceSpeaker);
+      this.participantTicket.set(report.ticket);
+    } catch (error: unknown) {
+      console.error('Error while creating or updating speaker ticket:', error);
+      this.ticketActionError.set(this.readErrorMessage(error));
+    } finally {
+      this.ticketActionPending.set(false);
+    }
+  }
+
+  /** Deletes the current speaker ticket and clears the local ticket state. */
+  async deleteTicket(): Promise<void> {
+    const speaker = this.editingConferenceSpeaker();
+    if (!speaker?.id || !speaker.ticketId || this.ticketActionPending()) {
+      return;
+    }
+    this.ticketActionPending.set(true);
+    this.ticketActionError.set('');
+    try {
+      const report = await this.conferenceSpeakerService.deleteSpeakerTicket(
+        this.conferenceId(),
+        speaker.id,
+      );
+      this.editingConferenceSpeaker.set(report.conferenceSpeaker);
+      this.participantTicket.set(undefined);
+    } catch (error: unknown) {
+      console.error('Error while deleting speaker ticket:', error);
+      this.ticketActionError.set(this.readErrorMessage(error));
+    } finally {
+      this.ticketActionPending.set(false);
+    }
+  }
+
   formatRange(range: [number, number]): string {
     return `${this.formatMinutes(range[0])} - ${this.formatMinutes(range[1])}`;
   }
@@ -368,7 +459,9 @@ export class ConferenceSpeakerEdit implements OnInit {
     if (!day) {
       return 0;
     }
-    const availability = this.editingDayAvailabilities().find((candidate) => candidate.dayId === dayId);
+    const availability = this.editingDayAvailabilities().find(
+      (candidate) => candidate.dayId === dayId,
+    );
     if (!availability) {
       return 0;
     }
@@ -382,9 +475,11 @@ export class ConferenceSpeakerEdit implements OnInit {
     if (!person) {
       return false;
     }
-    return this.isRequiredTextFilled(person.firstName)
-      && this.isRequiredTextFilled(person.lastName)
-      && this.isRequiredTextFilled(person.email);
+    return (
+      this.isRequiredTextFilled(person.firstName) &&
+      this.isRequiredTextFilled(person.lastName) &&
+      this.isRequiredTextFilled(person.email)
+    );
   }
 
   isRequiredTextFilled(value: string | null | undefined): boolean {
@@ -428,11 +523,15 @@ export class ConferenceSpeakerEdit implements OnInit {
         source: 'MANUAL',
         sourceId: '',
       });
-      this.editingDayAvailabilities.set(this.buildDayAvailabilityEditors(this.conference()?.days ?? [], []));
+      this.editingDayAvailabilities.set(
+        this.buildDayAvailabilityEditors(this.conference()?.days ?? [], []),
+      );
       return;
     }
 
-    const conferenceSpeakerId = String(this.route.snapshot.paramMap.get('conferenceSpeakerId') ?? '').trim();
+    const conferenceSpeakerId = String(
+      this.route.snapshot.paramMap.get('conferenceSpeakerId') ?? '',
+    ).trim();
     const conferenceSpeaker = conferenceSpeakers.find((item) => item.id === conferenceSpeakerId);
     if (!conferenceSpeaker) {
       this.closeSpeakerEdit();
@@ -456,9 +555,44 @@ export class ConferenceSpeakerEdit implements OnInit {
     this.editingDayAvailabilities.set(
       this.buildDayAvailabilityEditors(
         this.conference()?.days ?? [],
-        conferenceSpeaker.unavailableSlotsId ?? []
-      )
+        conferenceSpeaker.unavailableSlotsId ?? [],
+      ),
     );
+  }
+
+  /** Loads the ticket referenced by the current conference speaker. */
+  private async loadParticipantTicket(): Promise<void> {
+    const ticketId = String(this.editingConferenceSpeaker()?.ticketId ?? '').trim();
+    if (!ticketId) {
+      this.participantTicket.set(undefined);
+      return;
+    }
+    try {
+      const ticket = await firstValueFrom(
+        this.participantBilletwebTicketService.byId(ticketId).pipe(take(1)),
+      );
+      this.participantTicket.set(ticket);
+      if (!ticket) {
+        this.ticketActionError.set('The linked ticket document does not exist.');
+      }
+    } catch (error: unknown) {
+      console.error('Error while loading speaker ticket:', error);
+      this.ticketActionError.set(this.readErrorMessage(error));
+    }
+  }
+
+  /** Extracts a user-facing message from an HTTP or JavaScript error. */
+  private readErrorMessage(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const body = (error as { error?: { error?: unknown } }).error;
+      const message = body && typeof body === 'object' && 'error' in body ? body.error : undefined;
+      if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+      }
+    }
+    return error instanceof Error && error.message.trim()
+      ? error.message.trim()
+      : 'Speaker ticket action failed.';
   }
 
   private deepCopyPerson(person: Person): Person {
@@ -472,7 +606,9 @@ export class ConferenceSpeakerEdit implements OnInit {
             photoUrl: person.speaker.photoUrl,
             conferenceHallId: person.speaker.conferenceHallId,
             submittedConferenceIds: [...(person.speaker.submittedConferenceIds ?? [])],
-            socialLinks: (person.speaker.socialLinks ?? []).map((socialLink) => ({ ...socialLink })),
+            socialLinks: (person.speaker.socialLinks ?? []).map((socialLink) => ({
+              ...socialLink,
+            })),
           }
         : undefined,
     };
@@ -506,15 +642,18 @@ export class ConferenceSpeakerEdit implements OnInit {
     const ids = new Set(
       (speaker.submittedConferenceIds ?? [])
         .map((id) => String(id ?? '').trim())
-        .filter((id) => !!id)
+        .filter((id) => !!id),
     );
     ids.add(conferenceId);
     speaker.submittedConferenceIds = Array.from(ids).sort((a, b) => a.localeCompare(b));
   }
 
-  private buildDayAvailabilityEditors(days: Day[], unavailableSlotsId: string[]): DayAvailabilityEditor[] {
+  private buildDayAvailabilityEditors(
+    days: Day[],
+    unavailableSlotsId: string[],
+  ): DayAvailabilityEditor[] {
     const unavailableSet = new Set(
-      (unavailableSlotsId ?? []).map((id) => String(id ?? '').trim()).filter((id) => !!id)
+      (unavailableSlotsId ?? []).map((id) => String(id ?? '').trim()).filter((id) => !!id),
     );
 
     return [...(days ?? [])]
@@ -524,7 +663,9 @@ export class ConferenceSpeakerEdit implements OnInit {
         const maxMinute = this.timeToMinutes(day.endTime);
         const daySlots = day.slots ?? [];
         const dayUnavailableSlots = daySlots.filter((slot) => unavailableSet.has(slot.id));
-        const isDayAvailable = !(daySlots.length > 0 && dayUnavailableSlots.length === daySlots.length);
+        const isDayAvailable = !(
+          daySlots.length > 0 && dayUnavailableSlots.length === daySlots.length
+        );
         const availableSlots = daySlots.filter((slot) => !unavailableSet.has(slot.id));
         let range: [number, number] = [minMinute, maxMinute];
 
@@ -533,8 +674,12 @@ export class ConferenceSpeakerEdit implements OnInit {
         } else if (daySlots.length > 0 && availableSlots.length === 0) {
           range = [minMinute, minMinute];
         } else if (availableSlots.length > 0) {
-          const availabilityStart = Math.min(...availableSlots.map((slot) => this.timeToMinutes(slot.startTime)));
-          const availabilityEnd = Math.max(...availableSlots.map((slot) => this.timeToMinutes(slot.endTime)));
+          const availabilityStart = Math.min(
+            ...availableSlots.map((slot) => this.timeToMinutes(slot.startTime)),
+          );
+          const availabilityEnd = Math.max(
+            ...availableSlots.map((slot) => this.timeToMinutes(slot.endTime)),
+          );
           range = this.normalizeRange([availabilityStart, availabilityEnd], minMinute, maxMinute);
         }
 
@@ -554,7 +699,11 @@ export class ConferenceSpeakerEdit implements OnInit {
     if (Number.isNaN(date.getTime())) {
       return day.date;
     }
-    const lang = (this.translateService.currentLang || this.translateService.getDefaultLang() || 'en').toLowerCase();
+    const lang = (
+      this.translateService.currentLang ||
+      this.translateService.getDefaultLang() ||
+      'en'
+    ).toLowerCase();
     const weekday = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(date);
     return `${weekday} ${day.date}`;
   }
@@ -574,8 +723,13 @@ export class ConferenceSpeakerEdit implements OnInit {
     return `${day.date} ${slot.startTime} - ${slot.endTime}`;
   }
 
-  private computeUnavailableSlotsId(days: Day[], dayAvailabilities: DayAvailabilityEditor[]): string[] {
-    const availabilityByDayId = new Map(dayAvailabilities.map((availability) => [availability.dayId, availability]));
+  private computeUnavailableSlotsId(
+    days: Day[],
+    dayAvailabilities: DayAvailabilityEditor[],
+  ): string[] {
+    const availabilityByDayId = new Map(
+      dayAvailabilities.map((availability) => [availability.dayId, availability]),
+    );
     const unavailable = new Set<string>();
 
     days.forEach((day) => {
@@ -585,7 +739,11 @@ export class ConferenceSpeakerEdit implements OnInit {
         return;
       }
       const range: [number, number] = dayAvailability
-        ? this.normalizeRange(dayAvailability.range, dayAvailability.minMinute, dayAvailability.maxMinute)
+        ? this.normalizeRange(
+            dayAvailability.range,
+            dayAvailability.minMinute,
+            dayAvailability.maxMinute,
+          )
         : [this.timeToMinutes(day.beginTime), this.timeToMinutes(day.endTime)];
 
       this.computeUnavailableSlotIdsForDay(day, range).forEach((slotId) => unavailable.add(slotId));
@@ -616,13 +774,17 @@ export class ConferenceSpeakerEdit implements OnInit {
   }
 
   private timeToMinutes(time: string): number {
-    const [hours, minutes] = String(time ?? '00:00').split(':').map((value) => Number(value));
-    return (hours * 60) + minutes;
+    const [hours, minutes] = String(time ?? '00:00')
+      .split(':')
+      .map((value) => Number(value));
+    return hours * 60 + minutes;
   }
 
   private formatMinutes(minutes: number): string {
     const clamped = Math.max(0, Math.floor(minutes));
-    const h = Math.floor(clamped / 60).toString().padStart(2, '0');
+    const h = Math.floor(clamped / 60)
+      .toString()
+      .padStart(2, '0');
     const m = (clamped % 60).toString().padStart(2, '0');
     return `${h}:${m}`;
   }
@@ -652,5 +814,3 @@ export class ConferenceSpeakerEdit implements OnInit {
     return luminance > 0.62 ? '#0F172A' : '#FFFFFF';
   }
 }
-
-

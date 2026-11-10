@@ -14,19 +14,33 @@ import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
+import { BilletwebConfig } from '@shared/model/billetweb-config';
 import { Conference, Day, Slot } from '@shared/model/conference.model';
 import { Person } from '@shared/model/person.model';
 import { Session, SessionAllocation } from '@shared/model/session.model';
 import { ConferenceSpeaker } from '@shared/model/speaker.model';
+import { BilletwebConfigService } from '../../../services/billetweb-config.service';
 import { ConferenceService } from '../../../services/conference.service';
 import { ConferenceSpeakerService } from '../../../services/conference-speaker.service';
 import { PersonService } from '../../../services/person.service';
 import { SessionAllocationService } from '../../../services/session-allocation.service';
 import { SessionService } from '../../../services/session.service';
+import { settleWithConcurrency } from '../../../services/settle-with-concurrency';
 
 interface SelectOption {
   label: string;
   value: string;
+}
+
+/** In-memory ticket-presence filter applied to the displayed speaker list. */
+type TicketPresenceFilter = 'ALL' | 'WITH' | 'WITHOUT';
+
+/** One failed speaker operation displayed after bulk ticket creation. */
+interface BulkTicketFailure {
+  /** Display name or person identifier of the failed speaker. */
+  speakerName: string;
+  /** User-facing error returned by the operation. */
+  message: string;
 }
 
 interface SpeakerSessionTypeCount {
@@ -94,6 +108,7 @@ export class ConferenceSpeakers implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly conferenceService = inject(ConferenceService);
+  private readonly billetwebConfigService = inject(BilletwebConfigService);
   private readonly conferenceSpeakerService = inject(ConferenceSpeakerService);
   private readonly sessionService = inject(SessionService);
   private readonly sessionAllocationService = inject(SessionAllocationService);
@@ -103,6 +118,7 @@ export class ConferenceSpeakers implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly conference = signal<Conference | undefined>(undefined);
+  readonly billetwebConfig = signal<BilletwebConfig | undefined>(undefined);
   readonly conferenceSpeakers = signal<ConferenceSpeaker[]>([]);
   readonly sessions = signal<Session[]>([]);
   readonly sessionAllocations = signal<SessionAllocation[]>([]);
@@ -111,6 +127,10 @@ export class ConferenceSpeakers implements OnInit {
   readonly searchText = signal('');
   readonly hasUnavailableSlotFilter = signal(false);
   readonly hasMultipleSessionsFilter = signal(false);
+  readonly ticketPresenceFilter = signal<TicketPresenceFilter>('ALL');
+  readonly bulkTicketCreationPending = signal(false);
+  readonly bulkTicketSuccessCount = signal(0);
+  readonly bulkTicketFailures = signal<BulkTicketFailure[]>([]);
   readonly editDialogVisible = signal(false);
   readonly createMode = signal(false);
   readonly editingConferenceSpeaker = signal<ConferenceSpeaker | null>(null);
@@ -120,6 +140,20 @@ export class ConferenceSpeakers implements OnInit {
     { label: 'English', value: 'en' },
     { label: 'Français', value: 'fr' },
   ]);
+  readonly ticketPresenceOptions = computed(() => [
+    {
+      label: this.translateService.instant('CONFERENCE.SPEAKERS.FILTER_TICKET_ALL'),
+      value: 'ALL' as TicketPresenceFilter,
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPEAKERS.FILTER_TICKET_WITH'),
+      value: 'WITH' as TicketPresenceFilter,
+    },
+    {
+      label: this.translateService.instant('CONFERENCE.SPEAKERS.FILTER_TICKET_WITHOUT'),
+      value: 'WITHOUT' as TicketPresenceFilter,
+    },
+  ]);
 
   readonly conferenceId = computed(() => this.route.snapshot.paramMap.get('conferenceId') ?? '');
 
@@ -127,7 +161,17 @@ export class ConferenceSpeakers implements OnInit {
     (this.conference()?.sessionTypes ?? []).map((sessionType) => ({
       label: sessionType.name,
       value: sessionType.id,
-    }))
+    })),
+  );
+  readonly hasSpeakerTicketConfiguration = computed(
+    () =>
+      String(this.billetwebConfig()?.ticketTypes?.speaker?.ticketTypeId ?? '').trim().length > 0,
+  );
+  readonly bulkTicketCandidateCount = computed(
+    () =>
+      this.filteredSpeakerViews().filter(
+        (view) => String(view.conferenceSpeaker.ticketId ?? '').trim().length === 0,
+      ).length,
   );
 
   private readonly sessionById = computed(() => {
@@ -180,10 +224,10 @@ export class ConferenceSpeakers implements OnInit {
         }
 
         const sessionType = conference.sessionTypes.find(
-          (item) => item.id === String(session.conference?.sessionTypeId ?? '').trim()
+          (item) => item.id === String(session.conference?.sessionTypeId ?? '').trim(),
         );
         const track = conference.tracks.find(
-          (item) => item.id === String(session.conference?.trackId ?? '').trim()
+          (item) => item.id === String(session.conference?.trackId ?? '').trim(),
         );
         const sessionTypeBackgroundColor = sessionType?.color ?? '#E2E8F0';
         const trackBackgroundColor = track?.color ?? '#334155';
@@ -209,7 +253,8 @@ export class ConferenceSpeakers implements OnInit {
           speakersLabel: speakerNames.join(', '),
           slotLabel,
           status: String(session.conference?.status ?? 'UNKNOWN').trim() || 'UNKNOWN',
-          sessionTypeLabel: sessionType?.name ?? String(session.conference?.sessionTypeId ?? '').trim(),
+          sessionTypeLabel:
+            sessionType?.name ?? String(session.conference?.sessionTypeId ?? '').trim(),
           sessionTypeBackgroundColor,
           sessionTypeTextColor: this.computeTextColorForBackground(sessionTypeBackgroundColor),
           trackLabel: track?.name ?? String(session.conference?.trackId ?? '').trim(),
@@ -230,7 +275,10 @@ export class ConferenceSpeakers implements OnInit {
       const person = personsById.get(conferenceSpeaker.personId);
       const firstName = String(person?.firstName ?? '').trim();
       const lastName = String(person?.lastName ?? '').trim();
-      const fullName = [firstName, lastName].filter((value) => !!value).join(' ').trim();
+      const fullName = [firstName, lastName]
+        .filter((value) => !!value)
+        .join(' ')
+        .trim();
       const company = String(person?.speaker?.company ?? '').trim();
 
       const countsByTypeId = new Map<string, number>();
@@ -245,7 +293,9 @@ export class ConferenceSpeakers implements OnInit {
 
       const sessionTypeCounts = Array.from(countsByTypeId.entries())
         .map(([sessionTypeId, count]) => {
-          const sessionType = (this.conference()?.sessionTypes ?? []).find((item) => item.id === sessionTypeId);
+          const sessionType = (this.conference()?.sessionTypes ?? []).find(
+            (item) => item.id === sessionTypeId,
+          );
           const backgroundColor = sessionType?.color ?? '#E2E8F0';
           return {
             sessionTypeId,
@@ -259,7 +309,9 @@ export class ConferenceSpeakers implements OnInit {
         .sort((a, b) => a.sessionTypeLabel.localeCompare(b.sessionTypeLabel));
 
       const unavailableSlotsCount = new Set(
-        (conferenceSpeaker.unavailableSlotsId ?? []).map((id) => String(id).trim()).filter((id) => !!id)
+        (conferenceSpeaker.unavailableSlotsId ?? [])
+          .map((id) => String(id).trim())
+          .filter((id) => !!id),
       ).size;
 
       const searchField = [firstName, lastName, company].join(' ').toLowerCase().trim();
@@ -282,10 +334,13 @@ export class ConferenceSpeakers implements OnInit {
     const normalizedSearch = this.normalizeSearchText(this.searchText());
     const filterHasUnavailableSlot = this.hasUnavailableSlotFilter();
     const filterHasMultipleSessions = this.hasMultipleSessionsFilter();
+    const ticketPresenceFilter = this.ticketPresenceFilter();
 
     if (selectedSessionTypeIds.length > 0) {
       values = values.filter((value) =>
-        value.sessionTypeCounts.some((countByType) => selectedSessionTypeIds.includes(countByType.sessionTypeId))
+        value.sessionTypeCounts.some((countByType) =>
+          selectedSessionTypeIds.includes(countByType.sessionTypeId),
+        ),
       );
     }
 
@@ -301,6 +356,16 @@ export class ConferenceSpeakers implements OnInit {
       values = values.filter((value) => (value.conferenceSpeaker.sessionIds ?? []).length > 1);
     }
 
+    if (ticketPresenceFilter === 'WITH') {
+      values = values.filter(
+        (value) => String(value.conferenceSpeaker.ticketId ?? '').trim().length > 0,
+      );
+    } else if (ticketPresenceFilter === 'WITHOUT') {
+      values = values.filter(
+        (value) => String(value.conferenceSpeaker.ticketId ?? '').trim().length === 0,
+      );
+    }
+
     return values.sort((a, b) => a.fullName.localeCompare(b.fullName));
   });
 
@@ -313,17 +378,28 @@ export class ConferenceSpeakers implements OnInit {
     this.loading.set(true);
     forkJoin({
       conference: this.conferenceService.byId(conferenceId).pipe(take(1)),
+      billetwebConfig: this.billetwebConfigService.findByConferenceId(conferenceId).pipe(take(1)),
       conferenceSpeakers: this.conferenceSpeakerService.byConferenceId(conferenceId).pipe(take(1)),
       sessions: this.sessionService.byConferenceId(conferenceId).pipe(take(1)),
       sessionAllocations: this.sessionAllocationService.byConferenceId(conferenceId).pipe(take(1)),
       persons: this.personService.bySubmittedConferenceId(conferenceId).pipe(take(1)),
     }).subscribe({
-      next: ({ conference, conferenceSpeakers, sessions, sessionAllocations, persons }) => {
+      next: ({
+        conference,
+        billetwebConfig,
+        conferenceSpeakers,
+        sessions,
+        sessionAllocations,
+        persons,
+      }) => {
         this.conference.set(conference);
+        this.billetwebConfig.set(billetwebConfig);
         this.conferenceSpeakers.set(conferenceSpeakers);
         this.sessions.set(sessions);
         this.sessionAllocations.set(sessionAllocations);
-        this.personsById.set(new Map(persons.filter((person) => !!person.id).map((person) => [person.id, person])));
+        this.personsById.set(
+          new Map(persons.filter((person) => !!person.id).map((person) => [person.id, person])),
+        );
         this.loading.set(false);
       },
       error: (error) => {
@@ -334,7 +410,12 @@ export class ConferenceSpeakers implements OnInit {
   }
 
   openSpeakerEdit(view: ConferenceSpeakerView): void {
-    this.router.navigate(['/conference', this.conferenceId(), 'speakers', view.conferenceSpeaker.id]);
+    this.router.navigate([
+      '/conference',
+      this.conferenceId(),
+      'speakers',
+      view.conferenceSpeaker.id,
+    ]);
   }
 
   closeSpeakerEdit(): void {
@@ -368,23 +449,91 @@ export class ConferenceSpeakers implements OnInit {
     this.router.navigate(['/conference', this.conferenceId(), 'speakers', 'create']);
   }
 
+  /** Creates missing tickets for the currently filtered speakers with at most ten concurrent calls. */
+  async createTicketsForFilteredSpeakers(): Promise<void> {
+    if (this.bulkTicketCreationPending() || !this.hasSpeakerTicketConfiguration()) {
+      return;
+    }
+    const candidates = this.filteredSpeakerViews().filter(
+      (view) => String(view.conferenceSpeaker.ticketId ?? '').trim().length === 0,
+    );
+    this.bulkTicketCreationPending.set(true);
+    this.bulkTicketSuccessCount.set(0);
+    this.bulkTicketFailures.set([]);
+
+    try {
+      const results = await settleWithConcurrency(candidates, 10, async (view) => {
+        const report = await this.conferenceSpeakerService.upsertSpeakerTicket(
+          this.conferenceId(),
+          view.conferenceSpeaker.id,
+        );
+        return { view, report };
+      });
+
+      results.forEach((result, index) => {
+        const view = candidates[index];
+        if (result.status === 'fulfilled') {
+          this.bulkTicketSuccessCount.update((count) => count + 1);
+          this.replaceConferenceSpeaker(result.value.report.conferenceSpeaker);
+          return;
+        }
+        this.bulkTicketFailures.update((failures) => [
+          ...failures,
+          {
+            speakerName: view.fullName || view.conferenceSpeaker.personId,
+            message: this.readErrorMessage(result.reason),
+          },
+        ]);
+      });
+    } finally {
+      this.bulkTicketCreationPending.set(false);
+    }
+  }
+
+  /** Replaces one conference speaker after a successful ticket action. */
+  private replaceConferenceSpeaker(updatedSpeaker: ConferenceSpeaker): void {
+    this.conferenceSpeakers.update((speakers) =>
+      speakers.map((speaker) => (speaker.id === updatedSpeaker.id ? updatedSpeaker : speaker)),
+    );
+  }
+
+  /** Extracts a user-facing message from an HTTP or JavaScript error. */
+  private readErrorMessage(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const body = (error as { error?: { error?: unknown } }).error;
+      const message = body && typeof body === 'object' && 'error' in body ? body.error : undefined;
+      if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+      }
+    }
+    return error instanceof Error && error.message.trim()
+      ? error.message.trim()
+      : 'Speaker ticket action failed.';
+  }
+
   onDayRangeChange(dayAvailability: DayAvailabilityEditor, value: number[] | null): void {
     if (!value || value.length !== 2) {
       return;
     }
-    const nextRange = this.normalizeRange([
-      Number(value[0] ?? dayAvailability.minMinute),
-      Number(value[1] ?? dayAvailability.maxMinute),
-    ] as [number, number], dayAvailability.minMinute, dayAvailability.maxMinute);
+    const nextRange = this.normalizeRange(
+      [
+        Number(value[0] ?? dayAvailability.minMinute),
+        Number(value[1] ?? dayAvailability.maxMinute),
+      ] as [number, number],
+      dayAvailability.minMinute,
+      dayAvailability.maxMinute,
+    );
     dayAvailability.range = nextRange;
     this.editingDayAvailabilities.set([...this.editingDayAvailabilities()]);
   }
 
   onDayAvailabilityToggle(dayAvailability: DayAvailabilityEditor, value: boolean | null): void {
     dayAvailability.isDayAvailable = !!value;
-    if (dayAvailability.isDayAvailable
-      && dayAvailability.range[0] === dayAvailability.minMinute
-      && dayAvailability.range[1] === dayAvailability.minMinute) {
+    if (
+      dayAvailability.isDayAvailable &&
+      dayAvailability.range[0] === dayAvailability.minMinute &&
+      dayAvailability.range[1] === dayAvailability.minMinute
+    ) {
       dayAvailability.range = [dayAvailability.minMinute, dayAvailability.maxMinute];
     }
     this.editingDayAvailabilities.set([...this.editingDayAvailabilities()]);
@@ -402,7 +551,10 @@ export class ConferenceSpeakers implements OnInit {
     const isCreateMode = this.createMode();
 
     const conferenceDays = this.conference()?.days ?? [];
-    const unavailableSlotsId = this.computeUnavailableSlotsId(conferenceDays, this.editingDayAvailabilities());
+    const unavailableSlotsId = this.computeUnavailableSlotsId(
+      conferenceDays,
+      this.editingDayAvailabilities(),
+    );
     const nextPerson = this.deepCopyPerson(person);
     const speaker = this.ensureSpeaker(nextPerson);
     this.ensureSubmittedConferenceId(speaker);
@@ -423,7 +575,7 @@ export class ConferenceSpeakers implements OnInit {
         savedPerson = await firstValueFrom(
           isCreateMode
             ? this.personService.createViaFunction(nextPerson)
-            : this.personService.save(nextPerson)
+            : this.personService.save(nextPerson),
         );
         console.log('[ConferenceSpeakers] Saved person.', {
           personId: savedPerson.id,
@@ -449,17 +601,25 @@ export class ConferenceSpeakers implements OnInit {
         sourceId: isCreateMode ? '' : String(conferenceSpeaker.sourceId ?? '').trim(),
       };
 
-      console.log('[ConferenceSpeakers] Saving conference speaker in collection "conference-speaker"...', {
-        conferenceSpeakerId: nextConferenceSpeaker.id,
-        conferenceId: nextConferenceSpeaker.conferenceId,
-        personId: nextConferenceSpeaker.personId,
-      });
+      console.log(
+        '[ConferenceSpeakers] Saving conference speaker in collection "conference-speaker"...',
+        {
+          conferenceSpeakerId: nextConferenceSpeaker.id,
+          conferenceId: nextConferenceSpeaker.conferenceId,
+          personId: nextConferenceSpeaker.personId,
+        },
+      );
       let savedConferenceSpeaker: ConferenceSpeaker;
       try {
-        savedConferenceSpeaker = await firstValueFrom(this.conferenceSpeakerService.save(nextConferenceSpeaker));
-        console.log('[ConferenceSpeakers] Saved conference speaker in collection "conference-speaker".', {
-          conferenceSpeakerId: savedConferenceSpeaker.id,
-        });
+        savedConferenceSpeaker = await firstValueFrom(
+          this.conferenceSpeakerService.save(nextConferenceSpeaker),
+        );
+        console.log(
+          '[ConferenceSpeakers] Saved conference speaker in collection "conference-speaker".',
+          {
+            conferenceSpeakerId: savedConferenceSpeaker.id,
+          },
+        );
       } catch (error) {
         console.error('[ConferenceSpeakers] Failed saving collection "conference-speaker".', {
           conferenceSpeakerId: nextConferenceSpeaker.id,
@@ -477,8 +637,10 @@ export class ConferenceSpeakers implements OnInit {
       });
       this.conferenceSpeakers.update((current) =>
         current.some((item) => item.id === savedConferenceSpeaker.id)
-          ? current.map((item) => (item.id === savedConferenceSpeaker.id ? savedConferenceSpeaker : item))
-          : [...current, savedConferenceSpeaker]
+          ? current.map((item) =>
+              item.id === savedConferenceSpeaker.id ? savedConferenceSpeaker : item,
+            )
+          : [...current, savedConferenceSpeaker],
       );
       this.closeSpeakerEdit();
     } catch (error) {
@@ -502,7 +664,9 @@ export class ConferenceSpeakers implements OnInit {
     if (!day) {
       return 0;
     }
-    const availability = this.editingDayAvailabilities().find((candidate) => candidate.dayId === dayId);
+    const availability = this.editingDayAvailabilities().find(
+      (candidate) => candidate.dayId === dayId,
+    );
     if (!availability) {
       return 0;
     }
@@ -523,7 +687,9 @@ export class ConferenceSpeakers implements OnInit {
             photoUrl: person.speaker.photoUrl,
             conferenceHallId: person.speaker.conferenceHallId,
             submittedConferenceIds: [...(person.speaker.submittedConferenceIds ?? [])],
-            socialLinks: (person.speaker.socialLinks ?? []).map((socialLink) => ({ ...socialLink })),
+            socialLinks: (person.speaker.socialLinks ?? []).map((socialLink) => ({
+              ...socialLink,
+            })),
           }
         : undefined,
     };
@@ -557,32 +723,39 @@ export class ConferenceSpeakers implements OnInit {
     const ids = new Set(
       (speaker.submittedConferenceIds ?? [])
         .map((id) => String(id ?? '').trim())
-        .filter((id) => !!id)
+        .filter((id) => !!id),
     );
     ids.add(conferenceId);
     speaker.submittedConferenceIds = Array.from(ids).sort((a, b) => a.localeCompare(b));
   }
 
   private normalizeSearchText(value: string): string {
-    return String(value ?? '').trim().toLowerCase();
+    return String(value ?? '')
+      .trim()
+      .toLowerCase();
   }
 
   isSpeakerFormValid(person: Person | null): boolean {
     if (!person) {
       return false;
     }
-    return this.isRequiredTextFilled(person.firstName)
-      && this.isRequiredTextFilled(person.lastName)
-      && this.isRequiredTextFilled(person.email);
+    return (
+      this.isRequiredTextFilled(person.firstName) &&
+      this.isRequiredTextFilled(person.lastName) &&
+      this.isRequiredTextFilled(person.email)
+    );
   }
 
   isRequiredTextFilled(value: string | null | undefined): boolean {
     return String(value ?? '').trim().length > 0;
   }
 
-  private buildDayAvailabilityEditors(days: Day[], unavailableSlotsId: string[]): DayAvailabilityEditor[] {
+  private buildDayAvailabilityEditors(
+    days: Day[],
+    unavailableSlotsId: string[],
+  ): DayAvailabilityEditor[] {
     const unavailableSet = new Set(
-      (unavailableSlotsId ?? []).map((id) => String(id ?? '').trim()).filter((id) => !!id)
+      (unavailableSlotsId ?? []).map((id) => String(id ?? '').trim()).filter((id) => !!id),
     );
 
     return [...(days ?? [])]
@@ -592,7 +765,9 @@ export class ConferenceSpeakers implements OnInit {
         const maxMinute = this.timeToMinutes(day.endTime);
         const daySlots = day.slots ?? [];
         const dayUnavailableSlots = daySlots.filter((slot) => unavailableSet.has(slot.id));
-        const isDayAvailable = !(daySlots.length > 0 && dayUnavailableSlots.length === daySlots.length);
+        const isDayAvailable = !(
+          daySlots.length > 0 && dayUnavailableSlots.length === daySlots.length
+        );
         const availableSlots = daySlots.filter((slot) => !unavailableSet.has(slot.id));
         let range: [number, number] = [minMinute, maxMinute];
 
@@ -602,8 +777,12 @@ export class ConferenceSpeakers implements OnInit {
         } else if (daySlots.length > 0 && availableSlots.length === 0) {
           range = [minMinute, minMinute];
         } else if (availableSlots.length > 0) {
-          const availabilityStart = Math.min(...availableSlots.map((slot) => this.timeToMinutes(slot.startTime)));
-          const availabilityEnd = Math.max(...availableSlots.map((slot) => this.timeToMinutes(slot.endTime)));
+          const availabilityStart = Math.min(
+            ...availableSlots.map((slot) => this.timeToMinutes(slot.startTime)),
+          );
+          const availabilityEnd = Math.max(
+            ...availableSlots.map((slot) => this.timeToMinutes(slot.endTime)),
+          );
           range = this.normalizeRange([availabilityStart, availabilityEnd], minMinute, maxMinute);
         }
 
@@ -623,7 +802,11 @@ export class ConferenceSpeakers implements OnInit {
     if (Number.isNaN(date.getTime())) {
       return day.date;
     }
-    const lang = (this.translateService.currentLang || this.translateService.getDefaultLang() || 'en').toLowerCase();
+    const lang = (
+      this.translateService.currentLang ||
+      this.translateService.getDefaultLang() ||
+      'en'
+    ).toLowerCase();
     const weekday = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(date);
     return `${weekday} ${day.date}`;
   }
@@ -643,8 +826,13 @@ export class ConferenceSpeakers implements OnInit {
     return `${day.date} ${slot.startTime} - ${slot.endTime}`;
   }
 
-  private computeUnavailableSlotsId(days: Day[], dayAvailabilities: DayAvailabilityEditor[]): string[] {
-    const availabilityByDayId = new Map(dayAvailabilities.map((availability) => [availability.dayId, availability]));
+  private computeUnavailableSlotsId(
+    days: Day[],
+    dayAvailabilities: DayAvailabilityEditor[],
+  ): string[] {
+    const availabilityByDayId = new Map(
+      dayAvailabilities.map((availability) => [availability.dayId, availability]),
+    );
     const unavailable = new Set<string>();
 
     days.forEach((day) => {
@@ -654,7 +842,11 @@ export class ConferenceSpeakers implements OnInit {
         return;
       }
       const range: [number, number] = dayAvailability
-        ? this.normalizeRange(dayAvailability.range, dayAvailability.minMinute, dayAvailability.maxMinute)
+        ? this.normalizeRange(
+            dayAvailability.range,
+            dayAvailability.minMinute,
+            dayAvailability.maxMinute,
+          )
         : [this.timeToMinutes(day.beginTime), this.timeToMinutes(day.endTime)];
 
       this.computeUnavailableSlotIdsForDay(day, range).forEach((slotId) => unavailable.add(slotId));
@@ -685,13 +877,17 @@ export class ConferenceSpeakers implements OnInit {
   }
 
   private timeToMinutes(time: string): number {
-    const [hours, minutes] = String(time ?? '00:00').split(':').map((value) => Number(value));
-    return (hours * 60) + minutes;
+    const [hours, minutes] = String(time ?? '00:00')
+      .split(':')
+      .map((value) => Number(value));
+    return hours * 60 + minutes;
   }
 
   private formatMinutes(minutes: number): string {
     const clamped = Math.max(0, Math.floor(minutes));
-    const h = Math.floor(clamped / 60).toString().padStart(2, '0');
+    const h = Math.floor(clamped / 60)
+      .toString()
+      .padStart(2, '0');
     const m = (clamped % 60).toString().padStart(2, '0');
     return `${h}:${m}`;
   }
@@ -721,5 +917,3 @@ export class ConferenceSpeakers implements OnInit {
     return luminance > 0.62 ? '#0F172A' : '#FFFFFF';
   }
 }
-
-

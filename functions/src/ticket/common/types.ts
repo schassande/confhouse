@@ -11,6 +11,12 @@ export type SponsorTicketActionOperation =
   | 'DELETE_PARTICIPANT_TICKET'
   | 'SEND_PARTICIPANT_TICKET';
 
+/** Ticket operations accepted by shared BilletWeb configuration and credential helpers. */
+export type TicketActionOperation =
+  | SponsorTicketActionOperation
+  | 'UPSERT_SPEAKER_TICKET'
+  | 'DELETE_SPEAKER_TICKET';
+
 /**
  * Fully authorized organizer request context reused by sponsor ticket actions.
  */

@@ -1,10 +1,22 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { FirestoreGenericService } from './firestore-generic.service';
-import { ConferenceSpeaker, SubmitSource } from '@shared/model/speaker.model';
-import { Session } from '@shared/model/session.model';
+import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
 import { collection, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
-import { from, map, Observable } from 'rxjs';
+import { firstValueFrom, from, map, Observable } from 'rxjs';
+import { ParticipantBilletWebTicket } from '@shared/model/billetweb-config';
+import { Session } from '@shared/model/session.model';
+import { ConferenceSpeaker, SubmitSource } from '@shared/model/speaker.model';
+import { functionBaseUrl } from './constantes';
+import { FirestoreGenericService } from './firestore-generic.service';
+
+/** Result returned by one speaker ticket server action. */
+export interface SpeakerTicketActionReport {
+  /** Updated conference speaker projection. */
+  conferenceSpeaker: ConferenceSpeaker;
+  /** Created or updated ticket, omitted after deletion. */
+  ticket?: ParticipantBilletWebTicket;
+}
 
 /**
  * Service for ConferenceSpeaker persistent documents in Firestore.
@@ -12,6 +24,8 @@ import { from, map, Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class ConferenceSpeakerService extends FirestoreGenericService<ConferenceSpeaker> {
   private readonly db = inject(Firestore);
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
   private readonly statusesRequiringConferenceSpeaker = new Set([
     'ACCEPTED',
     'SPEAKER_CONFIRMED',
@@ -28,17 +42,17 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
       getDocs(
         query(
           collection(this.db, this.getCollectionName()),
-          where('conferenceId', '==', conferenceId)
-        )
-      )
+          where('conferenceId', '==', conferenceId),
+        ),
+      ),
     ).pipe(
       map((qs) =>
         qs.docs.map((qds) => {
           const data = qds.data() as ConferenceSpeaker;
           data.id = qds.id;
           return data;
-        })
-      )
+        }),
+      ),
     );
   }
 
@@ -49,14 +63,18 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
    * @param personId Person identifier.
    * @returns The matching conference speaker or `undefined`.
    */
-  byConferenceAndPersonId(conferenceId: string, personId: string): Observable<ConferenceSpeaker | undefined> {
+  byConferenceAndPersonId(
+    conferenceId: string,
+    personId: string,
+  ): Observable<ConferenceSpeaker | undefined> {
     const normalizedPersonId = String(personId ?? '').trim();
     return this.byConferenceId(conferenceId).pipe(
       map((conferenceSpeakers) =>
         (conferenceSpeakers ?? []).find(
-          (conferenceSpeaker) => String(conferenceSpeaker.personId ?? '').trim() === normalizedPersonId
-        )
-      )
+          (conferenceSpeaker) =>
+            String(conferenceSpeaker.personId ?? '').trim() === normalizedPersonId,
+        ),
+      ),
     );
   }
 
@@ -68,14 +86,57 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     return from(this.removeSessionFromConferenceSpeakersInternal(conferenceId, sessionId));
   }
 
-  private async syncFromSessionInternal(session: Session, previousSession?: Session): Promise<void> {
+  /** Creates or updates the BilletWeb ticket for one conference speaker. */
+  async upsertSpeakerTicket(
+    conferenceId: string,
+    speakerId: string,
+  ): Promise<SpeakerTicketActionReport> {
+    return await this.postTicketAction('upsertSpeakerTicket', { conferenceId, speakerId });
+  }
+
+  /** Deletes the BilletWeb ticket for one conference speaker. */
+  async deleteSpeakerTicket(
+    conferenceId: string,
+    speakerId: string,
+  ): Promise<SpeakerTicketActionReport> {
+    return await this.postTicketAction('deleteSpeakerTicket', { conferenceId, speakerId });
+  }
+
+  /** Posts one organizer-authorized speaker ticket action to the server. */
+  private async postTicketAction(
+    actionName: string,
+    payload: { conferenceId: string; speakerId: string },
+  ): Promise<SpeakerTicketActionReport> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const token = await user.getIdToken();
+    const response = await firstValueFrom(
+      this.http.post<{ report: SpeakerTicketActionReport }>(
+        `${functionBaseUrl}${actionName}`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
+    );
+    return response.report;
+  }
+
+  private async syncFromSessionInternal(
+    session: Session,
+    previousSession?: Session,
+  ): Promise<void> {
     const conferenceId = String(session.conference?.conferenceId ?? '').trim();
     const sessionId = String(session.id ?? '').trim();
     if (!conferenceId || !sessionId) {
       return;
     }
 
-    const shouldExist = this.statusesRequiringConferenceSpeaker.has(String(session.conference?.status ?? '').trim());
+    const shouldExist = this.statusesRequiringConferenceSpeaker.has(
+      String(session.conference?.status ?? '').trim(),
+    );
     const nextSpeakerIds = this.extractSpeakerIds(session);
     const previousSpeakerIds = this.extractSpeakerIds(previousSession);
     const personIdsToLoad = Array.from(new Set([...previousSpeakerIds, ...nextSpeakerIds]));
@@ -86,8 +147,8 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     const snap = await getDocs(
       query(
         collection(this.db, this.getCollectionName()),
-        where('conferenceId', '==', conferenceId)
-      )
+        where('conferenceId', '==', conferenceId),
+      ),
     );
     const personIdsToLoadSet = new Set(personIdsToLoad);
     const existingByPersonId = new Map<string, ConferenceSpeaker>();
@@ -116,6 +177,7 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
         }
 
         const nextConferenceSpeaker: ConferenceSpeaker = {
+          ...existing,
           id: existing?.id ?? doc(collection(this.db, this.getCollectionName())).id,
           conferenceId,
           personId,
@@ -125,7 +187,10 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
           sourceId: String(existing?.sourceId ?? personId).trim(),
           lastUpdated: Date.now().toString(),
         };
-        batch.set(doc(this.db, `${this.getCollectionName()}/${nextConferenceSpeaker.id}`), nextConferenceSpeaker);
+        batch.set(
+          doc(this.db, `${this.getCollectionName()}/${nextConferenceSpeaker.id}`),
+          nextConferenceSpeaker,
+        );
         opCount += 1;
         continue;
       }
@@ -141,6 +206,9 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
 
       const nextSessionIds = currentSessionIds.filter((id) => id !== sessionId);
       if (nextSessionIds.length === 0) {
+        if (String(existing.ticketId ?? '').trim()) {
+          await this.deleteSpeakerTicket(conferenceId, existing.id);
+        }
         batch.delete(doc(this.db, `${this.getCollectionName()}/${existing.id}`));
         opCount += 1;
         continue;
@@ -152,7 +220,10 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
         sessionIds: nextSessionIds,
         lastUpdated: Date.now().toString(),
       };
-      batch.set(doc(this.db, `${this.getCollectionName()}/${nextConferenceSpeaker.id}`), nextConferenceSpeaker);
+      batch.set(
+        doc(this.db, `${this.getCollectionName()}/${nextConferenceSpeaker.id}`),
+        nextConferenceSpeaker,
+      );
       opCount += 1;
     }
 
@@ -161,7 +232,10 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     }
   }
 
-  private async removeSessionFromConferenceSpeakersInternal(conferenceId: string, sessionId: string): Promise<void> {
+  private async removeSessionFromConferenceSpeakersInternal(
+    conferenceId: string,
+    sessionId: string,
+  ): Promise<void> {
     const normalizedConferenceId = String(conferenceId ?? '').trim();
     const normalizedSessionId = String(sessionId ?? '').trim();
     if (!normalizedConferenceId || !normalizedSessionId) {
@@ -171,25 +245,28 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     const snap = await getDocs(
       query(
         collection(this.db, this.getCollectionName()),
-        where('conferenceId', '==', normalizedConferenceId)
-      )
+        where('conferenceId', '==', normalizedConferenceId),
+      ),
     );
 
     const batch = writeBatch(this.db);
     let opCount = 0;
 
-    snap.forEach((docSnap) => {
+    for (const docSnap of snap.docs) {
       const existing = { ...(docSnap.data() as ConferenceSpeaker), id: docSnap.id };
       const currentSessionIds = this.normalizeIds(existing.sessionIds);
       if (!currentSessionIds.includes(normalizedSessionId)) {
-        return;
+        continue;
       }
 
       const nextSessionIds = currentSessionIds.filter((id) => id !== normalizedSessionId);
       if (nextSessionIds.length === 0) {
+        if (String(existing.ticketId ?? '').trim()) {
+          await this.deleteSpeakerTicket(normalizedConferenceId, existing.id);
+        }
         batch.delete(doc(this.db, `${this.getCollectionName()}/${existing.id}`));
         opCount += 1;
-        return;
+        continue;
       }
 
       const nextConferenceSpeaker: ConferenceSpeaker = {
@@ -200,7 +277,7 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
       };
       batch.set(doc(this.db, `${this.getCollectionName()}/${existing.id}`), nextConferenceSpeaker);
       opCount += 1;
-    });
+    }
 
     if (opCount > 0) {
       await batch.commit();
@@ -208,7 +285,9 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
   }
 
   private inferSource(session: Session, previousSession?: Session): SubmitSource {
-    const conferenceHallId = String(session.conference?.conferenceHallId ?? previousSession?.conference?.conferenceHallId ?? '').trim();
+    const conferenceHallId = String(
+      session.conference?.conferenceHallId ?? previousSession?.conference?.conferenceHallId ?? '',
+    ).trim();
     return conferenceHallId ? 'CONFERENCE_HALL' : 'MANUAL';
   }
 
@@ -216,18 +295,22 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     if (!session) {
       return [];
     }
-    return this.uniqueSorted([
-      String(session.speaker1Id ?? '').trim(),
-      String(session.speaker2Id ?? '').trim(),
-      String(session.speaker3Id ?? '').trim(),
-    ].filter((id) => id.length > 0));
+    return this.uniqueSorted(
+      [
+        String(session.speaker1Id ?? '').trim(),
+        String(session.speaker2Id ?? '').trim(),
+        String(session.speaker3Id ?? '').trim(),
+      ].filter((id) => id.length > 0),
+    );
   }
 
   private normalizeIds(values: string[] | undefined): string[] {
     if (!Array.isArray(values)) {
       return [];
     }
-    return this.uniqueSorted(values.map((value) => String(value ?? '').trim()).filter((value) => value.length > 0));
+    return this.uniqueSorted(
+      values.map((value) => String(value ?? '').trim()).filter((value) => value.length > 0),
+    );
   }
 
   private uniqueSorted(values: string[]): string[] {
@@ -246,4 +329,3 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     return true;
   }
 }
-

@@ -3,7 +3,10 @@
     speakerPageTitleKey()
       | translate
         : {
-            conference: ((conference()?.name || '') + (conference()?.edition ? ' ' + conference()?.edition : '')).trim()
+            conference: (
+              (conference()?.name || '') +
+              (conference()?.edition ? ' ' + conference()?.edition : '')
+            ).trim(),
           }
   }}
 </h2>
@@ -17,7 +20,12 @@
   [resizable]="false"
   (onHide)="closeDeallocationInfoDialog()"
 >
-  <p>{{ 'CONFERENCE.SPEAKERS.EDIT.DEALLOCATION_INFO_MESSAGE' | translate: { count: deallocationCount() } }}</p>
+  <p>
+    {{
+      'CONFERENCE.SPEAKERS.EDIT.DEALLOCATION_INFO_MESSAGE'
+        | translate: { count: deallocationCount() }
+    }}
+  </p>
   <div class="dialog-actions">
     <button
       pButton
@@ -48,7 +56,11 @@
             [image]="person.speaker?.photoUrl || ''"
             shape="circle"
             size="xlarge"
-            [label]="!person.speaker?.photoUrl ? ((person.firstName[0] || '') + (person.lastName[0] || '')) : undefined"
+            [label]="
+              !person.speaker?.photoUrl
+                ? (person.firstName[0] || '') + (person.lastName[0] || '')
+                : undefined
+            "
           ></p-avatar>
         </div>
 
@@ -58,6 +70,9 @@
             <p-tab [value]="1">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_SPEAKER' | translate }}</p-tab>
             <p-tab [value]="2">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_SESSIONS' | translate }}</p-tab>
             <p-tab [value]="3">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_AVAILABILITY' | translate }}</p-tab>
+            @if (hasSpeakerTicketConfiguration() && !createMode()) {
+              <p-tab [value]="4">{{ 'CONFERENCE.SPEAKERS.EDIT.TAB_TICKET' | translate }}</p-tab>
+            }
           </p-tablist>
           <p-tabpanels>
             <p-tabpanel [value]="0">
@@ -78,7 +93,13 @@
                 </div>
                 <div class="form-group">
                   <label>{{ 'PERSON.EDIT.EMAIL' | translate }}</label>
-                  <input pInputText [(ngModel)]="person.email" type="email" class="w-full" [disabled]="!createMode()" />
+                  <input
+                    pInputText
+                    [(ngModel)]="person.email"
+                    type="email"
+                    class="w-full"
+                    [disabled]="!createMode()"
+                  />
                   @if (!createMode()) {
                     <small>{{ 'PERSON.EDIT.EMAIL_DISABLED' | translate }}</small>
                   } @else if (!isRequiredTextFilled(person.email)) {
@@ -110,8 +131,16 @@
                 <h4>{{ 'CONFERENCE.SPEAKERS.EDIT.SOCIAL_LINKS' | translate }}</h4>
                 @for (socialLink of person.speaker!.socialLinks; track $index) {
                   <div class="social-row">
-                    <input pInputText [(ngModel)]="socialLink.network" [placeholder]="'CONFERENCE.SPEAKERS.EDIT.SOCIAL_NETWORK' | translate" />
-                    <input pInputText [(ngModel)]="socialLink.url" [placeholder]="'CONFERENCE.SPEAKERS.EDIT.SOCIAL_URL' | translate" />
+                    <input
+                      pInputText
+                      [(ngModel)]="socialLink.network"
+                      [placeholder]="'CONFERENCE.SPEAKERS.EDIT.SOCIAL_NETWORK' | translate"
+                    />
+                    <input
+                      pInputText
+                      [(ngModel)]="socialLink.url"
+                      [placeholder]="'CONFERENCE.SPEAKERS.EDIT.SOCIAL_URL' | translate"
+                    />
                     <button
                       pButton
                       type="button"
@@ -137,11 +166,21 @@
               <div class="form-grid">
                 <div class="form-group full-row">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.REFERENCE' | translate }}</label>
-                  <textarea pTextarea [(ngModel)]="person.speaker!.reference" rows="4" class="w-full"></textarea>
+                  <textarea
+                    pTextarea
+                    [(ngModel)]="person.speaker!.reference"
+                    rows="4"
+                    class="w-full"
+                  ></textarea>
                 </div>
                 <div class="form-group full-row">
                   <label>{{ 'CONFERENCE.SPEAKERS.EDIT.BIO' | translate }}</label>
-                  <textarea pTextarea [(ngModel)]="person.speaker!.bio" rows="4" class="w-full"></textarea>
+                  <textarea
+                    pTextarea
+                    [(ngModel)]="person.speaker!.bio"
+                    rows="4"
+                    class="w-full"
+                  ></textarea>
                 </div>
               </div>
             </p-tabpanel>
@@ -180,14 +219,18 @@
                           </div>
                         </div>
                         <div class="speaker-session-status">
-                          <app-session-status-badge [status]="item.status"></app-session-status-badge>
+                          <app-session-status-badge
+                            [status]="item.status"
+                          ></app-session-status-badge>
                         </div>
                       </div>
                     }
                   </div>
                 </ng-template>
                 <ng-template #emptymessage>
-                  <div class="empty-message">{{ 'CONFERENCE.SPEAKERS.EDIT.SESSIONS_EMPTY' | translate }}</div>
+                  <div class="empty-message">
+                    {{ 'CONFERENCE.SPEAKERS.EDIT.SESSIONS_EMPTY' | translate }}
+                  </div>
                 </ng-template>
               </p-dataview>
             </p-tabpanel>
@@ -206,7 +249,9 @@
                     </div>
                     <div class="day-header">
                       <span>{{ formatDayBoundary(dayAvailability.minMinute) }}</span>
-                      <strong class="selected-range">{{ formatRange(dayAvailability.range) }}</strong>
+                      <strong class="selected-range">{{
+                        formatRange(dayAvailability.range)
+                      }}</strong>
                       <span>{{ formatDayBoundary(dayAvailability.maxMinute) }}</span>
                     </div>
                     <p-slider
@@ -220,12 +265,109 @@
                       class="w-full"
                     ></p-slider>
                     <small>
-                      {{ 'CONFERENCE.SPEAKERS.EDIT.CALCULATED_UNAVAILABLE' | translate }}: {{ computeDayUnavailableCount(dayAvailability.dayId) }}
+                      {{ 'CONFERENCE.SPEAKERS.EDIT.CALCULATED_UNAVAILABLE' | translate }}:
+                      {{ computeDayUnavailableCount(dayAvailability.dayId) }}
                     </small>
                   </div>
                 }
               </div>
             </p-tabpanel>
+
+            @if (hasSpeakerTicketConfiguration() && !createMode()) {
+              <p-tabpanel [value]="4">
+                <div class="ticket-panel">
+                  @if (participantTicket(); as ticket) {
+                    <dl class="ticket-details">
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_DOCUMENT_ID' | translate }}</dt>
+                        <dd>{{ ticket.id }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_CONFERENCE_ID' | translate }}</dt>
+                        <dd>{{ ticket.conferenceId }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_PERSON_ID' | translate }}</dt>
+                        <dd>{{ ticket.personId }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_INTERNAL_ID' | translate }}</dt>
+                        <dd>{{ ticket.ticketInternalId }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_EXTERNAL_ID' | translate }}</dt>
+                        <dd>{{ ticket.ticketExtenalId }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_ORDER_ID' | translate }}</dt>
+                        <dd>{{ ticket.orderId }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_STATUS' | translate }}</dt>
+                        <dd>{{ ticket.ticketStatus }}</dd>
+                      </div>
+                      <div>
+                        <dt>{{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_TYPE' | translate }}</dt>
+                        <dd>{{ ticket.ticketName }}</dd>
+                      </div>
+                    </dl>
+                    <div class="ticket-links">
+                      @if (ticket.manageURL) {
+                        <a [href]="ticket.manageURL" target="_blank" rel="noopener noreferrer">
+                          {{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_MANAGE_LINK' | translate }}
+                        </a>
+                      }
+                      @if (ticket.downloadURL) {
+                        <a [href]="ticket.downloadURL" target="_blank" rel="noopener noreferrer">
+                          {{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_DOWNLOAD_LINK' | translate }}
+                        </a>
+                      }
+                    </div>
+                  } @else {
+                    <div class="empty-message">
+                      {{ 'CONFERENCE.SPEAKERS.EDIT.TICKET_EMPTY' | translate }}
+                    </div>
+                  }
+
+                  @if (ticketActionError()) {
+                    <div class="ticket-error" role="alert">{{ ticketActionError() }}</div>
+                  }
+
+                  <div class="ticket-actions">
+                    @if (!editingConferenceSpeaker()?.ticketId) {
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-plus"
+                        [label]="'CONFERENCE.SPEAKERS.EDIT.TICKET_CREATE' | translate"
+                        [loading]="ticketActionPending()"
+                        [disabled]="ticketActionPending()"
+                        (click)="upsertTicket()"
+                      ></button>
+                    } @else {
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-refresh"
+                        [label]="'CONFERENCE.SPEAKERS.EDIT.TICKET_UPDATE' | translate"
+                        [loading]="ticketActionPending()"
+                        [disabled]="ticketActionPending()"
+                        (click)="upsertTicket()"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [label]="'CONFERENCE.SPEAKERS.EDIT.TICKET_DELETE' | translate"
+                        [disabled]="ticketActionPending()"
+                        (click)="deleteTicket()"
+                      ></button>
+                    }
+                  </div>
+                </div>
+              </p-tabpanel>
+            }
           </p-tabpanels>
         </p-tabs>
 

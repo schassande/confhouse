@@ -10,6 +10,8 @@ import {
   loadConference,
 } from '../common';
 import { recomputeAndPersistConferenceDashboard } from '../dashboard/compute';
+import { deleteSpeakerTicketFromBilletweb } from '../../ticket/speaker/common';
+import type { ConferenceSpeaker } from '../../../../shared/src/model/speaker.model';
 
 const BATCH_SAFE_LIMIT = 450;
 const CONFERENCE_SPEAKER_STATUSES = new Set(['ACCEPTED', 'SPEAKER_CONFIRMED', 'SCHEDULED', 'PROGRAMMED']);
@@ -311,7 +313,7 @@ async function syncConferenceSpeakersFromSession(
   });
 
   const source = String(nextSession?.conference?.conferenceHallId ?? '').trim() ? 'CONFERENCE_HALL' : 'MANUAL';
-  const writes: Array<{ op: 'set' | 'delete'; id: string; value?: any }> = [];
+  const writes: Array<{ op: 'set' | 'delete'; id: string; collection?: string; value?: any }> = [];
 
   for (const personId of personIdsToLoad) {
     const existing = existingByPersonId.get(personId);
@@ -329,6 +331,7 @@ async function syncConferenceSpeakersFromSession(
         op: 'set',
         id: nextConferenceSpeakerId,
         value: {
+          ...existing,
           id: nextConferenceSpeakerId,
           conferenceId,
           personId,
@@ -348,6 +351,14 @@ async function syncConferenceSpeakersFromSession(
 
     const nextSessionIds = currentSessionIds.filter((value) => value !== sessionId);
     if (nextSessionIds.length === 0) {
+      if (String(existing.ticketId ?? '').trim()) {
+        const ticket = await deleteSpeakerTicketFromBilletweb(db, conferenceId, existing as ConferenceSpeaker);
+        writes.push({
+          op: 'delete',
+          collection: FIRESTORE_COLLECTIONS.PARTICIPANT_BILLETWEB_TICKET,
+          id: ticket.id,
+        });
+      }
       writes.push({ op: 'delete', id: String(existing.id ?? '').trim() });
       continue;
     }
@@ -368,21 +379,21 @@ async function syncConferenceSpeakersFromSession(
 }
 
 /**
- * Commits conference-speaker set/delete operations in Firestore batches.
+ * Commits conference-speaker and linked ticket set/delete operations in Firestore batches.
  *
  * @param db Firestore admin instance.
  * @param writes Pending write operations.
  */
 async function commitConferenceSpeakerWrites(
   db: admin.firestore.Firestore,
-  writes: Array<{ op: 'set' | 'delete'; id: string; value?: any }>
+  writes: Array<{ op: 'set' | 'delete'; id: string; collection?: string; value?: any }>
 ): Promise<void> {
   const cleanWrites = writes.filter((write) => String(write.id ?? '').trim().length > 0);
   for (let i = 0; i < cleanWrites.length; i += BATCH_SAFE_LIMIT) {
     const batch = db.batch();
     const chunk = cleanWrites.slice(i, i + BATCH_SAFE_LIMIT);
     chunk.forEach((write) => {
-      const ref = db.collection(FIRESTORE_COLLECTIONS.CONFERENCE_SPEAKER).doc(write.id);
+      const ref = db.collection(write.collection ?? FIRESTORE_COLLECTIONS.CONFERENCE_SPEAKER).doc(write.id);
       if (write.op === 'delete') {
         batch.delete(ref);
         return;
@@ -455,9 +466,14 @@ async function cleanupSpeakerIfNoEligibleSessions(
     .get();
 
   const writeOps: Array<{ collection: string; id: string }> = [];
-  conferenceSpeakerSnap.docs.forEach((docSnap) => {
+  for (const docSnap of conferenceSpeakerSnap.docs) {
+    const conferenceSpeaker = { ...(docSnap.data() as ConferenceSpeaker), id: docSnap.id };
+    if (String(conferenceSpeaker.ticketId ?? '').trim()) {
+      const ticket = await deleteSpeakerTicketFromBilletweb(db, conferenceId, conferenceSpeaker);
+      writeOps.push({ collection: FIRESTORE_COLLECTIONS.PARTICIPANT_BILLETWEB_TICKET, id: ticket.id });
+    }
     writeOps.push({ collection: FIRESTORE_COLLECTIONS.CONFERENCE_SPEAKER, id: docSnap.id });
-  });
+  }
   activityParticipationsSnap.docs.forEach((docSnap) => {
     writeOps.push({ collection: FIRESTORE_COLLECTIONS.ACTIVITY_PARTICIPATION, id: docSnap.id });
   });
