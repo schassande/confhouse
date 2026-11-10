@@ -301,7 +301,8 @@ Navigation:
 
 ### 18. Speakers List (`/conference/:conferenceId/speakers`)
 Purpose:
-- Conference speaker list.
+- Conference speaker list with in-memory search and filters, including speakers without a session.
+- The list displays 30 speakers per pagination page.
 
 Access:
 - Authenticated + organizer + valid conference context.

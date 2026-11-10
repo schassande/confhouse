@@ -127,6 +127,7 @@ export class ConferenceSpeakers implements OnInit {
   readonly searchText = signal('');
   readonly hasUnavailableSlotFilter = signal(false);
   readonly hasMultipleSessionsFilter = signal(false);
+  readonly hasNoSessionFilter = signal(false);
   readonly ticketPresenceFilter = signal<TicketPresenceFilter>('ALL');
   readonly bulkTicketCreationPending = signal(false);
   readonly bulkTicketSuccessCount = signal(0);
@@ -334,6 +335,7 @@ export class ConferenceSpeakers implements OnInit {
     const normalizedSearch = this.normalizeSearchText(this.searchText());
     const filterHasUnavailableSlot = this.hasUnavailableSlotFilter();
     const filterHasMultipleSessions = this.hasMultipleSessionsFilter();
+    const filterHasNoSession = this.hasNoSessionFilter();
     const ticketPresenceFilter = this.ticketPresenceFilter();
 
     if (selectedSessionTypeIds.length > 0) {
@@ -354,6 +356,10 @@ export class ConferenceSpeakers implements OnInit {
 
     if (filterHasMultipleSessions) {
       values = values.filter((value) => (value.conferenceSpeaker.sessionIds ?? []).length > 1);
+    }
+
+    if (filterHasNoSession) {
+      values = values.filter((value) => (value.conferenceSpeaker.sessionIds ?? []).length === 0);
     }
 
     if (ticketPresenceFilter === 'WITH') {

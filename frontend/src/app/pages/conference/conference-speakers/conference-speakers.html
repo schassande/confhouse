@@ -15,7 +15,7 @@
   class="speaker-dataview"
   [value]="filteredSpeakerViews()"
   [paginator]="true"
-  [rows]="10"
+  [rows]="30"
   layout="list"
   [loading]="loading()"
   [showCurrentPageReport]="true"
@@ -77,6 +77,17 @@
           ></p-checkbox>
           <label for="has-multiple-sessions-filter">
             {{ 'CONFERENCE.SPEAKERS.FILTER_HAS_MULTIPLE_SESSIONS' | translate }}
+          </label>
+        </div>
+        <div class="filter-checkbox">
+          <p-checkbox
+            inputId="has-no-session-filter"
+            [binary]="true"
+            [ngModel]="hasNoSessionFilter()"
+            (ngModelChange)="hasNoSessionFilter.set(!!$event)"
+          ></p-checkbox>
+          <label for="has-no-session-filter">
+            {{ 'CONFERENCE.SPEAKERS.FILTER_HAS_NO_SESSION' | translate }}
           </label>
         </div>
 

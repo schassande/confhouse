@@ -628,6 +628,7 @@
       "FILTER_SEARCH": "Search (min 3 chars)",
       "FILTER_HAS_UNAVAILABLE_SLOT": "Has unavailable slots",
       "FILTER_HAS_MULTIPLE_SESSIONS": "Has multiple sessions",
+      "FILTER_HAS_NO_SESSION": "Has no session",
       "FILTER_TICKET": "Filter by ticket",
       "FILTER_TICKET_ALL": "All tickets",
       "FILTER_TICKET_WITH": "With ticket",

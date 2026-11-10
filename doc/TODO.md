@@ -1,9 +1,6 @@
 # TODO List
 
 ## Priority 1
-- Page Speaker management
-  - Search speaker without talk
-  - increase page size from 10 to 50
 - Copy firestore data to local data (emulator)
 - Dev environnement
   - Build a dev env

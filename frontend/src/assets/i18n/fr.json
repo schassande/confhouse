@@ -349,6 +349,7 @@
       "FILTER_SEARCH": "Recherche (min 3 caractères)",
       "FILTER_HAS_UNAVAILABLE_SLOT": "A des indisponibilités",
       "FILTER_HAS_MULTIPLE_SESSIONS": "A plusieurs sessions",
+      "FILTER_HAS_NO_SESSION": "Sans session",
       "FILTER_TICKET": "Filtrer par billet",
       "FILTER_TICKET_ALL": "Tous les billets",
       "FILTER_TICKET_WITH": "Avec billet",
