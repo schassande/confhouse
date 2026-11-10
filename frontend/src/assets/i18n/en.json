@@ -878,7 +878,9 @@
           "ATTRIBUTE_PLACEHOLDER": "Select an attribute",
           "ATTRIBUTE_SELECT_ACTIVITY": "Select an activity first",
           "BILLETWEB_FIELD_ID": "BilletWeb custom field ID",
-          "BILLETWEB_FIELD_ID_HELP": "Short text with a maximum of 10 characters."
+          "BILLETWEB_FIELD_ID_HELP": "Select a field. The displayed label includes its BilletWeb ID.",
+          "FIELD_PLACEHOLDER": "Select a BilletWeb field",
+          "INVALID_FIELD_SELECTION": "Select a currently available BilletWeb field for each mapping."
         },
         "PREVIOUS": "Previous",
         "NEXT": "Next"

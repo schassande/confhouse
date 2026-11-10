@@ -266,13 +266,17 @@
                             <label [for]="'mapping-billetweb-field-' + $index">
                               {{ 'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.BILLETWEB_FIELD_ID' | translate }}
                             </label>
-                            <input
-                              [id]="'mapping-billetweb-field-' + $index"
-                              pInputText
-                              type="text"
+                            <p-select
+                              [inputId]="'mapping-billetweb-field-' + $index"
                               formControlName="billetwebCustomFieldId"
-                              maxlength="10"
-                            />
+                              [options]="fieldOptionsForMapping($index)"
+                              optionLabel="label"
+                              optionValue="value"
+                              optionDisabled="disabled"
+                              [placeholder]="'CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.FIELD_PLACEHOLDER' | translate"
+                              [disabled]="loadingFields() || !fieldsLoaded()"
+                              [showClear]="true"
+                            ></p-select>
                           </div>
                         </div>
 

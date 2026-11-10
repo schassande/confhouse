@@ -10,7 +10,7 @@ import {
   parseConferenceId,
 } from '../../conference/common';
 
-type BilletwebOperation = 'events' | 'tickets';
+type BilletwebOperation = 'events' | 'tickets' | 'fields';
 
 interface BilletwebEvent {
   id: string;
@@ -24,6 +24,18 @@ interface BilletwebTicket {
   id: string;
   name: string;
   full_name: string;
+}
+
+/**
+ * Represents a normalized BilletWeb custom field.
+ */
+interface BilletwebField {
+  id: string;
+  name: string;
+  type?: string;
+  basic?: number;
+  disabled?: number;
+  answers?: string[];
 }
 
 /**
@@ -67,6 +79,15 @@ export const fetchBilletweb = onRequest({ cors: true, timeoutSeconds: 60 }, asyn
       return;
     }
 
+    if (operation === 'fields') {
+      const url = `${apiUrl}/fields${query}`;
+      const payload = await callBilletwebApi(url);
+      const fields = normalizeFields(payload);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(200).send({ fields });
+      return;
+    }
+
     const eventId = requiredText(req.body?.eventId, 'Missing eventId');
     const url = `${apiUrl}/event/${encodeURIComponent(eventId)}/tickets${query}`;
     const payload = await callBilletwebApi(url);
@@ -97,7 +118,7 @@ export const fetchBilletweb = onRequest({ cors: true, timeoutSeconds: 60 }, asyn
  */
 function parseOperation(value: unknown): BilletwebOperation {
   const operation = String(value ?? '').trim();
-  if (operation !== 'events' && operation !== 'tickets') {
+  if (operation !== 'events' && operation !== 'tickets' && operation !== 'fields') {
     throw new HttpError(
       400,
       'Invalid operation',
@@ -226,6 +247,41 @@ function normalizeTickets(payload: unknown): BilletwebTicket[] {
       full_name: fullName,
     };
   }).filter((ticket) => !!ticket.id);
+}
+
+/**
+ * Normalizes custom fields returned by BilletWeb.
+ * @param payload Raw BilletWeb response.
+ * @returns Normalized custom fields.
+ */
+function normalizeFields(payload: unknown): BilletwebField[] {
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+  return payload
+    .map((field) => {
+      const raw = field as {
+        id?: unknown;
+        name?: unknown;
+        type?: unknown;
+        basic?: unknown;
+        disabled?: unknown;
+        answers?: unknown;
+      };
+      const id = String(raw?.id ?? '').trim();
+      const name = String(raw?.name ?? '').trim();
+      return {
+        id,
+        name,
+        type: String(raw?.type ?? '').trim() || undefined,
+        basic: Number.isFinite(Number(raw?.basic)) ? Number(raw.basic) : undefined,
+        disabled: Number.isFinite(Number(raw?.disabled)) ? Number(raw.disabled) : undefined,
+        answers: Array.isArray(raw?.answers)
+          ? raw.answers.map((answer) => String(answer ?? '').trim()).filter((answer) => answer.length > 0)
+          : undefined,
+      };
+    })
+    .filter((field) => !!field.id && !!field.name);
 }
 
 /**

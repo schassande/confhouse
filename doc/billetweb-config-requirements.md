@@ -72,17 +72,23 @@ Persistance :
 Chargement des activites :
 - Les activites de la conference sont chargees une seule fois via `ActivityService.byConferenceId(conferenceId)`.
 
+Chargement des champs BilletWeb :
+- Les champs sont charges via le proxy serveur avec `GET /api/fields?version=1` et les credentials BilletWeb.
+- La reponse est un tableau d'objets contenant au minimum `id` et `name`, avec des metadonnees optionnelles telles que `type`, `basic`, `disabled` et `answers`.
+- Exemple : `[{ "id": 4567, "name": "Taille de t-shirt", "type": "multiple", "answers": ["S", "M", "L"] }]`.
+
 Interface :
 - L'utilisateur peut ajouter, modifier et supprimer des lignes de mapping.
 - Chaque ligne permet de choisir :
   - une activite de la conference (`activityId`)
   - un attribut parmi les `specificAttributes` de cette activite (`activityAttributeName`)
-  - un identifiant de custom field BilletWeb (`billetwebCustomFieldId`)
+  - un custom field BilletWeb dans un select PrimeNG ; le libelle est toujours affiche sous la forme `nom (id)` et la valeur stockee est l'identifiant (`billetwebCustomFieldId`)
 
 Regles de saisie :
 - La liste des activites vient uniquement de la conference courante.
 - La liste des attributs depend de l'activite selectionnee.
-- `billetwebCustomFieldId` est un texte court limite a 10 caracteres.
+- Le select des champs est desactive pendant le chargement.
+- Un identifiant deja configure mais absent de la reponse API reste visible comme valeur invalide et bloque la sauvegarde jusqu'a selection d'un champ disponible.
 
 ## Contrainte technique CORS
 - Aucun appel direct navigateur -> BilletWeb.

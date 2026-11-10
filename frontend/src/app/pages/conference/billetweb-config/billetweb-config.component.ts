@@ -13,7 +13,12 @@ import { Activity } from '@shared/model/activity.model';
 import { Conference } from '@shared/model/conference.model';
 import { ActivityService } from '../../../services/activity.service';
 import { BilletwebConfigService } from '../../../services/billetweb-config.service';
-import { BilletwebApiService, BilletwebEvent, BilletwebTicketTypeOption } from '../../../services/billetweb-api.service';
+import {
+  BilletwebApiService,
+  BilletwebEvent,
+  BilletwebFieldOption,
+  BilletwebTicketTypeOption,
+} from '../../../services/billetweb-api.service';
 import { ConferenceSecretService, BILLETWEB_KEY_SECRET_NAME } from '../../../services/conference-secret.service';
 import { ActivityTicketFieldMapping, BilletwebConfig, BilletwebTicketType } from '@shared/model/billetweb-config';
 import { ConferenceService } from '../../../services/conference.service';
@@ -60,11 +65,14 @@ export class BilletwebConfigComponent {
   readonly testingConnection = signal(false);
   readonly loadingEvents = signal(false);
   readonly loadingTickets = signal(false);
+  readonly loadingFields = signal(false);
+  readonly fieldsLoaded = signal(false);
   readonly connectionTestResultCount = signal<number | null>(null);
   readonly errorMessage = signal('');
 
   readonly events = signal<BilletwebEvent[]>([]);
   readonly tickets = signal<BilletwebTicketTypeOption[]>([]);
+  readonly fields = signal<BilletwebFieldOption[]>([]);
   readonly activities = signal<Activity[]>([]);
   readonly selectedSponsorTicketTypeIds = signal<string[]>([]);
   readonly protectedSponsorTicketTypeIds = computed<string[]>(() => this.collectProtectedSponsorTicketTypeIds());
@@ -111,6 +119,13 @@ export class BilletwebConfigComponent {
       }))
       .filter((option) => option.value.length > 0)
   );
+  readonly fieldOptions = computed<SelectOption[]>(() =>
+    this.fields().map((field) => ({
+      label: `${field.name} (${field.id})`,
+      value: field.id,
+      disabled: field.disabled === 1,
+    }))
+  );
 
   constructor() {
     this.form.controls.eventId.valueChanges.subscribe((eventId) => {
@@ -142,6 +157,7 @@ export class BilletwebConfigComponent {
       .subscribe((signature) => {
         if (signature) {
           void this.preloadEvents();
+          void this.preloadFields();
         }
       });
     void this.initialize();
@@ -233,8 +249,13 @@ export class BilletwebConfigComponent {
    */
   async save(): Promise<void> {
     this.errorMessage.set('');
-    if (this.form.invalid) {
+    if (this.form.invalid || !this.areCustomFieldMappingsValid()) {
       this.form.markAllAsTouched();
+      if (!this.areCustomFieldMappingsValid()) {
+        this.errorMessage.set(
+          this.translateService.instant('CONFERENCE.CONFIG.BILLETWEB.CUSTOM_FIELDS.INVALID_FIELD_SELECTION')
+        );
+      }
       return;
     }
 
@@ -319,6 +340,7 @@ export class BilletwebConfigComponent {
         { emitEvent: false }
       );
       this.setCustomFieldMappings(config?.customFieldMappings ?? []);
+      await this.loadFields();
 
       if (config?.eventId) {
         await this.loadEvents();
@@ -361,6 +383,22 @@ export class BilletwebConfigComponent {
       await this.getOrLoadEvents(false);
     } catch {
       // Keep preload silent; explicit actions surface errors.
+    }
+  }
+
+  /**
+   * Preloads the BilletWeb custom field list when credentials are complete.
+   *
+   * @returns Promise resolved when preloading completes or is skipped.
+   */
+  private async preloadFields(): Promise<void> {
+    if (!this.canGoToStep2()) {
+      return;
+    }
+    try {
+      await this.loadFields();
+    } catch {
+      // Keep preload silent; explicit save validation surfaces the failure.
     }
   }
 
@@ -483,6 +521,37 @@ export class BilletwebConfigComponent {
       this.errorMessage.set(this.toErrorMessage(error));
     } finally {
       this.loadingTickets.set(false);
+    }
+  }
+
+  /**
+   * Loads the custom fields available for the current BilletWeb credentials.
+   *
+   * @returns Promise resolved when the field list has been loaded.
+   */
+  private async loadFields(): Promise<void> {
+    if (!this.canGoToStep2()) {
+      return;
+    }
+    this.loadingFields.set(true);
+    this.fieldsLoaded.set(false);
+    try {
+      const conferenceId = this.conferenceId();
+      const raw = this.form.getRawValue();
+      const fields = await this.billetwebApiService.listFields({
+        conferenceId,
+        apiUrl: raw.apiUrl.trim(),
+        userId: raw.userId.trim(),
+        keyVersion: raw.keyVersion.trim(),
+        key: raw.key.trim(),
+      });
+      this.fields.set(fields);
+      this.fieldsLoaded.set(true);
+    } catch (error: unknown) {
+      this.fields.set([]);
+      this.errorMessage.set(this.toErrorMessage(error));
+    } finally {
+      this.loadingFields.set(false);
     }
   }
 
@@ -622,6 +691,29 @@ export class BilletwebConfigComponent {
   }
 
   /**
+   * Returns field options for one mapping, preserving an existing unavailable ID for validation display.
+   *
+   * @param index Mapping row index.
+   * @returns Select options for the mapping row.
+   */
+  protected fieldOptionsForMapping(index: number): SelectOption[] {
+    const formGroup = this.customFieldMappingControls()[index];
+    const currentId = String(formGroup?.get('billetwebCustomFieldId')?.value ?? '').trim();
+    const options = this.fieldOptions();
+    if (currentId && !options.some((option) => option.value === currentId)) {
+      return [
+        ...options,
+        {
+          label: `Unknown field (${currentId})`,
+          value: currentId,
+          disabled: true,
+        },
+      ];
+    }
+    return options;
+  }
+
+  /**
    * Resets the selected attribute when the activity changes to one that no longer exposes it.
    *
    * @param index Row index.
@@ -710,7 +802,26 @@ export class BilletwebConfigComponent {
    * @returns `true` when the form is valid and not currently saving.
    */
   protected canSave(): boolean {
-    return this.form.valid && !this.saving();
+    return this.form.valid && this.areCustomFieldMappingsValid() && !this.saving();
+  }
+
+  /**
+   * Checks that every configured custom field mapping references a loaded BilletWeb field.
+   *
+   * @returns `true` when all mapping IDs are available and valid.
+   */
+  private areCustomFieldMappingsValid(): boolean {
+    const mappings = this.customFieldMappingControls();
+    if (mappings.length === 0) {
+      return true;
+    }
+    if (!this.fieldsLoaded()) {
+      return false;
+    }
+    const availableIds = new Set(this.fields().map((field) => field.id));
+    return mappings.every((mapping) =>
+      availableIds.has(String(mapping.get('billetwebCustomFieldId')?.value ?? '').trim())
+    );
   }
 
   /**
