@@ -324,7 +324,7 @@
           [label]="'COMMON.SAVE' | translate"
           (click)="save()"
           [loading]="saving()"
-          [disabled]="!canSave()"
+          [disabled]="saving()"
         ></button>
       </div>
     </form>

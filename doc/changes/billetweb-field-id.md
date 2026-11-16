@@ -30,7 +30,7 @@ Replace the free-text BilletWeb custom field ID input in the conference BilletWe
 3. Each option shall expose the BilletWeb field name as its visible label and the BilletWeb field ID as its value.
 4. Selecting an option shall update the reactive form control and save the selected ID in `billetwebCustomFieldId`.
 5. Existing saved field IDs shall remain compatible with the form and shall not be lost when the configuration is edited.
-6. If an existing saved field ID is absent from the latest API response, it shall remain visible in the form but the configuration cannot be saved until the user selects a currently available field.
+6. If an existing saved field ID is absent from the latest API response, it shall remain visible and selectable. When the API returns other fields, the value remains invalid until the user selects an available field; when the API returns no fields, the existing non-empty value is preserved for backward compatibility.
 
 ## Business rules
 

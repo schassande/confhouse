@@ -26,6 +26,8 @@ Creer une page de configuration `BilletWebConfig` permettant de parametrer l'acc
 - Formulaire PrimeNG avec internationalisation.
 - Stepper PrimeNG en 4 etapes.
 - Boutons `Previous` / `Next`, puis `Cancel` / `Save`.
+- Le bouton `Save` reste actionnable hors sauvegarde ; la validation complete est appliquee au lancement de `save()` afin qu'un chargement asynchrone BilletWeb ne bloque pas l'action de maniere permanente.
+- Un identifiant de custom field deja configure reste selectionnable lorsque BilletWeb ne renvoie aucun champ, afin de ne pas perdre une configuration existante.
 
 ## Etape 1 - Connection BilletWeb
 Champs a editer :

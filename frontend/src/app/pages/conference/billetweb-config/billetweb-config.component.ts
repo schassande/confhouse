@@ -704,9 +704,8 @@ export class BilletwebConfigComponent {
       return [
         ...options,
         {
-          label: `Unknown field (${currentId})`,
+          label: `BilletWeb field (${currentId})`,
           value: currentId,
-          disabled: true,
         },
       ];
     }
@@ -797,15 +796,6 @@ export class BilletwebConfigComponent {
   }
 
   /**
-   * Returns whether the full form can be saved.
-   *
-   * @returns `true` when the form is valid and not currently saving.
-   */
-  protected canSave(): boolean {
-    return this.form.valid && this.areCustomFieldMappingsValid() && !this.saving();
-  }
-
-  /**
    * Checks that every configured custom field mapping references a loaded BilletWeb field.
    *
    * @returns `true` when all mapping IDs are available and valid.
@@ -817,6 +807,11 @@ export class BilletwebConfigComponent {
     }
     if (!this.fieldsLoaded()) {
       return false;
+    }
+    if (this.fields().length === 0) {
+      return mappings.every(
+        (mapping) => String(mapping.get('billetwebCustomFieldId')?.value ?? '').trim().length > 0
+      );
     }
     const availableIds = new Set(this.fields().map((field) => field.id));
     return mappings.every((mapping) =>
