@@ -191,14 +191,14 @@ export class ActivityParticipationComponent {
       error: (error) => console.error('Error loading conference:', error),
     });
 
-    this.conferenceSpeakerService.byConferenceId(conferenceId).pipe(take(1)).subscribe({
-      next: (conferenceSpeakers) => {
-        const ids = new Set(
-          (conferenceSpeakers ?? [])
-            .map((speaker) => String(speaker.personId ?? '').trim())
-            .filter((id) => !!id)
+    this.conferenceSpeakerService
+      .byConferenceAndPersonId(conferenceId, currentPerson.id)
+      .pipe(take(1))
+      .subscribe({
+      next: (conferenceSpeaker) => {
+        this.conferenceSpeakerPersonIds.set(
+          conferenceSpeaker?.personId ? new Set([String(conferenceSpeaker.personId).trim()]) : new Set(),
         );
-        this.conferenceSpeakerPersonIds.set(ids);
         this.cdr.markForCheck();
       },
       error: (error) => console.error('Error loading conference speakers:', error),

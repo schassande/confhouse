@@ -67,14 +67,24 @@ export class ConferenceSpeakerService extends FirestoreGenericService<Conference
     conferenceId: string,
     personId: string,
   ): Observable<ConferenceSpeaker | undefined> {
+    const normalizedConferenceId = String(conferenceId ?? '').trim();
     const normalizedPersonId = String(personId ?? '').trim();
-    return this.byConferenceId(conferenceId).pipe(
-      map((conferenceSpeakers) =>
-        (conferenceSpeakers ?? []).find(
-          (conferenceSpeaker) =>
-            String(conferenceSpeaker.personId ?? '').trim() === normalizedPersonId,
+    return from(
+      getDocs(
+        query(
+          collection(this.db, this.getCollectionName()),
+          where('conferenceId', '==', normalizedConferenceId),
+          where('personId', '==', normalizedPersonId),
         ),
       ),
+    ).pipe(
+      map((qs) => {
+        const first = qs.docs[0];
+        if (!first) {
+          return undefined;
+        }
+        return { ...(first.data() as ConferenceSpeaker), id: first.id };
+      }),
     );
   }
 
